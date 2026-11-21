@@ -18,6 +18,7 @@ import {
   X,
   Sparkles,
   ArrowRight,
+  Swords,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -205,6 +206,23 @@ export function Navbar() {
                   </div>
                 );
               })}
+
+              {/* Compare / Race Mode Link */}
+              <Link
+                href="/compare"
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-all",
+                  pathname === "/compare"
+                    ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                    : "text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                )}
+              >
+                <Swords className="w-4 h-4 text-amber-500" />
+                <span>So sánh đối đầu</span>
+                <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                  Race
+                </span>
+              </Link>
             </nav>
 
             {/* Right Controls: Search + GitHub + Theme */}
@@ -306,6 +324,21 @@ export function Navbar() {
                   </div>
                 );
               })}
+
+              {/* Compare Mode Link in Mobile Drawer */}
+              <Link
+                href="/compare"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Swords className="w-4 h-4 text-emerald-500" />
+                  <span>So sánh đối đầu (Race Mode)</span>
+                </div>
+                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
+                  New
+                </span>
+              </Link>
             </div>
           </div>
         )}

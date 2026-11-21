@@ -29,6 +29,7 @@
 ## 🌟 Tính Năng Nổi Bật (Key Features)
 
 - 📊 **13 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 4 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming.
+- ⚔️ **Chế độ So Sánh Đối Đầu (Algorithm Race Mode)**: Đặt 2 giải thuật sắp xếp lên cùng một bàn cân chạy đua song song trên cùng mảng dữ liệu (ví dụ: *Quick Sort* vs *Bubble Sort*), hiển thị bảng so sánh đối đầu thời gian thực, đếm số bước, phép so sánh và vinh danh thuật toán chiến thắng 🏆.
 - 🎬 **Điều khiển linh hoạt (Interactive Playback)**:
   - Play / Pause (có hỗ trợ phím tắt <kbd>Space</kbd>).
   - Từng bước kế tiếp (<kbd>→</kbd>) hoặc lùi bước (<kbd>←</kbd>).

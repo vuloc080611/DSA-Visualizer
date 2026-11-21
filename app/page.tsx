@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Filter,
   CheckCircle,
+  Swords,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -102,6 +103,13 @@ export default function HomePage() {
               <span>Khám phá thuật toán</span>
               <ArrowRight className="w-4 h-4" />
             </a>
+            <Link
+              href="/compare"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold text-sm shadow-lg shadow-amber-500/25 flex items-center gap-2 transition-all hover:scale-105"
+            >
+              <Swords className="w-4 h-4" />
+              <span>Chế độ So Sánh (Race)</span>
+            </Link>
             <Link
               href="/visualizer/bubble-sort"
               className="px-6 py-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-slate-700 transition-all shadow-sm"
