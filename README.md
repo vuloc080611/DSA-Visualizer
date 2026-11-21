@@ -11,17 +11,18 @@
 
 **Một ứng dụng web tương tác trực quan hóa 13 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
 
-[🌐 **Trải Nghiệm Live Demo Trên Vercel**](https://dsa-visualizer-demo.vercel.app) • [📖 **Xem Báo Cáo Chi Tiết**](#6-những-gì-học-được-key-takeaways) • [👨‍💻 **Tác Giả**](#7-tác-giả)
+[🌐 **Trải Nghiệm Live Demo Trên Vercel**](https://dsa-visualizer-one-beta.vercel.app) • [📖 **Xem Báo Cáo Chi Tiết**](#key-takeaways) • [👨‍💻 **Tác Giả**](#author)
 
 </div>
 
 ---
 
+<a id="demo"></a>
 ## 📸 Demo & Giao Diện Ứng Dụng
 
 | Trang Chủ & Bộ Lọc Thuật Toán | Giao Diện Trực Quan Hóa (Visualizer Canvas) |
 | :---: | :---: |
-| ![Home Preview](https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/www/public/og.jpg) | ![Visualizer Preview](https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/www/public/og.jpg) |
+| [![Home Preview](public/screenshots/home-preview.svg)](https://dsa-visualizer-one-beta.vercel.app) | [![Visualizer Preview](public/screenshots/visualizer-preview.svg)](https://dsa-visualizer-one-beta.vercel.app/visualizer/quick-sort) |
 
 ---
 
@@ -186,6 +187,7 @@ dsa-visualizer/
 
 ---
 
+<a id="key-takeaways"></a>
 ## 💡 Những Gì Học Được (Key Takeaways)
 
 Quá trình xây dựng dự án này mang lại nhiều kiến thức chuyên sâu và kinh nghiệm thực chiến quý báu:
@@ -207,6 +209,7 @@ Quá trình xây dựng dự án này mang lại nhiều kiến thức chuyên s
 
 ---
 
+<a id="author"></a>
 ## 👨‍💻 Tác Giả
 
 - **Họ và tên:** **Vũ Lộc**

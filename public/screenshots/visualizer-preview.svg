@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="100%" height="100%">
+  <defs>
+    <linearGradient id="vBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="vBtnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="barSorted" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="barComparing" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <linearGradient id="barSwapping" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="barPivot" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="barDefault" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .vTitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; fill: #ffffff; }
+    .vSub { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; fill: #94a3b8; }
+    .vMono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+
+  <!-- Frame -->
+  <rect width="1200" height="675" rx="16" fill="url(#vBgGrad)" stroke="#334155" stroke-width="2"/>
+
+  <!-- Title bar -->
+  <rect width="1200" height="42" rx="16" fill="#0f172a"/>
+  <rect y="26" width="1200" height="16" fill="#0f172a"/>
+  <line x1="0" y1="42" x2="1200" y2="42" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Dots -->
+  <circle cx="24" cy="21" r="6" fill="#ef4444"/>
+  <circle cx="44" cy="21" r="6" fill="#f59e0b"/>
+  <circle cx="64" cy="21" r="6" fill="#10b981"/>
+
+  <!-- Address Bar -->
+  <rect x="300" y="9" width="600" height="24" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="600" y="25" text-anchor="middle" font-size="11" fill="#94a3b8" class="vMono">https://dsa-visualizer-one-beta.vercel.app/visualizer/quick-sort</text>
+
+  <!-- Algorithm Top Bar -->
+  <g transform="translate(50, 60)">
+    <text x="0" y="24" font-size="12" fill="#10b981" font-weight="600" class="vTitle">← Trở về danh sách thuật toán</text>
+    <text x="0" y="58" font-size="28" font-weight="bold" fill="#ffffff" class="vTitle">Quick Sort</text>
+    <rect x="150" y="38" width="76" height="24" rx="12" fill="#064e3b" stroke="#059669" stroke-width="1"/>
+    <text x="188" y="54" text-anchor="middle" font-size="10" font-weight="bold" fill="#34d399" class="vMono">SORTING</text>
+
+    <!-- Complexity Badges Bar -->
+    <rect x="240" y="38" width="90" height="24" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="285" y="54" text-anchor="middle" font-size="11" fill="#f59e0b" class="vMono">Avg: O(N log N)</text>
+
+    <rect x="340" y="38" width="80" height="24" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="380" y="54" text-anchor="middle" font-size="11" fill="#ec4899" class="vMono">Worst: O(N²)</text>
+
+    <rect x="430" y="38" width="80" height="24" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="470" y="54" text-anchor="middle" font-size="11" fill="#60a5fa" class="vMono">Space: O(log N)</text>
+
+    <rect x="520" y="38" width="75" height="24" rx="6" fill="#064e3b" stroke="#047857" stroke-width="1"/>
+    <text x="557" y="54" text-anchor="middle" font-size="11" fill="#34d399" class="vMono">In-place: Có</text>
+  </g>
+
+  <!-- MAIN CANVAS (LEFT) -->
+  <g transform="translate(50, 135)">
+    <!-- Canvas Container -->
+    <rect width="660" height="250" rx="16" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
+
+    <!-- Legend bar at bottom of canvas -->
+    <line x1="20" y1="215" x2="640" y2="215" stroke="#1e293b" stroke-width="1"/>
+    <circle cx="50" cy="232" r="4" fill="#64748b"/>
+    <text x="62" y="236" font-size="10" fill="#94a3b8" class="vTitle">Mặc định</text>
+    <circle cx="140" cy="232" r="4" fill="#fbbf24"/>
+    <text x="152" y="236" font-size="10" fill="#fbbf24" class="vTitle">Đang so sánh</text>
+    <circle cx="250" cy="232" r="4" fill="#fb7185"/>
+    <text x="262" y="236" font-size="10" fill="#fb7185" class="vTitle">Đang hoán đổi</text>
+    <circle cx="360" cy="232" r="4" fill="#34d399"/>
+    <text x="372" y="236" font-size="10" fill="#34d399" class="vTitle">Đã sắp xếp</text>
+    <circle cx="470" cy="232" r="4" fill="#a78bfa"/>
+    <text x="482" y="236" font-size="10" fill="#a78bfa" class="vTitle">Pivot (Điểm chốt)</text>
+
+    <!-- BARS -->
+    <!-- Bar 0 (Sorted) -->
+    <rect x="40" y="145" width="45" height="55" rx="6" fill="url(#barSorted)" stroke="#059669" stroke-width="1"/>
+    <text x="62" y="165" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">15</text>
+    <text x="62" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">0</text>
+
+    <!-- Bar 1 (Comparing - Amber) -->
+    <rect x="95" y="105" width="45" height="95" rx="6" fill="url(#barComparing)" stroke="#d97706" stroke-width="1"/>
+    <text x="117" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="vMono">32</text>
+    <text x="117" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">1</text>
+
+    <!-- Bar 2 (Comparing - Amber) -->
+    <rect x="150" y="75" width="45" height="125" rx="6" fill="url(#barComparing)" stroke="#d97706" stroke-width="1"/>
+    <text x="172" y="95" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" class="vMono">45</text>
+    <text x="172" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">2</text>
+
+    <!-- Bar 3 (Default) -->
+    <rect x="205" y="120" width="45" height="80" rx="6" fill="url(#barDefault)" stroke="#475569" stroke-width="1"/>
+    <text x="227" y="140" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">24</text>
+    <text x="227" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">3</text>
+
+    <!-- Bar 4 (Swapping - Rose) -->
+    <rect x="260" y="55" width="45" height="145" rx="6" fill="url(#barSwapping)" stroke="#e11d48" stroke-width="1"/>
+    <text x="282" y="75" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">68</text>
+    <text x="282" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">4</text>
+
+    <!-- Bar 5 (Default) -->
+    <rect x="315" y="130" width="45" height="70" rx="6" fill="url(#barDefault)" stroke="#475569" stroke-width="1"/>
+    <text x="337" y="150" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">19</text>
+    <text x="337" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">5</text>
+
+    <!-- Bar 6 (Pivot - Violet) with Arrow -->
+    <text x="392" y="32" text-anchor="middle" font-size="11" font-weight="bold" fill="#a78bfa" class="vMono">PIVOT ↓</text>
+    <rect x="370" y="40" width="45" height="160" rx="6" fill="url(#barPivot)" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="392" y="60" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">50</text>
+    <text x="392" y="210" text-anchor="middle" font-size="10" fill="#a78bfa" class="vMono">6</text>
+
+    <!-- Bar 7 (Sorted) -->
+    <rect x="425" y="30" width="45" height="170" rx="6" fill="url(#barSorted)" stroke="#059669" stroke-width="1"/>
+    <text x="447" y="50" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">75</text>
+    <text x="447" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">7</text>
+
+    <!-- Bar 8 (Sorted) -->
+    <rect x="480" y="20" width="45" height="180" rx="6" fill="url(#barSorted)" stroke="#059669" stroke-width="1"/>
+    <text x="502" y="40" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">89</text>
+    <text x="502" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">8</text>
+
+    <!-- Bar 9 (Sorted) -->
+    <rect x="535" y="10" width="45" height="190" rx="6" fill="url(#barSorted)" stroke="#059669" stroke-width="1"/>
+    <text x="557" y="30" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff" class="vMono">99</text>
+    <text x="557" y="210" text-anchor="middle" font-size="10" fill="#64748b" class="vMono">9</text>
+  </g>
+
+  <!-- CONTROL PANEL (LEFT LOWER) -->
+  <g transform="translate(50, 400)">
+    <rect width="660" height="120" rx="16" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
+
+    <!-- Buttons -->
+    <rect x="20" y="18" width="36" height="36" rx="10" fill="#1e293b"/>
+    <text x="38" y="41" text-anchor="middle" font-size="14" fill="#fff">↺</text>
+
+    <rect x="64" y="18" width="36" height="36" rx="10" fill="#1e293b"/>
+    <text x="82" y="40" text-anchor="middle" font-size="13" fill="#fff">⏮</text>
+
+    <rect x="108" y="16" width="90" height="40" rx="12" fill="url(#vBtnGrad)"/>
+    <text x="153" y="41" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff" class="vTitle">▶ Chạy</text>
+
+    <rect x="206" y="18" width="36" height="36" rx="10" fill="#1e293b"/>
+    <text x="224" y="40" text-anchor="middle" font-size="13" fill="#fff">⏭</text>
+
+    <!-- Speed options -->
+    <text x="360" y="40" font-size="12" fill="#94a3b8" class="vTitle">Tốc độ:</text>
+    <rect x="410" y="20" width="160" height="32" rx="8" fill="#1e293b"/>
+    <text x="430" y="41" font-size="11" fill="#94a3b8" class="vMono">0.5x</text>
+    <rect x="460" y="22" width="35" height="28" rx="6" fill="#0f172a"/>
+    <text x="477" y="41" text-anchor="middle" font-size="11" font-weight="bold" fill="#10b981" class="vMono">1x</text>
+    <text x="515" y="41" font-size="11" fill="#94a3b8" class="vMono">2x</text>
+    <text x="548" y="41" font-size="11" fill="#94a3b8" class="vMono">4x</text>
+
+    <!-- Progress Scrubber -->
+    <text x="20" y="80" font-size="11" fill="#94a3b8" class="vMono">Tiến trình giải thuật</text>
+    <text x="640" y="80" text-anchor="end" font-size="11" fill="#94a3b8" class="vMono">Bước <tspan fill="#fff" font-weight="bold">18</tspan> / 32</text>
+    <rect x="20" y="88" width="620" height="8" rx="4" fill="#1e293b"/>
+    <rect x="20" y="88" width="350" height="8" rx="4" fill="#10b981"/>
+    <circle cx="370" cy="92" r="7" fill="#ffffff" stroke="#10b981" stroke-width="3"/>
+  </g>
+
+  <!-- STEP DESCRIPTION CARD (LEFT BOTTOM) -->
+  <g transform="translate(50, 535)">
+    <rect width="660" height="115" rx="16" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
+    <circle cx="36" cy="30" r="12" fill="#064e3b"/>
+    <text x="36" y="34" text-anchor="middle" font-size="12" fill="#34d399">ℹ</text>
+    <text x="56" y="34" font-size="14" font-weight="bold" fill="#fff" class="vTitle">Diễn giải từng bước</text>
+
+    <rect x="450" y="18" width="95" height="24" rx="6" fill="#1e293b"/>
+    <text x="497" y="34" text-anchor="middle" font-size="11" fill="#f59e0b" class="vMono">So sánh: 24</text>
+    <rect x="555" y="18" width="90" height="24" rx="6" fill="#1e293b"/>
+    <text x="600" y="34" text-anchor="middle" font-size="11" fill="#ec4899" class="vMono">Hoán đổi: 11</text>
+
+    <text x="24" y="68" font-size="13" font-weight="500" fill="#e2e8f0" class="vTitle">
+      So sánh arr[2] = 45 với pivot = 50. Do 45 &lt; 50, hoán đổi arr[1] và arr[2] để gom phần tử nhỏ hơn về bên trái.
+    </text>
+    <rect x="24" y="82" width="180" height="22" rx="4" fill="#064e3b"/>
+    <text x="32" y="97" font-size="11" fill="#34d399" class="vMono">Pivot index: 6 (giá trị 50)</text>
+  </g>
+
+  <!-- CODE PANEL (RIGHT) -->
+  <g transform="translate(730, 135)">
+    <rect width="420" height="515" rx="16" fill="#020617" stroke="#1e293b" stroke-width="1.5"/>
+    
+    <!-- Code Header Tabs -->
+    <rect width="420" height="42" rx="16" fill="#090d16"/>
+    <rect y="26" width="420" height="16" fill="#090d16"/>
+    <line x1="0" y1="42" x2="420" y2="42" stroke="#1e293b" stroke-width="1"/>
+
+    <rect x="15" y="8" width="55" height="26" rx="6" fill="#1e293b"/>
+    <text x="42" y="25" text-anchor="middle" font-size="11" font-weight="bold" fill="#34d399" class="vMono">C++</text>
+    <text x="100" y="25" text-anchor="middle" font-size="11" fill="#94a3b8" class="vMono">Python</text>
+    <text x="175" y="25" text-anchor="middle" font-size="11" fill="#94a3b8" class="vMono">TypeScript</text>
+
+    <rect x="345" y="8" width="60" height="26" rx="6" fill="#1e293b"/>
+    <text x="375" y="24" text-anchor="middle" font-size="10" fill="#94a3b8" class="vMono">Copy</text>
+
+    <!-- Code Lines -->
+    <g transform="translate(15, 60)" font-size="12" class="vMono">
+      <text x="0" y="20" fill="#64748b">1</text>
+      <text x="30" y="20" fill="#93c5fd">int <tspan fill="#67e8f9">partition</tspan>(vector&lt;int&gt;&amp; arr, int low, int high) {</text>
+
+      <text x="0" y="42" fill="#64748b">2</text>
+      <text x="45" y="42" fill="#93c5fd">int <tspan fill="#e2e8f0">pivot = arr[high];</tspan></text>
+
+      <text x="0" y="64" fill="#64748b">3</text>
+      <text x="45" y="64" fill="#93c5fd">int <tspan fill="#e2e8f0">i = low - 1;</tspan></text>
+
+      <text x="0" y="86" fill="#64748b">4</text>
+      <text x="45" y="86" fill="#f472b6">for <tspan fill="#e2e8f0">(int j = low; j &lt; high; j++) {</tspan></text>
+
+      <!-- Active Line Highlight -->
+      <rect x="20" y="96" width="375" height="24" rx="4" fill="#10b981" opacity="0.18"/>
+      <line x1="20" y1="96" x2="20" y2="120" stroke="#34d399" stroke-width="3"/>
+      <text x="0" y="112" fill="#34d399" font-weight="bold">5</text>
+      <text x="60" y="112" fill="#34d399" font-weight="bold">if (arr[j] &lt; pivot) {</text>
+
+      <text x="0" y="134" fill="#64748b">6</text>
+      <text x="75" y="134" fill="#e2e8f0">i++;</text>
+
+      <text x="0" y="156" fill="#64748b">7</text>
+      <text x="75" y="156" fill="#fbbf24">swap<tspan fill="#e2e8f0">(arr[i], arr[j]);</tspan></text>
+
+      <text x="0" y="178" fill="#64748b">8</text>
+      <text x="60" y="178" fill="#e2e8f0">}</text>
+
+      <text x="0" y="200" fill="#64748b">9</text>
+      <text x="45" y="200" fill="#e2e8f0">}</text>
+
+      <text x="0" y="222" fill="#64748b">10</text>
+      <text x="45" y="222" fill="#fbbf24">swap<tspan fill="#e2e8f0">(arr[i + 1], arr[high]);</tspan></text>
+
+      <text x="0" y="244" fill="#64748b">11</text>
+      <text x="45" y="244" fill="#f472b6">return <tspan fill="#e2e8f0">i + 1;</tspan></text>
+
+      <text x="0" y="266" fill="#64748b">12</text>
+      <text x="30" y="266" fill="#e2e8f0">}</text>
+
+      <text x="0" y="300" fill="#64748b">13</text>
+      <text x="30" y="300" fill="#93c5fd">void <tspan fill="#67e8f9">quickSort</tspan>(vector&lt;int&gt;&amp; arr, int low, int high) {</text>
+
+      <text x="0" y="322" fill="#64748b">14</text>
+      <text x="45" y="322" fill="#f472b6">if <tspan fill="#e2e8f0">(low &lt; high) {</tspan></text>
+
+      <text x="0" y="344" fill="#64748b">15</text>
+      <text x="60" y="344" fill="#e2e8f0">int pi = partition(arr, low, high);</text>
+
+      <text x="0" y="366" fill="#64748b">16</text>
+      <text x="60" y="366" fill="#67e8f9">quickSort<tspan fill="#e2e8f0">(arr, low, pi - 1);</tspan></text>
+
+      <text x="0" y="388" fill="#64748b">17</text>
+      <text x="60" y="388" fill="#67e8f9">quickSort<tspan fill="#e2e8f0">(arr, pi + 1, high);</tspan></text>
+
+      <text x="0" y="410" fill="#64748b">18</text>
+      <text x="45" y="410" fill="#e2e8f0">}</text>
+
+      <text x="0" y="432" fill="#64748b">19</text>
+      <text x="30" y="432" fill="#e2e8f0">}</text>
+    </g>
+  </g>
+</svg>
