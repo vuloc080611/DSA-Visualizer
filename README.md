@@ -161,7 +161,7 @@ dsa-visualizer/
 
 1. **Clone repository về máy**:
    ```bash
-   git clone https://github.com/your-username/DSA-Visualizer.git
+   git clone https://github.com/vuloc080611/DSA-Visualizer.git
    cd DSA-Visualizer
    ```
 
@@ -213,7 +213,8 @@ Quá trình xây dựng dự án này mang lại nhiều kiến thức chuyên s
 - **Vị trí:** Sinh viên năm 3 – Chuyên ngành Công nghệ Thông tin (CNTT)
 - **Trường:** Trường Đại học Công nghiệp TP.HCM (IUH)
 - **Mục tiêu:** Ứng tuyển vị trí Thực tập sinh Frontend / Full-stack Developer (Internship)
-- **Email:** Contact via GitHub
+- **GitHub:** [github.com/vuloc080611](https://github.com/vuloc080611)
+- **Repository:** [github.com/vuloc080611/DSA-Visualizer](https://github.com/vuloc080611/DSA-Visualizer)
 
 ---
 

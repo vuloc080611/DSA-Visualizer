@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     "Vũ Lộc",
     "IUH",
   ],
-  authors: [{ name: "Vũ Lộc", url: "https://github.com" }],
+  authors: [{ name: "Vũ Lộc", url: "https://github.com/vuloc080611" }],
   creator: "Vũ Lộc",
   openGraph: {
     title: "DSA Visualizer – Interactive Algorithm Visualization Web App",

@@ -231,7 +231,7 @@ export function Navbar() {
               </button>
 
               <Link
-                href="https://github.com"
+                href="https://github.com/vuloc080611/DSA-Visualizer"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:border-slate-700"
