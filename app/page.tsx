@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ALGORITHMS, CATEGORIES } from "@/lib/algorithms";
 import { AlgorithmCard } from "@/components/AlgorithmCard";
 import { AlgorithmCategory } from "@/lib/types";
@@ -21,6 +21,39 @@ import Link from "next/link";
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<AlgorithmCategory | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const syncCategoryFromHash = () => {
+      const hash = window.location.hash.replace("#", "").toLowerCase();
+      if (["sorting", "searching", "graph", "array"].includes(hash)) {
+        setSelectedCategory(hash as AlgorithmCategory);
+        const el = document.getElementById("algorithms");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    };
+
+    // Check on initial mount
+    syncCategoryFromHash();
+
+    // Listen to hash changes (back/forward or URL updates)
+    window.addEventListener("hashchange", syncCategoryFromHash);
+
+    // Listen to custom category selection from Navbar
+    const handleCustomSelect = (e: Event) => {
+      const customEvent = e as CustomEvent<AlgorithmCategory>;
+      if (customEvent.detail) {
+        setSelectedCategory(customEvent.detail);
+      }
+    };
+    window.addEventListener("select-category", handleCustomSelect as EventListener);
+
+    return () => {
+      window.removeEventListener("hashchange", syncCategoryFromHash);
+      window.removeEventListener("select-category", handleCustomSelect as EventListener);
+    };
+  }, []);
 
   const filteredAlgorithms = useMemo(() => {
     return ALGORITHMS.filter((alg) => {
@@ -100,7 +133,12 @@ export default function HomePage() {
       </section>
 
       {/* Main Algorithm Gallery Section */}
-      <section id="algorithms" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+      <section id="algorithms" className="scroll-mt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 relative">
+        {/* Hidden scroll anchor targets for navbar navigation */}
+        <div id="sorting" className="absolute -top-24" />
+        <div id="searching" className="absolute -top-24" />
+        <div id="graph" className="absolute -top-24" />
+        <div id="array" className="absolute -top-24" />
         {/* Search & Category Filter Bar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           {/* Category Tabs */}
