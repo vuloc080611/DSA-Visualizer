@@ -26,7 +26,7 @@ export default function HomePage() {
   useEffect(() => {
     const syncCategoryFromHash = () => {
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (["sorting", "searching", "graph", "array"].includes(hash)) {
+      if (["sorting", "searching", "graph", "array", "tree"].includes(hash)) {
         setSelectedCategory(hash as AlgorithmCategory);
         const el = document.getElementById("algorithms");
         if (el) {
@@ -121,11 +121,11 @@ export default function HomePage() {
           {/* Stat Badges */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-8">
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">12+</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">15</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Thuật toán có sẵn</div>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-emerald-500">4</div>
+              <div className="text-2xl font-bold text-emerald-500">5</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Chủ đề kinh điển</div>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
@@ -147,6 +147,7 @@ export default function HomePage() {
         <div id="searching" className="absolute -top-24" />
         <div id="graph" className="absolute -top-24" />
         <div id="array" className="absolute -top-24" />
+        <div id="tree" className="absolute -top-24" />
         {/* Search & Category Filter Bar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           {/* Category Tabs */}

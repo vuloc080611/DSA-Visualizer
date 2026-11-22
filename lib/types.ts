@@ -1,4 +1,4 @@
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "array";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "array" | "tree";
 
 export interface Complexity {
   best: string;
@@ -23,6 +23,17 @@ export interface GraphEdge {
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
+}
+
+export interface TreeNodeData {
+  id: string;
+  value: number;
+  left?: TreeNodeData | null;
+  right?: TreeNodeData | null;
+  height?: number; // for AVL
+  balanceFactor?: number; // for AVL
+  x?: number;
+  y?: number;
 }
 
 export interface Step {
@@ -52,6 +63,15 @@ export interface Step {
   activeEdge?: [string, string];
   visitedEdges?: [string, string][];
   traversalOrder?: string[];
+
+  // Tree state (for BST, AVL Tree)
+  tree?: TreeNodeData | null;
+  activeNodeValue?: number; // currently inspected/comparing node
+  treeHighlights?: number[]; // node values in search/traversal path
+  treeAction?: "search" | "insert" | "delete" | "rotate-left" | "rotate-right" | "rebalance" | "traverse";
+  rotationType?: "LL" | "RR" | "LR" | "RL";
+  unbalancedNodeValue?: number;
+  foundNodeValue?: number;
 }
 
 export interface AlgorithmCode {
@@ -75,6 +95,7 @@ export interface Algorithm {
   code: AlgorithmCode;
   defaultArray?: number[];
   defaultGraph?: GraphData;
+  defaultTreeValues?: number[];
   defaultTarget?: number;
   generateSteps: (config?: any) => Step[];
 }

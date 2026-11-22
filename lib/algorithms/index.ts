@@ -10,6 +10,7 @@ import {
 import { generateLinearSearchSteps, generateBinarySearchSteps } from "./searching";
 import { generateBFSSteps, generateDFSSteps, defaultGraphData } from "./graph";
 import { generateTwoSumSteps, generateSlidingWindowSteps, generateKadaneSteps } from "./array";
+import { generateBSTSteps, generateAVLSteps } from "./tree";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -762,6 +763,206 @@ def max_sliding_window(nums, k):
     },
     generateSteps: (cfg) => generateKadaneSteps(cfg?.array || [-2, 1, -3, 4, -1, 2, 1, -5, 4]),
   },
+
+  // =================== TREE (CÂY NHỊ PHÂN) ===================
+  {
+    id: "bst",
+    name: "Binary Search Tree (BST)",
+    category: "tree",
+    shortDescription: "Cây nhị phân tìm kiếm hỗ trợ thao tác Chèn (Insert), Tìm kiếm (Search) và Xóa (Delete) trong O(log N).",
+    fullDescription:
+      "Binary Search Tree (BST) là cấu trúc dữ liệu cây nhị phân có tính chất: với mọi nút X, tất cả các nút ở cây con trái đều nhỏ hơn X, và tất cả các nút ở cây con phải đều lớn hơn X. Nhờ tính chất này, việc tìm kiếm, chèn và xóa có thể thực hiện trung bình trong O(log N). Khi xóa nút có 2 con, ta thay thế bằng phần tử nhỏ nhất cây con phải (Inorder Successor).",
+    complexity: {
+      best: "O(1)",
+      average: "O(log N)",
+      worst: "O(N)",
+      space: "O(N)",
+    },
+    properties: {
+      stable: true,
+      inPlace: false,
+      dataStructure: "Binary Tree / Pointer Node",
+    },
+    defaultTreeValues: [50, 30, 70, 20, 40, 60, 80],
+    code: {
+      cpp: `struct Node {
+    int val;
+    Node *left, *right;
+    Node(int v) : val(v), left(nullptr), right(nullptr) {}
+};
+
+Node* insert(Node* root, int val) {
+    if (!root) return new Node(val);
+    if (val < root->val) root->left = insert(root->left, val);
+    else if (val > root->val) root->right = insert(root->right, val);
+    return root;
+}
+
+Node* search(Node* root, int target) {
+    if (!root || root->val == target) return root;
+    if (target < root->val) return search(root->left, target);
+    return search(root->right, target);
+}
+
+Node* deleteNode(Node* root, int key) {
+    if (!root) return root;
+    if (key < root->val) root->left = deleteNode(root->left, key);
+    else if (key > root->val) root->right = deleteNode(root->right, key);
+    else {
+        if (!root->left) { Node* temp = root->right; delete root; return temp; }
+        else if (!root->right) { Node* temp = root->left; delete root; return temp; }
+        Node* succ = root->right;
+        while (succ->left) succ = succ->left;
+        root->val = succ->val;
+        root->right = deleteNode(root->right, succ->val);
+    }
+    return root;
+}`,
+      python: `class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def insert(root, val):
+    if not root:
+        return TreeNode(val)
+    if val < root.val:
+        root.left = insert(root.left, val)
+    elif val > root.val:
+        root.right = insert(root.right, val)
+    return root
+
+def search(root, target):
+    if not root or root.val == target:
+        return root
+    if target < root.val:
+        return search(root.left, target)
+    return search(root.right, target)`,
+      typescript: `class TreeNode {
+  val: number;
+  left: TreeNode | null = null;
+  right: TreeNode | null = null;
+  constructor(val: number) { this.val = val; }
+}
+
+function insertBST(root: TreeNode | null, val: number): TreeNode {
+  if (!root) return new TreeNode(val);
+  if (val < root.val) root.left = insertBST(root.left, val);
+  else if (val > root.val) root.right = insertBST(root.right, val);
+  return root;
+}`,
+    },
+    generateSteps: (cfg) => generateBSTSteps(cfg?.treeValues || [50, 30, 70, 20, 40, 60, 80], cfg),
+  },
+
+  {
+    id: "avl-tree",
+    name: "AVL Tree (Self-Balancing)",
+    category: "tree",
+    shortDescription: "Cây nhị phân tự cân bằng duy trì hệ số Balance Factor ∈ {-1, 0, 1} bằng 4 phép xoay cây (Rotations).",
+    fullDescription:
+      "AVL Tree là cây tìm kiếm nhị phân tự cân bằng đầu tiên trên thế giới. Sau mỗi thao tác chèn hoặc xóa, cây tính toán hệ số cân bằng Balance Factor = Height(Left) - Height(Right). Nếu mất cân bằng (|BF| > 1), cây tự động kích hoạt một trong 4 kỹ thuật xoay: Xoay Phải (LL), Xoay Trái (RR), Xoay Kép Trái-Phải (LR), hoặc Xoay Kép Phải-Trái (RL) để đảm bảo chiều cao luôn là O(log N) cho mọi tình huống.",
+    complexity: {
+      best: "O(1)",
+      average: "O(log N)",
+      worst: "O(log N)",
+      space: "O(N)",
+    },
+    properties: {
+      stable: true,
+      inPlace: false,
+      dataStructure: "Self-Balancing Binary Tree",
+    },
+    defaultTreeValues: [10, 20, 30, 40, 50, 25],
+    code: {
+      cpp: `int height(Node* n) { return n ? n->height : 0; }
+int getBalance(Node* n) { return n ? height(n->left) - height(n->right) : 0; }
+
+Node* rightRotate(Node* y) {
+    Node* x = y->left;
+    Node* T2 = x->right;
+    x->right = y;
+    y->left = T2;
+    y->height = 1 + max(height(y->left), height(y->right));
+    x->height = 1 + max(height(x->left), height(x->right));
+    return x;
+}
+
+Node* leftRotate(Node* x) {
+    Node* y = x->right;
+    Node* T2 = y->left;
+    y->left = x;
+    x->right = T2;
+    x->height = 1 + max(height(x->left), height(x->right));
+    y->height = 1 + max(height(y->left), height(y->right));
+    return y;
+}
+
+Node* insertAVL(Node* node, int val) {
+    if (!node) return new Node(val);
+    if (val < node->val) node->left = insertAVL(node->left, val);
+    else if (val > node->val) node->right = insertAVL(node->right, val);
+    else return node;
+
+    node->height = 1 + max(height(node->left), height(node->right));
+    int bf = getBalance(node);
+
+    // LL Case
+    if (bf > 1 && val < node->left->val) return rightRotate(node);
+    // RR Case
+    if (bf < -1 && val > node->right->val) return leftRotate(node);
+    // LR Case
+    if (bf > 1 && val > node->left->val) {
+        node->left = leftRotate(node->left);
+        return rightRotate(node);
+    }
+    // RL Case
+    if (bf < -1 && val < node->right->val) {
+        node->right = rightRotate(node->right);
+        return leftRotate(node);
+    }
+    return node;
+}`,
+      python: `def right_rotate(y):
+    x = y.left
+    T2 = x.right
+    x.right = y
+    y.left = T2
+    y.height = 1 + max(get_height(y.left), get_height(y.right))
+    x.height = 1 + max(get_height(x.left), get_height(x.right))
+    return x
+
+def left_rotate(x):
+    y = x.right
+    T2 = y.left
+    y.left = x
+    x.right = T2
+    x.height = 1 + max(get_height(x.left), get_height(x.right))
+    y.height = 1 + max(get_height(y.left), get_height(y.right))
+    return y`,
+      typescript: `function insertAVL(node: TreeNode | null, val: number): TreeNode {
+  if (!node) return new TreeNode(val);
+  if (val < node.val) node.left = insertAVL(node.left, val);
+  else if (val > node.val) node.right = insertAVL(node.right, val);
+  else return node;
+
+  const bf = getBalance(node);
+  if (bf > 1 && val < node.left!.val) return rightRotate(node);
+  if (bf < -1 && val > node.right!.val) return leftRotate(node);
+  if (bf > 1 && val > node.left!.val) {
+    node.left = leftRotate(node.left!);
+    return rightRotate(node);
+  }
+  if (bf < -1 && val < node.right!.val) {
+    node.right = rightRotate(node.right!);
+    return leftRotate(node);
+  }
+  return node;
+}`,
+    },
+    generateSteps: (cfg) => generateAVLSteps(cfg?.treeValues || [10, 20, 30, 40, 50, 25], cfg),
+  },
 ];
 
 export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: number }[] = [
@@ -770,6 +971,7 @@ export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: n
   { id: "searching", name: "Searching (Tìm kiếm)", count: ALGORITHMS.filter((a) => a.category === "searching").length },
   { id: "graph", name: "Graph (Đồ thị)", count: ALGORITHMS.filter((a) => a.category === "graph").length },
   { id: "array", name: "Array & Window", count: ALGORITHMS.filter((a) => a.category === "array").length },
+  { id: "tree", name: "Tree (Cây BST & AVL)", count: ALGORITHMS.filter((a) => a.category === "tree").length },
 ];
 
 export function getAlgorithmById(id: string): Algorithm | undefined {

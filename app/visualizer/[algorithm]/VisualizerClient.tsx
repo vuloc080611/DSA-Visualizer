@@ -33,7 +33,11 @@ interface VisualizerClientProps {
 export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   const algorithm = getAlgorithmById(algorithmId)!;
   const [arrayData, setArrayData] = useState<number[]>(
-    algorithm?.defaultArray ? [...algorithm.defaultArray] : []
+    algorithm?.defaultArray
+      ? [...algorithm.defaultArray]
+      : algorithm?.defaultTreeValues
+      ? [...algorithm.defaultTreeValues]
+      : []
   );
   const [target, setTarget] = useState<number | undefined>(algorithm?.defaultTarget);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -50,6 +54,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
       const activeTgt = tgt !== undefined ? tgt : target;
       const generated = algorithm.generateSteps({
         array: activeArr,
+        treeValues: activeArr,
         target: activeTgt,
         graph: algorithm.defaultGraph,
       });

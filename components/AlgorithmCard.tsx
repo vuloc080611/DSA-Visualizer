@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Algorithm } from "@/lib/types";
 import { ComplexityBadge } from "./ComplexityBadge";
-import { ArrowRight, BarChart2, Search, Network, Layers, CheckCircle2, Sliders } from "lucide-react";
+import { ArrowRight, BarChart2, Search, Network, Layers, CheckCircle2, Sliders, GitFork } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface AlgorithmCardProps {
@@ -21,6 +21,8 @@ export function AlgorithmCard({ algorithm }: AlgorithmCardProps) {
         return <Network className="w-4 h-4 text-purple-500" />;
       case "array":
         return <Layers className="w-4 h-4 text-amber-500" />;
+      case "tree":
+        return <GitFork className="w-4 h-4 text-emerald-500" />;
       default:
         return <Sliders className="w-4 h-4 text-slate-500" />;
     }
@@ -36,6 +38,8 @@ export function AlgorithmCard({ algorithm }: AlgorithmCardProps) {
         return "Graph";
       case "array":
         return "Array / Window";
+      case "tree":
+        return "Tree / AVL";
       default:
         return category;
     }

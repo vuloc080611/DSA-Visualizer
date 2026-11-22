@@ -9,7 +9,7 @@
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-12-0055FF?style=for-the-badge&logo=framer)
 ![Vercel Ready](https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel)
 
-**Một ứng dụng web tương tác trực quan hóa 13 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
+**Một ứng dụng web tương tác trực quan hóa 15 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
 
 [🌐 **Trải Nghiệm Live Demo Trên Vercel**](https://dsa-visualizer-one-beta.vercel.app) • [📖 **Xem Báo Cáo Chi Tiết**](#key-takeaways) • [👨‍💻 **Tác Giả**](#author)
 
@@ -28,7 +28,8 @@
 
 ## 🌟 Tính Năng Nổi Bật (Key Features)
 
-- 📊 **13 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 4 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming.
+- 📊 **15 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 5 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming, và Tree (Binary Search Tree & AVL Tree).
+- 🌳 **Cây nhị phân tìm kiếm & AVL Tree**: Trực quan hóa chèn node (Insert), tìm kiếm (Search), xóa node (Delete) và **4 phép xoay cây tự cân bằng (Single Right LL, Single Left RR, Double LR, Double RL Rotations)** với hiển thị hệ số Balance Factor thời gian thực.
 - ⚔️ **Chế độ So Sánh Đối Đầu (Algorithm Race Mode)**: Đặt 2 giải thuật sắp xếp lên cùng một bàn cân chạy đua song song trên cùng mảng dữ liệu (ví dụ: *Quick Sort* vs *Bubble Sort*), hiển thị bảng so sánh đối đầu thời gian thực, đếm số bước, phép so sánh và vinh danh thuật toán chiến thắng 🏆.
 - 🎬 **Điều khiển linh hoạt (Interactive Playback)**:
   - Play / Pause (có hỗ trợ phím tắt <kbd>Space</kbd>).
@@ -92,6 +93,12 @@
 | **Two Sum** | $O(N)$ | $O(N)$ | Bảng băm (Hash Map lookup trong $O(1)$) |
 | **Sliding Window Maximum** | $O(N)$ | $O(k)$ | Cửa sổ trượt (Sliding Window / Monotonic Deque) |
 | **Kadane's Algorithm** | $O(N)$ | $O(1)$ | Quy hoạch động tìm Maximum Subarray |
+
+### 5. Tree (Cây nhị phân & AVL tự cân bằng)
+| Thuật toán | Best Time | Average Time | Worst Time | Space | Tính năng & Kỹ thuật cốt lõi |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Binary Search Tree (BST)** | $O(1)$ | $O(\log N)$ | $O(N)$ | $O(N)$ | Chèn, Tìm kiếm, Xóa node 2 con (Inorder Successor) |
+| **AVL Tree (Self-Balancing)** | $O(1)$ | $O(\log N)$ | $O(\log N)$ | $O(N)$ | Tự cân bằng với 4 phép xoay: LL, RR, LR, RL ($BF \in \{-1, 0, 1\}$) |
 
 ---
 

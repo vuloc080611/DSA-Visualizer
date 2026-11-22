@@ -222,45 +222,71 @@ export function ControlPanel({
         />
       </div>
 
-      {/* Bottom Row: Array Generation Options (Only for array/sorting/searching) */}
+      {/* Bottom Row: Data Generation Options */}
       {category !== "graph" && (
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Dữ liệu mẫu:</span>
+          {category === "tree" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Dữ liệu cây:</span>
+              {onNearlySorted && (
+                <button
+                  onClick={onNearlySorted}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Dãy số mẫu</span>
+                </button>
+              )}
+              {onRandomize && (
+                <button
+                  onClick={onRandomize}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Sinh số ngẫu nhiên</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Dữ liệu mẫu:</span>
 
-            {onRandomize && (
-              <button
-                onClick={onRandomize}
-                disabled={isPlaying}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
-              >
-                <Shuffle className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Ngẫu nhiên</span>
-              </button>
-            )}
+              {onRandomize && (
+                <button
+                  onClick={onRandomize}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Ngẫu nhiên</span>
+                </button>
+              )}
 
-            {onNearlySorted && (
-              <button
-                onClick={onNearlySorted}
-                disabled={isPlaying}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Gần sắp xếp</span>
-              </button>
-            )}
+              {onNearlySorted && (
+                <button
+                  onClick={onNearlySorted}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Gần sắp xếp</span>
+                </button>
+              )}
 
-            {onReversed && (
-              <button
-                onClick={onReversed}
-                disabled={isPlaying}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
-              >
-                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                <span>Đảo ngược</span>
-              </button>
-            )}
-          </div>
+              {onReversed && (
+                <button
+                  onClick={onReversed}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Đảo ngược</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {onCustomInput && (
             <button
@@ -269,7 +295,7 @@ export function ControlPanel({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 disabled:opacity-50 transition-colors border border-emerald-200 dark:border-emerald-800"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Tùy chỉnh mảng...</span>
+              <span>{category === "tree" ? "Tùy chỉnh dãy số cây..." : "Tùy chỉnh mảng..."}</span>
             </button>
           )}
         </div>

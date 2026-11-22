@@ -19,6 +19,7 @@ import {
   Sparkles,
   ArrowRight,
   Swords,
+  GitFork,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,7 @@ const CATEGORIES_DATA: NavCategory[] = [
   { id: "searching", label: "Searching", icon: Search },
   { id: "graph", label: "Graph", icon: Network },
   { id: "array", label: "Array & Window", icon: Layers },
+  { id: "tree", label: "Tree & AVL", icon: GitFork },
 ];
 
 export function Navbar() {

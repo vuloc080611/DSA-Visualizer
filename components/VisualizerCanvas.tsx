@@ -1,6 +1,6 @@
 "use client";
 
-import { Step, AlgorithmCategory } from "@/lib/types";
+import { Step, AlgorithmCategory, TreeNodeData } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowDown, Activity } from "lucide-react";
 
@@ -14,6 +14,11 @@ export function VisualizerCanvas({ currentStep, category }: VisualizerCanvasProp
   // If it's a graph algorithm (BFS/DFS), render the Graph Canvas
   if (category === "graph" && currentStep.graph) {
     return <GraphCanvas currentStep={currentStep} />;
+  }
+
+  // If it's a tree algorithm (BST / AVL), render the Tree Canvas
+  if (category === "tree") {
+    return <TreeCanvas currentStep={currentStep} />;
   }
 
   // Array / Sorting / Searching / Window Canvas
@@ -367,6 +372,270 @@ function GraphCanvas({ currentStep }: { currentStep: Step }) {
         <div className="flex items-center gap-1.5">
           <span className="w-4 h-0.5 bg-emerald-500" />
           <span>Cạnh đã duyệt</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== TREE CANVAS (BST & AVL) ====================
+interface FlatNode {
+  id: string;
+  value: number;
+  x: number;
+  y: number;
+  height?: number;
+  balanceFactor?: number;
+}
+interface FlatEdge {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  fromVal: number;
+  toVal: number;
+}
+
+function flattenTree(node: TreeNodeData | null | undefined): { nodes: FlatNode[]; edges: FlatEdge[] } {
+  const nodes: FlatNode[] = [];
+  const edges: FlatEdge[] = [];
+  if (!node || node.x === undefined || node.y === undefined) return { nodes, edges };
+
+  function traverse(curr: TreeNodeData) {
+    nodes.push({
+      id: curr.id,
+      value: curr.value,
+      x: curr.x!,
+      y: curr.y!,
+      height: curr.height,
+      balanceFactor: curr.balanceFactor,
+    });
+
+    if (curr.left && curr.left.x !== undefined && curr.left.y !== undefined) {
+      edges.push({
+        fromX: curr.x!,
+        fromY: curr.y!,
+        toX: curr.left.x,
+        toY: curr.left.y,
+        fromVal: curr.value,
+        toVal: curr.left.value,
+      });
+      traverse(curr.left);
+    }
+
+    if (curr.right && curr.right.x !== undefined && curr.right.y !== undefined) {
+      edges.push({
+        fromX: curr.x!,
+        fromY: curr.y!,
+        toX: curr.right.x,
+        toY: curr.right.y,
+        fromVal: curr.value,
+        toVal: curr.right.value,
+      });
+      traverse(curr.right);
+    }
+  }
+
+  traverse(node);
+  return { nodes, edges };
+}
+
+function TreeCanvas({ currentStep }: { currentStep: Step }) {
+  const tree = currentStep.tree;
+  const { nodes, edges } = flattenTree(tree);
+
+  const activeVal = currentStep.activeNodeValue;
+  const unbalancedVal = currentStep.unbalancedNodeValue;
+  const foundVal = currentStep.foundNodeValue;
+  const highlights = new Set(currentStep.treeHighlights || []);
+
+  return (
+    <div className="relative w-full rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 p-4 sm:p-6 backdrop-blur-sm overflow-hidden select-none">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Action / Rotation Badge */}
+      <div className="absolute top-3 left-4 flex flex-wrap gap-2 z-10">
+        {currentStep.rotationType && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950/80 border border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold shadow-sm animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+            <span>
+              Xoay AVL:{" "}
+              {currentStep.rotationType === "LL"
+                ? "Phải (Single Right - LL)"
+                : currentStep.rotationType === "RR"
+                ? "Trái (Single Left - RR)"
+                : currentStep.rotationType === "LR"
+                ? "Kép Trái-Phải (LR Double)"
+                : "Kép Phải-Trái (RL Double)"}
+            </span>
+          </div>
+        )}
+        {currentStep.treeAction && !currentStep.rotationType && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold shadow-sm">
+            <span className="capitalize">
+              {currentStep.treeAction === "insert"
+                ? "Thao tác: Chèn (Insert)"
+                : currentStep.treeAction === "delete"
+                ? "Thao tác: Xóa (Delete)"
+                : currentStep.treeAction === "search"
+                ? "Thao tác: Tìm kiếm (Search)"
+                : "Thao tác: Cân bằng (Rebalance)"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {nodes.length === 0 ? (
+        <div className="h-[280px] sm:h-[320px] flex items-center justify-center text-slate-400 font-mono text-sm">
+          Cây rỗng (Root = null). Đang chuẩn bị chèn node đầu tiên...
+        </div>
+      ) : (
+        <div className="relative z-10 w-full flex justify-center">
+          <svg viewBox="0 0 700 320" className="w-full max-w-3xl h-[280px] sm:h-[320px] overflow-visible">
+            {/* Edges */}
+            {edges.map((edge, idx) => {
+              const isPath = highlights.has(edge.fromVal) && highlights.has(edge.toVal);
+              return (
+                <line
+                  key={idx}
+                  x1={edge.fromX}
+                  y1={edge.fromY}
+                  x2={edge.toX}
+                  y2={edge.toY}
+                  stroke={isPath ? "#10b981" : "#94a3b8"}
+                  strokeWidth={isPath ? 3 : 2}
+                  className="transition-all duration-300"
+                />
+              );
+            })}
+
+            {/* Nodes */}
+            {nodes.map((node) => {
+              const isActive = activeVal === node.value;
+              const isUnbalanced = unbalancedVal === node.value;
+              const isFound = foundVal === node.value;
+              const isHighlighted = highlights.has(node.value) && !isActive && !isFound;
+
+              let fillColor = "#f8fafc";
+              let strokeColor = "#64748b";
+              let textColor = "#0f172a";
+
+              if (isUnbalanced) {
+                fillColor = "#f43f5e"; // rose/red
+                strokeColor = "#fda4af";
+                textColor = "#ffffff";
+              } else if (isActive) {
+                fillColor = "#8b5cf6"; // violet
+                strokeColor = "#c084fc";
+                textColor = "#ffffff";
+              } else if (isFound) {
+                fillColor = "#10b981"; // emerald
+                strokeColor = "#34d399";
+                textColor = "#ffffff";
+              } else if (isHighlighted) {
+                fillColor = "#f59e0b"; // amber
+                strokeColor = "#fbbf24";
+                textColor = "#ffffff";
+              }
+
+              const hasBF = node.balanceFactor !== undefined;
+              const bf = node.balanceFactor ?? 0;
+              const isBfCritical = Math.abs(bf) > 1;
+
+              return (
+                <g key={node.id} className="cursor-pointer transition-transform duration-200">
+                  {/* Ping ring for active or unbalanced node */}
+                  {(isActive || isUnbalanced) && (
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={26}
+                      fill="none"
+                      stroke={isUnbalanced ? "#f43f5e" : "#8b5cf6"}
+                      strokeWidth="3"
+                      className="animate-ping opacity-60"
+                    />
+                  )}
+
+                  {/* Node Circle */}
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={20}
+                    fill={fillColor}
+                    stroke={strokeColor}
+                    strokeWidth="3"
+                    className="shadow-md transition-colors duration-300"
+                  />
+
+                  {/* Value */}
+                  <text
+                    x={node.x}
+                    y={node.y + 5}
+                    textAnchor="middle"
+                    fill={textColor}
+                    fontSize="13"
+                    fontWeight="bold"
+                    fontFamily="monospace"
+                  >
+                    {node.value}
+                  </text>
+
+                  {/* AVL Balance Factor & Height Tag */}
+                  {hasBF && (
+                    <g transform={`translate(${node.x + 14}, ${node.y - 18})`}>
+                      <rect
+                        width={28}
+                        height={16}
+                        rx={4}
+                        fill={isBfCritical ? "#e11d48" : "#1e293b"}
+                        stroke={isBfCritical ? "#f43f5e" : "#475569"}
+                        strokeWidth={1}
+                      />
+                      <text
+                        x={14}
+                        y={12}
+                        textAnchor="middle"
+                        fontSize="9"
+                        fontWeight="bold"
+                        fill={isBfCritical ? "#ffffff" : "#94a3b8"}
+                        fontFamily="monospace"
+                      >
+                        {bf > 0 ? `+${bf}` : bf}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      )}
+
+      {/* Tree Legend */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-slate-600 dark:text-slate-400 z-10 pt-2 border-t border-slate-200/50 dark:border-slate-800/50 w-full">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-purple-500" />
+          <span>Đang xét / So sánh</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-amber-500" />
+          <span>Đường đi duyệt (Path)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-emerald-500" />
+          <span>Vừa chèn / Tìm thấy</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-rose-500" />
+          <span>Mất cân bằng (|BF| &gt; 1) / Xóa</span>
+        </div>
+        <div className="flex items-center gap-1.5 font-mono">
+          <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700">
+            BF: ±k
+          </span>
+          <span>Hệ số cân bằng (Balance Factor)</span>
         </div>
       </div>
     </div>

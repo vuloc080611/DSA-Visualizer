@@ -50,6 +50,11 @@ export function Footer() {
                   Array & Window (Two Sum, Kadane)
                 </Link>
               </li>
+              <li>
+                <Link href="/#tree" className="hover:text-emerald-500 transition-colors">
+                  Tree (BST & AVL Tree)
+                </Link>
+              </li>
             </ul>
           </div>
 
