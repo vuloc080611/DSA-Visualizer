@@ -1,4 +1,12 @@
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "array" | "tree" | "pathfinding";
+export type AlgorithmCategory =
+  | "sorting"
+  | "searching"
+  | "graph"
+  | "array"
+  | "tree"
+  | "pathfinding"
+  | "linked-list"
+  | "stack-queue";
 
 export interface Complexity {
   best: string;
@@ -90,6 +98,30 @@ export interface Step {
     hCost?: number;
     fCost?: number;
   };
+
+  // Linked List state
+  linkedList?: {
+    id: string;
+    value: number | string;
+    nextId: string | null;
+  }[];
+  headId?: string | null;
+  currNodeId?: string | null;
+  prevNodeId?: string | null;
+  nextNodeId?: string | null;
+  slowNodeId?: string | null; // for Floyd's Cycle
+  fastNodeId?: string | null; // for Floyd's Cycle
+  cycleEntryId?: string | null;
+  reversedEdges?: [string, string][];
+
+  // Stack & Queue state
+  stackItems?: {
+    id: string;
+    value: string;
+    status?: "push" | "pop" | "matched" | "unmatched" | "normal";
+  }[];
+  inputString?: string;
+  charIndex?: number;
 }
 
 export interface GridConfig {

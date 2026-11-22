@@ -9,7 +9,7 @@
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-12-0055FF?style=for-the-badge&logo=framer)
 ![Vercel Ready](https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel)
 
-**Một ứng dụng web tương tác trực quan hóa 17 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
+**Một ứng dụng web tương tác trực quan hóa 20 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
 
 [🌐 **Trải Nghiệm Live Demo Trên Vercel**](https://dsa-visualizer-one-beta.vercel.app) • [📖 **Xem Báo Cáo Chi Tiết**](#key-takeaways) • [👨‍💻 **Tác Giả**](#author)
 
@@ -28,7 +28,12 @@
 
 ## 🌟 Tính Năng Nổi Bật (Key Features)
 
-- 📊 **17 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 6 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming, Tree (BST & AVL Tree), và Pathfinding (Mê cung 2D Dijkstra / A*).
+- 📊 **20 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 8 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming, Tree (BST & AVL Tree), Pathfinding (Mê cung 2D Dijkstra / A*), Linked List (Reverse List & Floyd's Cycle), và Stack & Queue (Valid Parentheses).
+- 🔗 **Danh Sách Liên Kết & Con Trỏ (Linked List)**:
+  - Trực quan hóa chi tiết từng con trỏ `prev`, `curr`, `next` với mũi tên đảo chiều màu ngọc lục bảo trong **Reverse Linked List**.
+  - Mô phỏng thuật toán kinh điển **Rùa & Thỏ (Floyd's Tortoise & Hare)**: Rùa đi 1 bước, Thỏ nhảy 2 bước đuổi nhau trong chu trình và tìm điểm bắt đầu chu trình (Cycle Entry Point).
+- 🥞 **Ngăn Xếp Ống Nghiệm Thủy Tinh (Glass Stack & LIFO)**:
+  - Kiểm tra ngoặc hợp lệ (**Valid Parentheses**) với mô hình ống nghiệm thẳng đứng, các dấu ngoặc rơi vào (PUSH) và bay ra khi khớp (POP) với hiệu ứng thị giác sắc nét.
 - 🗺️ **Tìm đường đi trong Mê cung 2D (Interactive Pathfinding Grid - Dijkstra & A*)**:
   - Bảng lưới ô vuông 2D trực quan với tương tác kéo chuột vẽ/xóa các bức tường chướng ngại vật (Walls/Obstacles).
   - Tự do kéo thả điểm xuất phát (🟢 Start) và điểm kết thúc (🔴 End) đến bất kỳ vị trí nào trên lưới.
@@ -116,6 +121,17 @@
 | :--- | :---: | :---: | :---: | :---: | :--- |
 | **Dijkstra's Algorithm (2D Grid)** | $O(V + E \log V)$ | $O(E + V \log V)$ | $O(E + V \log V)$ | $O(V)$ | Tìm đường ngắn nhất kinh điển với Min-Heap/Priority Queue, lan tỏa tròn |
 | **A\* Search Algorithm (2D Grid)** | $O(V)$ | $O(E)$ | $O(b^d)$ | $O(V)$ | Tìm đường Heuristic tối ưu $f(n) = g(n) + h(n)$ (Khoảng cách Manhattan) hướng đích |
+
+### 7. Linked List (Danh sách liên kết)
+| Thuật toán | Best Time | Average Time | Worst Time | Space | Kỹ thuật cốt lõi |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Reverse Linked List (LeetCode #206)** | $O(N)$ | $O(N)$ | $O(N)$ | $O(1)$ | Đảo ngược con trỏ 3 bước (prev, curr, next) |
+| **Floyd's Cycle Detection (LeetCode #141)** | $O(1)$ | $O(N)$ | $O(N)$ | $O(1)$ | Thuật toán Rùa & Thỏ (Slow 1 bước, Fast 2 bước) tìm chu trình & điểm bắt đầu |
+
+### 8. Stack & Queue (Ngăn xếp & Hàng đợi)
+| Thuật toán | Best Time | Average Time | Worst Time | Space | Kỹ thuật cốt lõi |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Valid Parentheses (LeetCode #20)** | $O(1)$ | $O(N)$ | $O(N)$ | $O(N)$ | Ngăn xếp LIFO: PUSH khi gặp mở ngoặc, POP khi khớp cặp đóng ngoặc |
 
 ---
 

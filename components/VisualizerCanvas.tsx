@@ -14,6 +14,11 @@ import {
   RotateCcw,
   Footprints,
   Compass,
+  Link2,
+  CornerDownLeft,
+  CheckCircle2,
+  XCircle,
+  Layers,
 } from "lucide-react";
 import {
   DEFAULT_GRID_ROWS,
@@ -37,6 +42,16 @@ export function VisualizerCanvas({
   category,
   onGridChange,
 }: VisualizerCanvasProps) {
+  // If it's a linked list algorithm (Reverse, Floyd's Cycle), render LinkedListCanvas
+  if (category === "linked-list" || currentStep.linkedList !== undefined) {
+    return <LinkedListCanvas currentStep={currentStep} />;
+  }
+
+  // If it's a stack & queue algorithm (Valid Parentheses), render StackCanvas
+  if (category === "stack-queue" || currentStep.stackItems !== undefined) {
+    return <StackCanvas currentStep={currentStep} />;
+  }
+
   // If it's a pathfinding algorithm (Dijkstra/A* on 2D Grid), render the Pathfinding Canvas
   if (category === "pathfinding" || currentStep.gridRows !== undefined) {
     return <PathfindingCanvas currentStep={currentStep} onGridChange={onGridChange} />;
@@ -938,6 +953,350 @@ function PathfindingCanvas({
 
         <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
           💡 Mẹo: Nhấn giữ chuột và kéo trên lưới để vẽ/xóa tường, hoặc kéo nút Start/End để đổi chỗ!
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== LINKED LIST CANVAS ====================
+function LinkedListCanvas({ currentStep }: { currentStep: Step }) {
+  const nodes = currentStep.linkedList || [];
+  const headId = currentStep.headId;
+  const currId = currentStep.currNodeId;
+  const prevId = currentStep.prevNodeId;
+  const nextId = currentStep.nextNodeId;
+  const slowId = currentStep.slowNodeId;
+  const fastId = currentStep.fastNodeId;
+  const cycleEntryId = currentStep.cycleEntryId;
+  const reversedEdges = currentStep.reversedEdges || [];
+
+  return (
+    <div className="relative w-full h-[380px] sm:h-[420px] flex flex-col justify-between items-center p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none">
+      {/* Background grid accent */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Top Status Bar: Pointer Summary */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200/60 dark:border-slate-800/60 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          {headId && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 font-semibold shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-purple-500" />
+              <span>Head: Node {nodes.find((n) => n.id === headId)?.value}</span>
+            </div>
+          )}
+
+          {slowId && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-semibold shadow-sm">
+              <span>🐢 Rùa (Slow): Node {nodes.find((n) => n.id === slowId)?.value}</span>
+            </div>
+          )}
+
+          {fastId && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 font-semibold shadow-sm">
+              <span>🐇 Thỏ (Fast): Node {nodes.find((n) => n.id === fastId)?.value}</span>
+            </div>
+          )}
+
+          {cycleEntryId && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-semibold shadow-sm">
+              <span>🔄 Điểm Chu Trình: Node {nodes.find((n) => n.id === cycleEntryId)?.value}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+          Danh sách: {nodes.length} nodes
+        </div>
+      </div>
+
+      {/* Main Chain Container */}
+      <div className="relative z-10 w-full flex-1 flex items-center justify-center overflow-x-auto py-6 px-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-max">
+          {nodes.map((node, idx) => {
+            const isHead = node.id === headId;
+            const isCurr = node.id === currId;
+            const isPrev = node.id === prevId;
+            const isNext = node.id === nextId;
+            const isSlow = node.id === slowId;
+            const isFast = node.id === fastId;
+            const isCycleTarget = node.id === cycleEntryId;
+
+            // Check if pointer leaving this node is reversed
+            const hasReversedOutgoing = reversedEdges.some(([from]) => from === node.id);
+
+            return (
+              <div key={node.id} className="flex items-center">
+                {/* Node Structure */}
+                <div className="relative flex flex-col items-center">
+                  {/* Top Pointer Badges */}
+                  <div className="absolute -top-10 flex flex-col items-center gap-0.5 z-20">
+                    <div className="flex items-center gap-1">
+                      {isHead && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500 text-white shadow-sm">
+                          Head
+                        </span>
+                      )}
+                      {isPrev && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-white shadow-sm">
+                          prev
+                        </span>
+                      )}
+                      {isCurr && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white shadow-sm animate-bounce">
+                          curr
+                        </span>
+                      )}
+                      {isNext && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-500 text-white shadow-sm">
+                          next
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {isSlow && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-white shadow-sm">
+                          🐢 Slow
+                        </span>
+                      )}
+                      {isFast && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white shadow-sm">
+                          🐇 Fast
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Node Capsule Box (Value + Next pointer) */}
+                  <div
+                    className={`flex items-center rounded-2xl shadow-md transition-all duration-200 border-2 ${
+                      isCurr || (isSlow && isFast)
+                        ? "border-amber-400 dark:border-amber-400 ring-4 ring-amber-400/20 scale-105"
+                        : isSlow
+                        ? "border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500/20"
+                        : isFast
+                        ? "border-rose-500 dark:border-rose-400 ring-2 ring-rose-500/20"
+                        : isCycleTarget
+                        ? "border-amber-400/80 dark:border-amber-500/80 bg-amber-50/20"
+                        : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    }`}
+                  >
+                    {/* Node Data Compartment */}
+                    <div className="w-12 sm:w-14 h-12 sm:h-14 flex items-center justify-center font-bold text-base sm:text-lg text-slate-900 dark:text-white font-mono bg-white dark:bg-slate-900 rounded-l-[14px]">
+                      {node.value}
+                    </div>
+
+                    {/* Node Next Pointer Compartment */}
+                    <div className="w-7 sm:w-8 h-12 sm:h-14 border-l border-slate-200 dark:border-slate-800 flex items-center justify-center bg-slate-50 dark:bg-slate-800/80 rounded-r-[14px] text-slate-400">
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          hasReversedOutgoing
+                            ? "bg-emerald-500 ring-2 ring-emerald-400"
+                            : "bg-slate-400 dark:bg-slate-500"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bottom Node Address Index */}
+                  <span className="text-[10px] font-mono text-slate-400 mt-1.5">
+                    node[{idx}]
+                  </span>
+                </div>
+
+                {/* Arrow Connector to next node */}
+                {idx < nodes.length - 1 && (
+                  <div className="w-10 sm:w-14 flex items-center justify-center relative">
+                    {hasReversedOutgoing ? (
+                      // Reversed Arrow (<-)
+                      <div className="w-full flex items-center justify-center text-emerald-500">
+                        <svg className="w-full h-6" viewBox="0 0 50 20">
+                          <path
+                            d="M 45 10 L 5 10 M 12 4 L 4 10 L 12 16"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      // Normal Arrow (->)
+                      <div className="w-full flex items-center justify-center text-cyan-500 dark:text-cyan-400">
+                        <svg className="w-full h-6" viewBox="0 0 50 20">
+                          <path
+                            d="M 5 10 L 45 10 M 38 4 L 46 10 L 38 16"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Terminal NULL Block */}
+          {!cycleEntryId && (
+            <div className="flex items-center pl-2">
+              <div className="px-3 py-2 rounded-xl bg-slate-200/80 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs font-mono font-bold text-slate-600 dark:text-slate-400 shadow-inner">
+                NULL
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-purple-500" />
+            <span>Head (Đầu)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded bg-amber-500 text-white text-[9px] flex items-center justify-center font-bold">
+              C
+            </span>
+            <span>Con trỏ Hiện tại (curr)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-cyan-500" />
+            <span>Liên kết thuận (Next)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span>Đã đảo chiều (Reversed)</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+          💡 Danh sách liên kết: Mỗi node gồm Dữ liệu (Value) và Địa chỉ con trỏ kế tiếp (.next)
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== STACK & QUEUE CANVAS ====================
+function StackCanvas({ currentStep }: { currentStep: Step }) {
+  const stackItems = currentStep.stackItems || [];
+  const inputString = currentStep.inputString || "";
+  const charIndex = currentStep.charIndex ?? -1;
+
+  return (
+    <div className="relative w-full h-[400px] sm:h-[440px] flex flex-col justify-between items-center p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none">
+      {/* Background grid accent */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Top Input String Scanning Tape */}
+      <div className="relative z-10 w-full flex flex-col items-center gap-1 pb-3 border-b border-slate-200/60 dark:border-slate-800/60">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          Chuỗi ngoặc đầu vào (Input Tape):
+        </span>
+
+        <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          {inputString.split("").map((ch, idx) => {
+            const isScanned = idx < charIndex;
+            const isCurrent = idx === charIndex;
+
+            return (
+              <div key={idx} className="relative flex flex-col items-center">
+                {isCurrent && (
+                  <span className="absolute -top-5 text-[10px] font-bold text-amber-500 animate-bounce">
+                    ↓ Đang đọc
+                  </span>
+                )}
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-mono font-bold text-base transition-all duration-150 ${
+                    isCurrent
+                      ? "bg-amber-500 text-white ring-4 ring-amber-400/30 scale-110 shadow-md"
+                      : isScanned
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                      : "bg-slate-50 dark:bg-slate-800/40 text-slate-800 dark:text-slate-200"
+                  }`}
+                >
+                  {ch}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Center: The Glass Tube Stack Chamber */}
+      <div className="relative z-10 w-full flex-1 flex items-center justify-center py-2">
+        <div className="relative flex items-end justify-center">
+          {/* Stack Top Pointer Arrow */}
+          {stackItems.length > 0 && (
+            <div className="absolute -left-20 top-2 sm:top-4 flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono animate-pulse">
+              <span>ĐỈNH TOP</span>
+              <span>→</span>
+            </div>
+          )}
+
+          {/* The U-Shaped Glass Container */}
+          <div className="w-44 sm:w-52 h-48 border-b-4 border-l-4 border-r-4 border-slate-300 dark:border-slate-600 rounded-b-3xl bg-slate-200/20 dark:bg-slate-950/40 flex flex-col-reverse items-center p-2.5 gap-2 overflow-hidden shadow-inner backdrop-blur-sm">
+            {stackItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs italic">
+                <span>Ngăn xếp rỗng</span>
+                <span className="text-[10px] text-slate-500">(Stack is empty)</span>
+              </div>
+            ) : (
+              stackItems.map((item, idx) => {
+                let badgeStyle = "bg-indigo-600 text-white";
+                if (item.status === "push") badgeStyle = "bg-amber-500 text-white animate-bounce shadow-lg shadow-amber-500/30";
+                if (item.status === "matched") badgeStyle = "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30";
+                if (item.status === "unmatched") badgeStyle = "bg-rose-500 text-white animate-shake shadow-lg shadow-rose-500/30";
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`w-full py-2 px-4 rounded-xl flex items-center justify-between text-sm font-mono font-bold shadow-md transition-all duration-200 ${badgeStyle}`}
+                  >
+                    <span className="text-lg">{item.value}</span>
+                    <span className="text-[10px] font-sans opacity-80 uppercase">
+                      {idx === stackItems.length - 1 ? "Top" : `#${idx + 1}`}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Legend & Principle */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded bg-amber-500" />
+            <span>PUSH (Đẩy vào đỉnh Stack)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded bg-emerald-500" />
+            <span>POP (Khớp cặp ngoặc)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded bg-rose-500" />
+            <span>Lỗi sai ngoặc (Mismatch)</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+          💡 Nguyên lý LIFO (Last In First Out): Phần tử vào sau cùng sẽ được lấy ra đầu tiên
         </div>
       </div>
     </div>

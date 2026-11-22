@@ -20,6 +20,12 @@ import {
   DEFAULT_END,
   DEFAULT_GRID_WALLS,
 } from "./pathfinding";
+import {
+  generateReverseLinkedListSteps,
+  generateFloydCycleSteps,
+  DEFAULT_LINKED_LIST_VALUES,
+} from "./linkedList";
+import { generateValidParenthesesSteps, DEFAULT_PARENTHESES_STRING } from "./stackQueue";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -1195,6 +1201,178 @@ def a_star_grid(grid, start, end):
     },
     generateSteps: (cfg) => generateAStarSteps(cfg),
   },
+
+  // =================== LINKED LIST ===================
+  {
+    id: "reverse-linked-list",
+    name: "Reverse Linked List (Đảo ngược DSLK)",
+    category: "linked-list",
+    shortDescription: "Thuật toán đảo ngược danh sách liên kết đơn bằng cách đổi chiều con trỏ trong O(N).",
+    fullDescription:
+      "Đảo ngược danh sách liên kết (LeetCode #206) là bài toán kinh điển kiểm tra khả năng thao tác con trỏ. Thuật toán duy trì 3 con trỏ: prev (node phía trước), curr (node hiện tại), next (node phía sau). Ở mỗi bước, con trỏ next của curr được trỏ ngược về prev, sau đó tịnh tiến về phía trước.",
+    complexity: {
+      best: "O(N)",
+      average: "O(N)",
+      worst: "O(N)",
+      space: "O(1)",
+    },
+    properties: {
+      inPlace: true,
+      dataStructure: "Singly Linked List",
+    },
+    defaultArray: DEFAULT_LINKED_LIST_VALUES,
+    code: {
+      cpp: `ListNode* reverseList(ListNode* head) {
+    ListNode* prev = nullptr;
+    ListNode* curr = head;
+    while (curr != nullptr) {
+        ListNode* nextTemp = curr->next; // 1. Lưu con trỏ next
+        curr->next = prev;               // 2. Đảo chiều con trỏ
+        prev = curr;                     // 3. Tịnh tiến prev
+        curr = nextTemp;                 // 4. Tịnh tiến curr
+    }
+    return prev; // Head mới của danh sách
+}`,
+      python: `def reverse_list(head):
+    prev = None
+    curr = head
+    while curr:
+        next_temp = curr.next  # 1. Lưu con trỏ kế tiếp
+        curr.next = prev       # 2. Đảo ngược mũi tên
+        prev = curr            # 3. Tịnh tiến prev
+        curr = next_temp       # 4. Tịnh tiến curr
+    return prev`,
+      typescript: `function reverseList(head: ListNode | null): ListNode | null {
+  let prev: ListNode | null = null;
+  let curr = head;
+  while (curr !== null) {
+    const nextTemp = curr.next; // 1. Lưu node kế
+    curr.next = prev;           // 2. Đảo chiều trỏ ngược
+    prev = curr;                // 3. Tiến prev
+    curr = nextTemp;            // 4. Tiến curr
+  }
+  return prev;
+}`,
+    },
+    generateSteps: (cfg) => generateReverseLinkedListSteps(cfg?.array || DEFAULT_LINKED_LIST_VALUES),
+  },
+
+  {
+    id: "floyd-cycle",
+    name: "Floyd's Cycle Detection (Rùa & Thỏ)",
+    category: "linked-list",
+    shortDescription: "Thuật toán phát hiện chu trình trong danh sách liên kết với 2 con trỏ Fast & Slow.",
+    fullDescription:
+      "Thuật toán phát hiện chu trình của Floyd (Tortoise and Hare - LeetCode #141) sử dụng 2 con trỏ chạy với tốc độ khác nhau: Slow (Rùa) bước 1 node mỗi lần, Fast (Thỏ) nhảy 2 node mỗi lần. Nếu danh sách có chu trình kín, Thỏ chắc chắn sẽ đuổi kịp Rùa từ phía sau trong O(N) với bộ nhớ O(1).",
+    complexity: {
+      best: "O(1)",
+      average: "O(N)",
+      worst: "O(N)",
+      space: "O(1)",
+    },
+    properties: {
+      inPlace: true,
+      dataStructure: "Cyclic Linked List",
+    },
+    code: {
+      cpp: `bool hasCycle(ListNode *head) {
+    if (!head || !head->next) return false;
+    ListNode *slow = head;
+    ListNode *fast = head;
+    while (fast && fast->next) {
+        slow = slow->next;          // Rùa đi 1 bước
+        fast = fast->next->next;    // Thỏ đi 2 bước
+        if (slow == fast) {
+            return true;            // Bắt kịp -> Có chu trình!
+        }
+    }
+    return false;
+}`,
+      python: `def has_cycle(head):
+    slow = fast = head
+    while fast and fast.next:
+        slow = slow.next           # Rùa đi 1 bước
+        fast = fast.next.next      # Thỏ đi 2 bước
+        if slow == fast:
+            return True            # Gặp nhau trong chu trình!
+    return False`,
+      typescript: `function hasCycle(head: ListNode | null): boolean {
+  let slow = head;
+  let fast = head;
+  while (fast !== null && fast.next !== null) {
+    slow = slow!.next;          // 1 bước
+    fast = fast.next.next;      // 2 bước
+    if (slow === fast) {
+      return true;              // Bắt kịp nhau!
+    }
+  }
+  return false;
+}`,
+    },
+    generateSteps: () => generateFloydCycleSteps(),
+  },
+
+  // =================== STACK & QUEUE ===================
+  {
+    id: "valid-parentheses",
+    name: "Valid Parentheses (Ngoặc hợp lệ - Stack)",
+    category: "stack-queue",
+    shortDescription: "Kiểm tra tính hợp lệ của chuỗi các dấu ngoặc đóng mở bằng cấu trúc Ngăn xếp LIFO.",
+    fullDescription:
+      "Bài toán kiểm tra ngoặc hợp lệ (LeetCode #20) là ứng dụng tiêu biểu nhất của Ngăn xếp (Stack). Duyệt qua từng ký tự: nếu là ngoặc mở ('(', '[', '{') thì ĐẨY (PUSH) vào Stack; nếu là ngoặc đóng (')', ']', '}') thì LẤY (POP) phần tử ở đỉnh Stack ra để so khớp cặp. Nếu rỗng hoặc không khớp -> Không hợp lệ.",
+    complexity: {
+      best: "O(1)",
+      average: "O(N)",
+      worst: "O(N)",
+      space: "O(N)",
+    },
+    properties: {
+      inPlace: false,
+      dataStructure: "Stack (LIFO)",
+    },
+    code: {
+      cpp: `bool isValid(string s) {
+    stack<char> st;
+    unordered_map<char, char> map = {{')', '('}, {']', '['}, {'}', '{'}};
+    for (char c : s) {
+        if (c == '(' || c == '[' || c == '{') {
+            st.push(c); // Đẩy ngoặc mở vào stack
+        } else {
+            if (st.empty() || st.top() != map[c]) return false;
+            st.pop();  // Khớp cặp -> Lấy ra khỏi stack
+        }
+    }
+    return st.empty(); // Phải rỗng mới hợp lệ
+}`,
+      python: `def is_valid(s: str) -> bool:
+    stack = []
+    mapping = {")": "(", "]": "[", "}": "{"}
+    for char in s:
+        if char in mapping.values():
+            stack.append(char) # Push mở ngoặc
+        elif char in mapping:
+            if not stack or stack[-1] != mapping[char]:
+                return False   # Mismatch
+            stack.pop()        # Pop khi khớp
+    return len(stack) == 0`,
+      typescript: `function isValid(s: string): boolean {
+  const stack: string[] = [];
+  const map: Record<string, string> = { ")": "(", "]": "[", "}": "{" };
+  for (const char of s) {
+    if (char === "(" || char === "[" || char === "{") {
+      stack.push(char); // Push ngoặc mở
+    } else {
+      if (stack.length === 0 || stack[stack.length - 1] !== map[char]) {
+        return false;   // Sai thứ tự hoặc rỗng
+      }
+      stack.pop();      // Pop khớp cặp
+    }
+  }
+  return stack.length === 0;
+}`,
+    },
+    generateSteps: () => generateValidParenthesesSteps(),
+  },
 ];
 
 export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: number }[] = [
@@ -1205,6 +1383,8 @@ export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: n
   { id: "array", name: "Array & Window", count: ALGORITHMS.filter((a) => a.category === "array").length },
   { id: "tree", name: "Tree (Cây BST & AVL)", count: ALGORITHMS.filter((a) => a.category === "tree").length },
   { id: "pathfinding", name: "Pathfinding (Mê cung 2D)", count: ALGORITHMS.filter((a) => a.category === "pathfinding").length },
+  { id: "linked-list", name: "Linked List (DS Liên kết)", count: ALGORITHMS.filter((a) => a.category === "linked-list").length },
+  { id: "stack-queue", name: "Stack & Queue", count: ALGORITHMS.filter((a) => a.category === "stack-queue").length },
 ];
 
 export function getAlgorithmById(id: string): Algorithm | undefined {

@@ -21,6 +21,7 @@ import {
   Swords,
   GitFork,
   Compass,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,8 @@ const CATEGORIES_DATA: NavCategory[] = [
   { id: "graph", label: "Graph", icon: Network },
   { id: "tree", label: "Tree", icon: GitFork },
   { id: "array", label: "Array", icon: Layers },
+  { id: "linked-list", label: "Linked List", icon: Link2 },
+  { id: "stack-queue", label: "Stack", icon: Layers },
   { id: "pathfinding", label: "Pathfinding", icon: Compass },
 ];
 
@@ -136,7 +139,7 @@ export function Navbar() {
             </Link>
 
             {/* Desktop Navigation Links with Dropdowns */}
-            <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
+            <nav className="hidden xl:flex items-center gap-1 xl:gap-1.5">
               {CATEGORIES_DATA.map((cat) => {
                 const Icon = cat.icon;
                 const algs = ALGORITHMS.filter((a) => a.category === cat.id);
@@ -267,7 +270,7 @@ export function Navbar() {
               {/* Mobile menu trigger */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="xl:hidden p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 aria-label="Toggle navigation menu"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -278,7 +281,7 @@ export function Navbar() {
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 pt-3 pb-5 space-y-3">
+          <div className="xl:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 pt-3 pb-5 space-y-3">
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

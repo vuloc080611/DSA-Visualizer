@@ -258,7 +258,63 @@ export function generateQuizQuestions(steps: Step[], algorithm: Algorithm): Quiz
     }
   }
 
-  // 5. Fallback general algorithmic questions if too few
+  // 5. Check for Linked List
+  if (algorithm.category === "linked-list") {
+    if (algorithm.id === "reverse-linked-list") {
+      questions.push({
+        id: "rll-pointer",
+        stepIndex: 1,
+        question: `Trong thuật toán Reverse Linked List, trước khi trỏ curr->next = prev, tại sao ta bắt buộc phải lưu next = curr->next?`,
+        options: [
+          { id: "A", text: "Để không bị mất liên kết đến các node còn lại của danh sách" },
+          { id: "B", text: "Để giải phóng bộ nhớ của node hiện tại" },
+          { id: "C", text: "Để tăng độ dài của danh sách liên kết" },
+          { id: "D", text: "Để kiểm tra xem danh sách có bị chu trình hay không" },
+        ],
+        correctOptionId: "A",
+        explanation: `Chính xác! Do là danh sách liên kết đơn, nếu không lưu con trỏ next trước khi đổi chiều curr->next, ta sẽ vĩnh viễn mất địa chỉ của phần còn lại.`,
+        category: "linked-list",
+        points: 100,
+      });
+    } else if (algorithm.id === "floyd-cycle") {
+      questions.push({
+        id: "floyd-concept",
+        stepIndex: 2,
+        question: `Tại sao thuật toán Rùa & Thỏ (Floyd's Tortoise & Hare) đảm bảo 100% hai con trỏ sẽ gặp nhau nếu danh sách có chu trình?`,
+        options: [
+          { id: "A", text: "Vì mỗi lượt Thỏ rút ngắn khoảng cách với Rùa đúng 1 bước trong chu trình kín" },
+          { id: "B", text: "Vì Thỏ chạy nhanh gấp 10 lần Rùa" },
+          { id: "C", text: "Vì danh sách tự động đảo ngược khi Thỏ chạm đáy" },
+          { id: "D", text: "Vì Rùa sẽ đứng yên chờ Thỏ đến" },
+        ],
+        correctOptionId: "A",
+        explanation: `Chính xác! Tốc độ tương đối giữa Thỏ (2 bước/lần) và Rùa (1 bước/lần) là 2 - 1 = 1 node/lượt. Khoảng cách giữa chúng giảm đều đặn 1 đơn vị mỗi vòng cho đến khi bằng 0!`,
+        category: "linked-list",
+        points: 100,
+      });
+    }
+  }
+
+  // 6. Check for Stack & Queue
+  if (algorithm.category === "stack-queue") {
+    questions.push({
+      id: "stack-lifo",
+      stepIndex: 1,
+      question: `Cấu trúc dữ liệu Ngăn xếp (Stack) hoạt động theo nguyên lý truy xuất phần tử nào?`,
+      options: [
+        { id: "A", text: "LIFO (Last In First Out - Phần tử vào sau cùng sẽ được lấy ra đầu tiên)" },
+        { id: "B", text: "FIFO (First In First Out - Vào trước ra trước như xếp hàng)" },
+        { id: "C", text: "Random Access (Truy cập ngẫu nhiên qua chỉ số index)" },
+        { id: "D", text: "Priority Based (Dựa theo độ ưu tiên của phần tử)" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Stack hoạt động theo nguyên lý LIFO (Last In First Out). Phần tử đẩy vào đỉnh sau cùng sẽ là phần tử được lấy ra trước tiên.`,
+      category: "stack-queue",
+      points: 100,
+    });
+  }
+
+  // 7. Fallback general algorithmic questions if too few
   if (questions.length < 2) {
     questions.push({
       id: `gen-complexity-${algorithm.id}`,
