@@ -37,6 +37,9 @@
   - Hiển thị phân tích Heuristic thời gian thực: $f(n) = g(n) + h(n)$ với khoảng cách Manhattan cho thuật toán A*.
 - 🌳 **Cây nhị phân tìm kiếm & AVL Tree**: Trực quan hóa chèn node (Insert), tìm kiếm (Search), xóa node (Delete) và **4 phép xoay cây tự cân bằng (Single Right LL, Single Left RR, Double LR, Double RL Rotations)** với hiển thị hệ số Balance Factor thời gian thực.
 - ⚔️ **Chế độ So Sánh Đối Đầu (Algorithm Race Mode)**: Đặt 2 giải thuật sắp xếp lên cùng một bàn cân chạy đua song song trên cùng mảng dữ liệu (ví dụ: *Quick Sort* vs *Bubble Sort*), hiển thị bảng so sánh đối đầu thời gian thực, đếm số bước, phép so sánh và vinh danh thuật toán chiến thắng 🏆.
+- 🎯 **Chế độ Thử Thách & Luyện Thi Phỏng Vấn (Interactive Quiz Practice Mode)**:
+  - Tự động tạm dừng thuật toán tại các bước quyết định và hiển thị câu hỏi trắc nghiệm tương tác (Dự đoán hoán đổi, xác định Pivot, hướng thu hẹp mảng, phép xoay cây AVL, tiêu chí mở rộng A*).
+  - Hệ thống tính điểm kinh nghiệm (+100 XP), chuỗi đúng liên tiếp (Streak 🔥), âm thanh phản hồi Game Chime, giải thích chi tiết đáp án và phím tắt trả lời nhanh (<kbd>A</kbd>, <kbd>B</kbd>, <kbd>C</kbd>, <kbd>D</kbd> hoặc <kbd>1</kbd>–<kbd>4</kbd>).
 - 🎬 **Điều khiển linh hoạt (Interactive Playback)**:
   - Play / Pause (có hỗ trợ phím tắt <kbd>Space</kbd>).
   - Từng bước kế tiếp (<kbd>→</kbd>) hoặc lùi bước (<kbd>←</kbd>).

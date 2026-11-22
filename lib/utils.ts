@@ -158,3 +158,18 @@ export function playCompletionSweep(array: number[]) {
     playStepSound("complete");
   }, array.length * stepDelay + 80);
 }
+
+// Sound effects for Interactive Quiz Mode
+export function playQuizSound(type: "correct" | "wrong") {
+  if (typeof window === "undefined") return;
+  if (type === "correct") {
+    // Joyful game chime: D5 -> F#5 -> A5
+    playTone(587.33, "triangle", 0.08, 0.06);
+    setTimeout(() => playTone(739.99, "triangle", 0.08, 0.06), 70);
+    setTimeout(() => playTone(880.0, "triangle", 0.16, 0.07), 140);
+  } else {
+    // Gentle warning double boop
+    playTone(220, "sine", 0.08, 0.05);
+    setTimeout(() => playTone(174.61, "sine", 0.12, 0.05), 90);
+  }
+}
