@@ -6,7 +6,9 @@ export type AlgorithmCategory =
   | "tree"
   | "pathfinding"
   | "linked-list"
-  | "stack-queue";
+  | "stack-queue"
+  | "dp"
+  | "backtracking";
 
 export interface Complexity {
   best: string;
@@ -122,6 +124,34 @@ export interface Step {
   }[];
   inputString?: string;
   charIndex?: number;
+
+  // Dynamic Programming (0/1 Knapsack) state
+  dpTable?: number[][];
+  dpRowLabels?: string[];
+  dpColLabels?: (number | string)[];
+  currentDpCell?: [number, number]; // [row, col]
+  dpSourceCells?: [number, number][]; // previous dependency cells
+  dpFormula?: string;
+  selectedItems?: number[]; // indices of items selected in final knapsack
+  knapsackItems?: {
+    id: number;
+    name: string;
+    weight: number;
+    value: number;
+  }[];
+  knapsackCapacity?: number;
+  totalValue?: number;
+  totalWeight?: number;
+
+  // Backtracking (N-Queens) state
+  nQueensBoard?: number[]; // column index of queen in each row (-1 if empty)
+  boardSize?: number;
+  currentQueen?: [number, number]; // [row, col] being checked
+  queenConflicts?: [number, number][]; // conflicting queens or attack rays
+  isBacktracking?: boolean;
+  backtrackCount?: number;
+  isSolution?: boolean;
+  solutionCount?: number;
 }
 
 export interface GridConfig {

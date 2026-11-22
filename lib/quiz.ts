@@ -314,6 +314,44 @@ export function generateQuizQuestions(steps: Step[], algorithm: Algorithm): Quiz
     });
   }
 
+  // 7. Check for Dynamic Programming (0/1 Knapsack)
+  if (algorithm.category === "dp") {
+    questions.push({
+      id: "knapsack-formula",
+      stepIndex: 3,
+      question: `Trong bài toán Balo 0/1, nếu khối lượng của đồ vật thứ i (w_i) lớn hơn sức chứa hiện tại (w), giá trị dp[i][w] được tính như thế nào?`,
+      options: [
+        { id: "A", text: "dp[i][w] = dp[i-1][w] (Không thể chọn, kế thừa giá trị tối ưu của các đồ vật trước)" },
+        { id: "B", text: "dp[i][w] = dp[i-1][w - w_i] + v_i (Bắt buộc chọn)" },
+        { id: "C", text: "dp[i][w] = 0 (Đặt lại bằng 0)" },
+        { id: "D", text: "dp[i][w] = max(dp[i][w-1], v_i)" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Khi w_i > w, đồ vật vượt quá sức chứa balo nên bắt buộc phải bỏ qua. Giá trị tối ưu chính là kết quả khi chỉ xét (i-1) đồ vật trước với cùng sức chứa w.`,
+      category: "dp",
+      points: 120,
+    });
+  }
+
+  // 8. Check for Backtracking (N-Queens)
+  if (algorithm.category === "backtracking") {
+    questions.push({
+      id: "nqueens-concept",
+      stepIndex: 4,
+      question: `Trong thuật toán Quay lui xếp Hậu (N-Queens), hai quân Hậu tại [r1, c1] và [r2, c2] được xem là tấn công nhau trên đường chéo khi nào?`,
+      options: [
+        { id: "A", text: "|r1 - r2| === |c1 - c2| (Hiệu khoảng cách hàng bằng khoảng cách cột)" },
+        { id: "B", text: "r1 + c1 === 10" },
+        { id: "C", text: "c1 === c2 (Cùng chỉ số cột)" },
+        { id: "D", text: "r1 === r2 (Cùng chỉ số hàng)" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Hai ô nằm trên cùng một đường chéo (chính hoặc phụ) khi và chỉ khi khoảng cách hàng bằng khoảng cách cột: |r1 - r2| == |c1 - c2|.`,
+      category: "backtracking",
+      points: 120,
+    });
+  }
+
   // 7. Fallback general algorithmic questions if too few
   if (questions.length < 2) {
     questions.push({

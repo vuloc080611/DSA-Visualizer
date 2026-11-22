@@ -200,6 +200,21 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
         } else if (currentStep.currentNode) {
           // Graph: pitch scales with traversal progression
           playTone(getPitchForValue(currentStepIndex, 0, Math.max(steps.length, 10), 260, 680), "sine", 0.04, 0.035);
+        } else if (currentStep.currentDpCell) {
+          // Dynamic Programming (0/1 Knapsack): pitch scales with item row & capacity column
+          const [row, col] = currentStep.currentDpCell;
+          const pitch = 220 + row * 70 + col * 45;
+          playTone(pitch, "triangle", 0.04, 0.035);
+        } else if (currentStep.nQueensBoard) {
+          // Backtracking (N-Queens) sound design
+          if (currentStep.isBacktracking) {
+            playTone(180, "sawtooth", 0.06, 0.05); // Lower descending tone for backtrack
+          } else if (currentStep.queenConflicts && currentStep.queenConflicts.length > 0) {
+            playTone(240, "square", 0.03, 0.03); // Conflict warning click
+          } else if (currentStep.currentQueen) {
+            const [r, c] = currentStep.currentQueen;
+            playTone(320 + r * 70 + c * 35, "sine", 0.05, 0.04); // Safe placement tone
+          }
         }
       }
     }
@@ -439,26 +454,26 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             onRandomize={
               algorithm.category === "pathfinding"
                 ? () => handleGridChange(generateRandomWalls(15, 25, gridStart, gridEnd, 0.28), gridStart, gridEnd)
-                : algorithm.category !== "graph"
+                : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
                 ? handleRandomize
                 : undefined
             }
             onNearlySorted={
               algorithm.category === "pathfinding"
                 ? () => handleGridChange(generateStaircaseWalls(15, 25, gridStart, gridEnd), gridStart, gridEnd)
-                : algorithm.category !== "graph"
+                : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
                 ? handleNearlySorted
                 : undefined
             }
             onReversed={
               algorithm.category === "pathfinding"
                 ? () => handleGridChange([], gridStart, gridEnd)
-                : algorithm.category !== "graph"
+                : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
                 ? handleReversed
                 : undefined
             }
             onCustomInput={
-              algorithm.category !== "graph" && algorithm.category !== "pathfinding"
+              (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array")
                 ? handleCustomInput
                 : undefined
             }

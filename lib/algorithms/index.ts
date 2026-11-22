@@ -26,6 +26,8 @@ import {
   DEFAULT_LINKED_LIST_VALUES,
 } from "./linkedList";
 import { generateValidParenthesesSteps, DEFAULT_PARENTHESES_STRING } from "./stackQueue";
+import { generateKnapsackSteps, DEFAULT_KNAPSACK_ITEMS, DEFAULT_KNAPSACK_CAPACITY } from "./dp";
+import { generateNQueensSteps, DEFAULT_N_QUEENS_SIZE } from "./backtracking";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -1373,6 +1375,144 @@ def a_star_grid(grid, start, end):
     },
     generateSteps: () => generateValidParenthesesSteps(),
   },
+
+  // =================== DYNAMIC PROGRAMMING ===================
+  {
+    id: "knapsack-01",
+    name: "0/1 Knapsack (Balo 0/1)",
+    category: "dp",
+    shortDescription: "Bài toán cái túi 0/1: Chọn các đồ vật sao cho tổng giá trị lớn nhất mà không vượt quá sức chứa W của Balo bằng Quy hoạch động ma trận 2D.",
+    fullDescription:
+      "0/1 Knapsack là bài toán kinh điển của Quy hoạch động. Cho N đồ vật, mỗi đồ có trọng lượng w_i và giá trị v_i. Ta cần chọn một tập con các đồ vật để tổng giá trị là lớn nhất và tổng khối lượng không vượt quá W. Bảng dp[i][w] lưu giá trị tối ưu khi chỉ xét i đồ vật đầu tiên với sức chứa balo là w. Công thức: dp[i][w] = max(dp[i-1][w], dp[i-1][w - w_i] + v_i). Cuối cùng thuật toán truy vết ngược để tìm chính xác các đồ vật đã chọn.",
+    complexity: {
+      best: "O(N × W)",
+      average: "O(N × W)",
+      worst: "O(N × W)",
+      space: "O(N × W)",
+    },
+    properties: {
+      stable: false,
+      inPlace: false,
+      dataStructure: "2D DP Table / Matrix",
+    },
+    code: {
+      cpp: `int knapsack(int W, vector<int>& wt, vector<int>& val, int n) {
+    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));
+    for (int i = 1; i <= n; i++) {
+        for (int w = 1; w <= W; w++) {
+            if (wt[i - 1] <= w) {
+                dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - wt[i - 1]] + val[i - 1]);
+            } else {
+                dp[i][w] = dp[i - 1][w];
+            }
+        }
+    }
+    return dp[n][W];
+}`,
+      python: `def knapsack(W, wt, val, n):
+    dp = [[0 for _ in range(W + 1)] for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        for w in range(1, W + 1):
+            if wt[i - 1] <= w:
+                dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - wt[i - 1]] + val[i - 1])
+            else:
+                dp[i][w] = dp[i - 1][w]
+    return dp[n][W]`,
+      typescript: `function knapsack(W: number, wt: number[], val: number[], n: number): number {
+  const dp: number[][] = Array.from({ length: n + 1 }, () => Array(W + 1).fill(0));
+  for (let i = 1; i <= n; i++) {
+    for (let w = 1; w <= W; w++) {
+      if (wt[i - 1] <= w) {
+        dp[i][w] = Math.max(dp[i - 1][w], dp[i - 1][w - wt[i - 1]] + val[i - 1]);
+      } else {
+        dp[i][w] = dp[i - 1][w];
+      }
+    }
+  }
+  return dp[n][W];
+}`,
+    },
+    generateSteps: () => generateKnapsackSteps(),
+  },
+
+  // =================== BACKTRACKING ===================
+  {
+    id: "n-queens",
+    name: "N-Queens (Xếp N quân Hậu)",
+    category: "backtracking",
+    shortDescription: "Bài toán xếp N quân Hậu trên bàn cờ N×N sao cho không có 2 quân Hậu nào khống chế nhau bằng thuật toán Quay lui (Backtracking).",
+    fullDescription:
+      "N-Queens là bài toán kinh điển mô tả kỹ thuật Quay lui (Backtracking) và vét cạn có tỉa nhánh. Mục tiêu là xếp N quân Hậu lên bàn cờ N×N sao cho không có hai quân Hậu nào cùng hàng, cùng cột hoặc cùng đường chéo. Thuật toán thử đặt quân Hậu lần lượt từ hàng 0 đến hàng N-1. Nếu tại một hàng không tìm thấy ô an toàn (bị chiếu), thuật toán sẽ QUAY LUI (Backtrack) về hàng trước đó để rút quân và thử vị trí tiếp theo.",
+    complexity: {
+      best: "O(N)",
+      average: "O(N!)",
+      worst: "O(N!)",
+      space: "O(N)",
+    },
+    properties: {
+      stable: false,
+      inPlace: true,
+      dataStructure: "Chessboard / Array",
+    },
+    code: {
+      cpp: `bool isSafe(vector<int>& board, int row, int col) {
+    for (int r = 0; r < row; r++) {
+        if (board[r] == col || abs(board[r] - col) == abs(r - row))
+            return false;
+    }
+    return true;
+}
+
+bool solveNQueens(vector<int>& board, int row, int n) {
+    if (row == n) return true;
+    for (int col = 0; col < n; col++) {
+        if (isSafe(board, row, col)) {
+            board[row] = col;
+            if (solveNQueens(board, row + 1, n)) return true;
+            board[row] = -1; // Backtrack
+        }
+    }
+    return false;
+}`,
+      python: `def is_safe(board, row, col):
+    for r in range(row):
+        if board[r] == col or abs(board[r] - col) == abs(r - row):
+            return False
+    return True
+
+def solve_n_queens(board, row, n):
+    if row == n:
+        return True
+    for col in range(n):
+        if is_safe(board, row, col):
+            board[row] = col
+            if solve_n_queens(board, row + 1, n):
+                return True
+            board[row] = -1  # Backtrack
+    return False`,
+      typescript: `function isSafe(board: number[], row: number, col: number): boolean {
+  for (let r = 0; r < row; r++) {
+    if (board[r] === col || Math.abs(board[r] - col) === Math.abs(r - row)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function solveNQueens(board: number[], row: number, n: number): boolean {
+  if (row === n) return true;
+  for (let col = 0; col < n; col++) {
+    if (isSafe(board, row, col)) {
+      board[row] = col;
+      if (solveNQueens(board, row + 1, n)) return true;
+      board[row] = -1; // Backtrack
+    }
+  }
+  return false;
+}`,
+    },
+    generateSteps: () => generateNQueensSteps(),
+  },
 ];
 
 export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: number }[] = [
@@ -1385,6 +1525,8 @@ export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: n
   { id: "pathfinding", name: "Pathfinding (Mê cung 2D)", count: ALGORITHMS.filter((a) => a.category === "pathfinding").length },
   { id: "linked-list", name: "Linked List (DS Liên kết)", count: ALGORITHMS.filter((a) => a.category === "linked-list").length },
   { id: "stack-queue", name: "Stack & Queue", count: ALGORITHMS.filter((a) => a.category === "stack-queue").length },
+  { id: "dp", name: "Quy hoạch động (DP)", count: ALGORITHMS.filter((a) => a.category === "dp").length },
+  { id: "backtracking", name: "Quay lui (Backtracking)", count: ALGORITHMS.filter((a) => a.category === "backtracking").length },
 ];
 
 export function getAlgorithmById(id: string): Algorithm | undefined {

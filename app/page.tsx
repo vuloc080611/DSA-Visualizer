@@ -36,6 +36,8 @@ export default function HomePage() {
           "pathfinding",
           "linked-list",
           "stack-queue",
+          "dp",
+          "backtracking",
         ].includes(hash)
       ) {
         setSelectedCategory(hash as AlgorithmCategory);

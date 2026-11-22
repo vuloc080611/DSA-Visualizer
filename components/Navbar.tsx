@@ -22,6 +22,8 @@ import {
   GitFork,
   Compass,
   Link2,
+  Calculator,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +60,8 @@ const CATEGORIES_DATA: NavCategory[] = [
   { id: "linked-list", label: "Linked List", icon: Link2 },
   { id: "stack-queue", label: "Stack & Queue", icon: Layers },
   { id: "pathfinding", label: "Pathfinding", icon: Compass },
+  { id: "dp", label: "Quy hoạch động", icon: Calculator },
+  { id: "backtracking", label: "Quay lui", icon: Crown },
 ];
 
 export function Navbar() {
