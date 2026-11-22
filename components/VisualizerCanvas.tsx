@@ -1,16 +1,47 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { Step, AlgorithmCategory, TreeNodeData } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArrowDown, Activity } from "lucide-react";
+import {
+  Sparkles,
+  ArrowDown,
+  Activity,
+  Flag,
+  Target,
+  Shuffle,
+  Trash2,
+  RotateCcw,
+  Footprints,
+  Compass,
+} from "lucide-react";
+import {
+  DEFAULT_GRID_ROWS,
+  DEFAULT_GRID_COLS,
+  DEFAULT_START,
+  DEFAULT_END,
+  DEFAULT_GRID_WALLS,
+  generateRandomWalls,
+  generateStaircaseWalls,
+} from "@/lib/algorithms/pathfinding";
 
 interface VisualizerCanvasProps {
   currentStep: Step;
   category: AlgorithmCategory;
   arraySize?: number;
+  onGridChange?: (walls: [number, number][], start: [number, number], end: [number, number]) => void;
 }
 
-export function VisualizerCanvas({ currentStep, category }: VisualizerCanvasProps) {
+export function VisualizerCanvas({
+  currentStep,
+  category,
+  onGridChange,
+}: VisualizerCanvasProps) {
+  // If it's a pathfinding algorithm (Dijkstra/A* on 2D Grid), render the Pathfinding Canvas
+  if (category === "pathfinding" || currentStep.gridRows !== undefined) {
+    return <PathfindingCanvas currentStep={currentStep} onGridChange={onGridChange} />;
+  }
+
   // If it's a graph algorithm (BFS/DFS), render the Graph Canvas
   if (category === "graph" && currentStep.graph) {
     return <GraphCanvas currentStep={currentStep} />;
@@ -636,6 +667,277 @@ function TreeCanvas({ currentStep }: { currentStep: Step }) {
             BF: ±k
           </span>
           <span>Hệ số cân bằng (Balance Factor)</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== PATHFINDING CANVAS (2D GRID) ====================
+function PathfindingCanvas({
+  currentStep,
+  onGridChange,
+}: {
+  currentStep: Step;
+  onGridChange?: (walls: [number, number][], start: [number, number], end: [number, number]) => void;
+}) {
+  const rows = currentStep.gridRows || DEFAULT_GRID_ROWS;
+  const cols = currentStep.gridCols || DEFAULT_GRID_COLS;
+  const start = currentStep.gridStart || DEFAULT_START;
+  const end = currentStep.gridEnd || DEFAULT_END;
+  const walls = currentStep.gridWalls || DEFAULT_GRID_WALLS;
+
+  const currentCell = currentStep.currentCell;
+  const visitedCells = currentStep.visitedCells || [];
+  const frontierCells = currentStep.frontierCells || [];
+  const pathCells = currentStep.pathCells || [];
+  const pathLength = currentStep.pathLength || 0;
+  const pathFound = currentStep.pathFound || false;
+  const cellMetrics = currentStep.cellMetrics;
+
+  // Local state for interactive wall drawing & drag start/end
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [dragMode, setDragMode] = useState<"draw-wall" | "erase-wall" | "move-start" | "move-end" | null>(null);
+
+  // Fast coordinate lookup sets
+  const wallKeySet = useMemo(() => new Set(walls.map(([r, c]) => `${r},${c}`)), [walls]);
+  const visitedKeySet = useMemo(() => new Set(visitedCells.map(([r, c]) => `${r},${c}`)), [visitedCells]);
+  const frontierKeySet = useMemo(() => new Set(frontierCells.map(([r, c]) => `${r},${c}`)), [frontierCells]);
+  const pathKeySet = useMemo(() => new Set(pathCells.map(([r, c]) => `${r},${c}`)), [pathCells]);
+
+  const handleCellMouseDown = (r: number, c: number) => {
+    if (!onGridChange) return;
+    setIsMouseDown(true);
+
+    if (r === start[0] && c === start[1]) {
+      setDragMode("move-start");
+      return;
+    }
+    if (r === end[0] && c === end[1]) {
+      setDragMode("move-end");
+      return;
+    }
+
+    const key = `${r},${c}`;
+    if (wallKeySet.has(key)) {
+      setDragMode("erase-wall");
+      const nextWalls = walls.filter(([wr, wc]) => !(wr === r && wc === c));
+      onGridChange(nextWalls, start, end);
+    } else {
+      setDragMode("draw-wall");
+      const nextWalls: [number, number][] = [...walls, [r, c]];
+      onGridChange(nextWalls, start, end);
+    }
+  };
+
+  const handleCellMouseEnter = (r: number, c: number) => {
+    if (!isMouseDown || !dragMode || !onGridChange) return;
+
+    if (dragMode === "move-start") {
+      if ((r === end[0] && c === end[1]) || wallKeySet.has(`${r},${c}`)) return;
+      onGridChange(walls, [r, c], end);
+      return;
+    }
+
+    if (dragMode === "move-end") {
+      if ((r === start[0] && c === start[1]) || wallKeySet.has(`${r},${c}`)) return;
+      onGridChange(walls, start, [r, c]);
+      return;
+    }
+
+    if ((r === start[0] && c === start[1]) || (r === end[0] && c === end[1])) return;
+
+    const key = `${r},${c}`;
+    if (dragMode === "draw-wall" && !wallKeySet.has(key)) {
+      onGridChange([...walls, [r, c]], start, end);
+    } else if (dragMode === "erase-wall" && wallKeySet.has(key)) {
+      onGridChange(
+        walls.filter(([wr, wc]) => !(wr === r && wc === c)),
+        start,
+        end
+      );
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+    setDragMode(null);
+  };
+
+  return (
+    <div
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      className="relative w-full flex flex-col justify-between items-center p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none"
+    >
+      {/* Background grid accent pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
+
+      {/* Grid Top Toolbar: Stats + Quick Maze presets */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-200/60 dark:border-slate-800/60">
+        {/* Real-time stats */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300 text-xs font-semibold shadow-sm">
+            <Footprints className="w-3.5 h-3.5" />
+            <span>Đã duyệt: {visitedCells.length} ô</span>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-semibold shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Độ dài đường đi: {pathLength > 0 ? `${pathLength} bước` : "--"}</span>
+          </div>
+
+          {cellMetrics?.fCost !== undefined && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-mono font-semibold shadow-sm">
+              <span>f = {cellMetrics.fCost} (g={cellMetrics.distance}, h={cellMetrics.hCost})</span>
+            </div>
+          )}
+
+          {pathFound && (
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500 text-white shadow-md shadow-emerald-500/25 animate-bounce">
+              🎯 Đã tới đích!
+            </span>
+          )}
+        </div>
+
+        {/* Maze Generators & Wall Actions */}
+        {onGridChange && (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => onGridChange(generateRandomWalls(rows, cols, start, end, 0.28), start, end)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+              title="Tạo các bức tường ngẫu nhiên"
+            >
+              <Shuffle className="w-3 h-3 text-emerald-500" />
+              <span className="hidden sm:inline">Tường 30%</span>
+            </button>
+
+            <button
+              onClick={() => onGridChange(generateStaircaseWalls(rows, cols, start, end), start, end)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+              title="Tạo mê cung ziczac"
+            >
+              <Compass className="w-3 h-3 text-indigo-500" />
+              <span className="hidden sm:inline">Mê cung Ziczac</span>
+            </button>
+
+            <button
+              onClick={() => onGridChange([], start, end)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors border border-slate-200 dark:border-slate-700"
+              title="Xóa tất cả tường"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span className="hidden sm:inline">Xóa tường</span>
+            </button>
+
+            <button
+              onClick={() => onGridChange(walls, DEFAULT_START, DEFAULT_END)}
+              className="p-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+              title="Đặt lại vị trí Start & End mặc định"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Grid Container (Scrollable on small mobile screens) */}
+      <div className="relative z-10 w-full overflow-x-auto py-3 flex items-center justify-center">
+        <div
+          className="grid gap-[2px] p-2 rounded-xl bg-slate-200/60 dark:bg-slate-950/80 border border-slate-300/80 dark:border-slate-800 shadow-inner"
+          style={{
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          }}
+        >
+          {Array.from({ length: rows }).map((_, r) =>
+            Array.from({ length: cols }).map((__, c) => {
+              const isStart = r === start[0] && c === start[1];
+              const isEnd = r === end[0] && c === end[1];
+              const isCurrent = currentCell && currentCell[0] === r && currentCell[1] === c;
+              const key = `${r},${c}`;
+              const isWall = wallKeySet.has(key);
+              const isPath = pathKeySet.has(key);
+              const isVisited = visitedKeySet.has(key);
+              const isFrontier = frontierKeySet.has(key);
+
+              // Cell Color Logic
+              let cellClass =
+                "bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800";
+
+              if (isStart) {
+                cellClass =
+                  "bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white shadow-lg shadow-emerald-500/40 border-emerald-300 cursor-grab active:cursor-grabbing scale-105 z-20";
+              } else if (isEnd) {
+                cellClass =
+                  "bg-gradient-to-tr from-rose-600 to-rose-400 text-white shadow-lg shadow-rose-500/40 border-rose-300 cursor-grab active:cursor-grabbing scale-105 z-20";
+              } else if (isCurrent) {
+                cellClass =
+                  "bg-white dark:bg-slate-100 text-slate-900 ring-2 ring-amber-400 scale-110 z-30 shadow-md";
+              } else if (isPath) {
+                cellClass =
+                  "bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow-md shadow-amber-400/50 border-amber-300 scale-[1.03] z-10 font-bold";
+              } else if (isWall) {
+                cellClass =
+                  "bg-slate-800 dark:bg-slate-200 border-slate-700 dark:border-slate-300 shadow-sm";
+              } else if (isVisited) {
+                cellClass =
+                  "bg-cyan-500/80 dark:bg-cyan-400/80 border-cyan-400 text-white shadow-sm";
+              } else if (isFrontier) {
+                cellClass =
+                  "bg-purple-500/50 dark:bg-purple-500/50 border-purple-400 text-white animate-pulse";
+              }
+
+              return (
+                <div
+                  key={key}
+                  onMouseDown={() => handleCellMouseDown(r, c)}
+                  onMouseEnter={() => handleCellMouseEnter(r, c)}
+                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-[4px] flex items-center justify-center transition-all duration-150 select-none ${cellClass}`}
+                >
+                  {isStart && <Flag className="w-3.5 h-3.5 text-white" />}
+                  {isEnd && <Target className="w-3.5 h-3.5 text-white animate-pulse" />}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Grid Legend & Instructions */}
+      <div className="relative z-10 w-full mt-2 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-[4px] bg-emerald-500 flex items-center justify-center">
+              <Flag className="w-2 h-2 text-white" />
+            </span>
+            <span>Bắt đầu (Start)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-[4px] bg-rose-500 flex items-center justify-center">
+              <Target className="w-2 h-2 text-white" />
+            </span>
+            <span>Đích (End)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-[4px] bg-slate-800 dark:bg-slate-200" />
+            <span>Tường (Wall)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-[4px] bg-cyan-500" />
+            <span>Đã duyệt (Visited)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-[4px] bg-amber-400" />
+            <span>Đường ngắn nhất (Path)</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+          💡 Mẹo: Nhấn giữ chuột và kéo trên lưới để vẽ/xóa tường, hoặc kéo nút Start/End để đổi chỗ!
         </div>
       </div>
     </div>

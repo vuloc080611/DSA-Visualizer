@@ -26,7 +26,7 @@ export default function HomePage() {
   useEffect(() => {
     const syncCategoryFromHash = () => {
       const hash = window.location.hash.replace("#", "").toLowerCase();
-      if (["sorting", "searching", "graph", "array", "tree"].includes(hash)) {
+      if (["sorting", "searching", "graph", "array", "tree", "pathfinding"].includes(hash)) {
         setSelectedCategory(hash as AlgorithmCategory);
         const el = document.getElementById("algorithms");
         if (el) {
@@ -91,7 +91,7 @@ export default function HomePage() {
 
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Học và ôn tập 12+ thuật toán kinh điển từ Sorting, Searching đến Graph & Dynamic Programming với hoạt ảnh step-by-step mượt mà, phân tích độ phức tạp và code mẫu đa ngôn ngữ.
+            Học và ôn tập 17+ thuật toán kinh điển từ Sorting, Searching, Graph, Cây BST/AVL đến Tìm đường Mê cung 2D (Dijkstra, A*) với hoạt ảnh step-by-step mượt mà, phân tích độ phức tạp và code mẫu đa ngôn ngữ.
           </p>
 
           {/* Quick CTA Buttons */}
@@ -121,11 +121,11 @@ export default function HomePage() {
           {/* Stat Badges */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-8">
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">15</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">17</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Thuật toán có sẵn</div>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-emerald-500">5</div>
+              <div className="text-2xl font-bold text-emerald-500">6</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Chủ đề kinh điển</div>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
@@ -148,6 +148,7 @@ export default function HomePage() {
         <div id="graph" className="absolute -top-24" />
         <div id="array" className="absolute -top-24" />
         <div id="tree" className="absolute -top-24" />
+        <div id="pathfinding" className="absolute -top-24" />
         {/* Search & Category Filter Bar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           {/* Category Tabs */}

@@ -11,6 +11,15 @@ import { generateLinearSearchSteps, generateBinarySearchSteps } from "./searchin
 import { generateBFSSteps, generateDFSSteps, defaultGraphData } from "./graph";
 import { generateTwoSumSteps, generateSlidingWindowSteps, generateKadaneSteps } from "./array";
 import { generateBSTSteps, generateAVLSteps } from "./tree";
+import {
+  generateDijkstraSteps,
+  generateAStarSteps,
+  DEFAULT_GRID_ROWS,
+  DEFAULT_GRID_COLS,
+  DEFAULT_START,
+  DEFAULT_END,
+  DEFAULT_GRID_WALLS,
+} from "./pathfinding";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -963,6 +972,229 @@ def left_rotate(x):
     },
     generateSteps: (cfg) => generateAVLSteps(cfg?.treeValues || [10, 20, 30, 40, 50, 25], cfg),
   },
+
+  // =================== PATHFINDING (2D GRID) ===================
+  {
+    id: "dijkstra",
+    name: "Dijkstra's Algorithm (Lưới 2D)",
+    category: "pathfinding",
+    shortDescription: "Tìm đường đi ngắn nhất kinh điển trong mê cung lưới 2D bằng hàng đợi ưu tiên.",
+    fullDescription:
+      "Thuật toán Dijkstra tìm đường đi ngắn nhất từ một điểm xuất phát duy nhất (Single-source shortest path). Trên mê cung lưới 2D, Dijkstra lan tỏa đồng đều theo mọi hướng (dạng sóng tròn) qua các ô kề cạnh (4 hướng) để luồn lách qua các bức tường chướng ngại vật và luôn đảm bảo tìm được đường đi ngắn nhất đến đích.",
+    complexity: {
+      best: "O(V + E log V)",
+      average: "O(E + V log V)",
+      worst: "O(E + V log V)",
+      space: "O(V)",
+    },
+    properties: {
+      inPlace: false,
+      dataStructure: "Priority Queue (Min-Heap), 2D Grid",
+    },
+    defaultGrid: {
+      rows: DEFAULT_GRID_ROWS,
+      cols: DEFAULT_GRID_COLS,
+      start: DEFAULT_START,
+      end: DEFAULT_END,
+      walls: DEFAULT_GRID_WALLS,
+    },
+    code: {
+      cpp: `// Dijkstra trên lưới 2D có chướng ngại vật
+vector<Point> dijkstra2D(Point start, Point end, vector<vector<int>>& grid) {
+    int R = grid.size(), C = grid[0].size();
+    vector<vector<int>> dist(R, vector<int>(C, 1e9));
+    vector<vector<Point>> parent(R, vector<Point>(C, {-1, -1}));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+
+    dist[start.r][start.c] = 0;
+    pq.push({0, start.r, start.c});
+    int dr[] = {-1, 0, 1, 0}, dc[] = {0, 1, 0, -1};
+
+    while (!pq.empty()) {
+        auto [d, r, c] = pq.top(); pq.pop();
+        if (r == end.r && c == end.c) break; // Tìm thấy đích!
+        if (d > dist[r][c]) continue;
+
+        for (int i = 0; i < 4; i++) {
+            int nr = r + dr[i], nc = c + dc[i];
+            if (nr >= 0 && nr < R && nc >= 0 && nc < C && grid[nr][nc] == 0) {
+                if (dist[r][c] + 1 < dist[nr][nc]) {
+                    dist[nr][nc] = dist[r][c] + 1;
+                    parent[nr][nc] = {r, c};
+                    pq.push({dist[nr][nc], nr, nc});
+                }
+            }
+        }
+    }
+    return reconstructPath(parent, start, end);
+}`,
+      python: `import heapq
+
+def dijkstra_grid(grid, start, end):
+    R, C = len(grid), len(grid[0])
+    dist = {start: 0}
+    parent = {}
+    pq = [(0, start[0], start[1])]
+    visited = set()
+
+    while pq:
+        d, r, c = heapq.heappop(pq)
+        if (r, c) == end:
+            break
+        if (r, c) in visited:
+            continue
+        visited.add((r, c))
+
+        for dr, dc in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < R and 0 <= nc < C and grid[nr][nc] == 0:
+                new_dist = d + 1
+                if new_dist < dist.get((nr, nc), float('inf')):
+                    dist[(nr, nc)] = new_dist
+                    parent[(nr, nc)] = (r, c)
+                    heapq.heappush(pq, (new_dist, nr, nc))
+    return reconstruct_path(parent, start, end)`,
+      typescript: `function dijkstraGrid(grid: number[][], start: [number, number], end: [number, number]) {
+  const rows = grid.length, cols = grid[0].length;
+  const dist: number[][] = Array.from({ length: rows }, () => Array(cols).fill(Infinity));
+  const parent: Map<string, [number, number]> = new Map();
+  const pq: { r: number; c: number; d: number }[] = [{ r: start[0], c: start[1], d: 0 }];
+  dist[start[0]][start[1]] = 0;
+
+  while (pq.length > 0) {
+    pq.sort((a, b) => a.d - b.d);
+    const { r, c, d } = pq.shift()!;
+    if (r === end[0] && c === end[1]) break; // Found end!
+
+    for (const [dr, dc] of [[-1, 0], [0, 1], [1, 0], [0, -1]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] === 0) {
+        if (d + 1 < dist[nr][nc]) {
+          dist[nr][nc] = d + 1;
+          parent.set(\`\${nr},\${nc}\`, [r, c]);
+          pq.push({ r: nr, c: nc, d: d + 1 });
+        }
+      }
+    }
+  }
+  return reconstructPath(parent, start, end);
+}`,
+    },
+    generateSteps: (cfg) => generateDijkstraSteps(cfg),
+  },
+
+  {
+    id: "a-star",
+    name: "A* Search Algorithm (Lưới 2D)",
+    category: "pathfinding",
+    shortDescription: "Thuật toán tìm đường đi tối ưu sử dụng hàm heuristic hướng đích f(n) = g(n) + h(n).",
+    fullDescription:
+      "A* (A-Star) là phiên bản nâng cấp có định hướng (Informed Search) của Dijkstra. Bằng cách sử dụng hàm ước lượng Heuristic (khoảng cách Manhattan h = |Δr| + |Δc| trên lưới 2D), A* 'kéo' quá trình duyệt trực diện về phía điểm kết thúc End, giúp tiết kiệm số ô cần duyệt vượt trội so với Dijkstra.",
+    complexity: {
+      best: "O(V)",
+      average: "O(E)",
+      worst: "O(b^d)",
+      space: "O(V)",
+    },
+    properties: {
+      inPlace: false,
+      dataStructure: "Priority Queue, Manhattan Heuristic",
+    },
+    defaultGrid: {
+      rows: DEFAULT_GRID_ROWS,
+      cols: DEFAULT_GRID_COLS,
+      start: DEFAULT_START,
+      end: DEFAULT_END,
+      walls: DEFAULT_GRID_WALLS,
+    },
+    code: {
+      cpp: `// A* Search trên lưới 2D với Manhattan Heuristic
+int manhattan(Point a, Point b) {
+    return abs(a.r - b.r) + abs(a.c - b.c);
+}
+
+vector<Point> aStarSearch(Point start, Point end, vector<vector<int>>& grid) {
+    int R = grid.size(), C = grid[0].size();
+    vector<vector<int>> gScore(R, vector<int>(C, 1e9));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> openSet;
+
+    gScore[start.r][start.c] = 0;
+    openSet.push({manhattan(start, end), start.r, start.c}); // f = g + h
+
+    while (!openSet.empty()) {
+        auto [f, r, c] = openSet.top(); openSet.pop();
+        if (r == end.r && c == end.c) break; // Đã tới đích!
+
+        for (auto [dr, dc] : directions) {
+            int nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < R && nc >= 0 && nc < C && grid[nr][nc] == 0) {
+                int tentativeG = gScore[r][c] + 1;
+                if (tentativeG < gScore[nr][nc]) {
+                    gScore[nr][nc] = tentativeG;
+                    int fScore = tentativeG + manhattan({nr, nc}, end);
+                    openSet.push({fScore, nr, nc});
+                }
+            }
+        }
+    }
+    return reconstructPath(parent, start, end);
+}`,
+      python: `import heapq
+
+def a_star_grid(grid, start, end):
+    def heuristic(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1]) # Manhattan
+
+    open_set = [(heuristic(start, end), 0, start)] # (f, g, node)
+    g_score = {start: 0}
+    parent = {}
+
+    while open_set:
+        f, g, (r, c) = heapq.heappop(open_set)
+        if (r, c) == end:
+            break
+
+        for dr, dc in [(-1, 0), (0, 1), (1, 0), (0, -1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and grid[nr][nc] == 0:
+                tentative_g = g + 1
+                if tentative_g < g_score.get((nr, nc), float('inf')):
+                    g_score[(nr, nc)] = tentative_g
+                    f_score = tentative_g + heuristic((nr, nc), end)
+                    parent[(nr, nc)] = (r, c)
+                    heapq.heappush(open_set, (f_score, tentative_g, (nr, nc)))
+    return reconstruct_path(parent, start, end)`,
+      typescript: `function aStarGrid(grid: number[][], start: [number, number], end: [number, number]) {
+  const h = (r: number, c: number) => Math.abs(r - end[0]) + Math.abs(c - end[1]);
+  const rows = grid.length, cols = grid[0].length;
+  const gScore: number[][] = Array.from({ length: rows }, () => Array(cols).fill(Infinity));
+  const parent: Map<string, [number, number]> = new Map();
+  
+  gScore[start[0]][start[1]] = 0;
+  const openSet = [{ r: start[0], c: start[1], g: 0, f: h(start[0], start[1]) }];
+
+  while (openSet.length > 0) {
+    openSet.sort((a, b) => a.f - b.f);
+    const curr = openSet.shift()!;
+    if (curr.r === end[0] && curr.c === end[1]) break; // Found end!
+
+    for (const [dr, dc] of [[-1, 0], [0, 1], [1, 0], [0, -1]]) {
+      const nr = curr.r + dr, nc = curr.c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] === 0) {
+        const tentativeG = curr.g + 1;
+        if (tentativeG < gScore[nr][nc]) {
+          gScore[nr][nc] = tentativeG;
+          parent.set(\`\${nr},\${nc}\`, [curr.r, curr.c]);
+          openSet.push({ r: nr, c: nc, g: tentativeG, f: tentativeG + h(nr, nc) });
+        }
+      }
+    }
+  }
+  return reconstructPath(parent, start, end);
+}`,
+    },
+    generateSteps: (cfg) => generateAStarSteps(cfg),
+  },
 ];
 
 export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: number }[] = [
@@ -972,6 +1204,7 @@ export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: n
   { id: "graph", name: "Graph (Đồ thị)", count: ALGORITHMS.filter((a) => a.category === "graph").length },
   { id: "array", name: "Array & Window", count: ALGORITHMS.filter((a) => a.category === "array").length },
   { id: "tree", name: "Tree (Cây BST & AVL)", count: ALGORITHMS.filter((a) => a.category === "tree").length },
+  { id: "pathfinding", name: "Pathfinding (Mê cung 2D)", count: ALGORITHMS.filter((a) => a.category === "pathfinding").length },
 ];
 
 export function getAlgorithmById(id: string): Algorithm | undefined {

@@ -1,4 +1,4 @@
-export type AlgorithmCategory = "sorting" | "searching" | "graph" | "array" | "tree";
+export type AlgorithmCategory = "sorting" | "searching" | "graph" | "array" | "tree" | "pathfinding";
 
 export interface Complexity {
   best: string;
@@ -72,6 +72,32 @@ export interface Step {
   rotationType?: "LL" | "RR" | "LR" | "RL";
   unbalancedNodeValue?: number;
   foundNodeValue?: number;
+
+  // Pathfinding Grid state (Dijkstra, A*)
+  gridRows?: number;
+  gridCols?: number;
+  gridStart?: [number, number];
+  gridEnd?: [number, number];
+  gridWalls?: [number, number][];
+  currentCell?: [number, number];
+  visitedCells?: [number, number][];
+  frontierCells?: [number, number][];
+  pathCells?: [number, number][];
+  pathLength?: number;
+  pathFound?: boolean;
+  cellMetrics?: {
+    distance?: number;
+    hCost?: number;
+    fCost?: number;
+  };
+}
+
+export interface GridConfig {
+  rows?: number;
+  cols?: number;
+  start?: [number, number];
+  end?: [number, number];
+  walls?: [number, number][];
 }
 
 export interface AlgorithmCode {
@@ -97,5 +123,6 @@ export interface Algorithm {
   defaultGraph?: GraphData;
   defaultTreeValues?: number[];
   defaultTarget?: number;
+  defaultGrid?: GridConfig;
   generateSteps: (config?: any) => Step[];
 }

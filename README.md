@@ -9,7 +9,7 @@
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-12-0055FF?style=for-the-badge&logo=framer)
 ![Vercel Ready](https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel)
 
-**Một ứng dụng web tương tác trực quan hóa 15 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
+**Một ứng dụng web tương tác trực quan hóa 17 thuật toán Cấu trúc dữ liệu & Giải thuật kinh điển với animation 60 FPS mượt mà, step-by-step, phân tích Big-O thời gian thực và mã nguồn đa ngôn ngữ (C++, Python, TypeScript).**
 
 [🌐 **Trải Nghiệm Live Demo Trên Vercel**](https://dsa-visualizer-one-beta.vercel.app) • [📖 **Xem Báo Cáo Chi Tiết**](#key-takeaways) • [👨‍💻 **Tác Giả**](#author)
 
@@ -28,7 +28,13 @@
 
 ## 🌟 Tính Năng Nổi Bật (Key Features)
 
-- 📊 **15 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 5 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming, và Tree (Binary Search Tree & AVL Tree).
+- 📊 **17 Thuật toán được cài đặt hoàn chỉnh**: Bao gồm đầy đủ 6 chủ đề cốt lõi: Sorting, Searching, Graph (BFS/DFS), Array & Dynamic Programming, Tree (BST & AVL Tree), và Pathfinding (Mê cung 2D Dijkstra / A*).
+- 🗺️ **Tìm đường đi trong Mê cung 2D (Interactive Pathfinding Grid - Dijkstra & A*)**:
+  - Bảng lưới ô vuông 2D trực quan với tương tác kéo chuột vẽ/xóa các bức tường chướng ngại vật (Walls/Obstacles).
+  - Tự do kéo thả điểm xuất phát (🟢 Start) và điểm kết thúc (🔴 End) đến bất kỳ vị trí nào trên lưới.
+  - Bộ sinh mê cung tích hợp: Tường ngẫu nhiên 30% (Random Walls), Mê cung ziczac (Staircase Maze) và Xóa tường tức thì.
+  - Trực quan hóa lan tỏa các ô đã duyệt (Visited wave), hàng đợi mở (Frontier) và đường đi ngắn nhất phát sáng rực rỡ (Golden Shortest Path).
+  - Hiển thị phân tích Heuristic thời gian thực: $f(n) = g(n) + h(n)$ với khoảng cách Manhattan cho thuật toán A*.
 - 🌳 **Cây nhị phân tìm kiếm & AVL Tree**: Trực quan hóa chèn node (Insert), tìm kiếm (Search), xóa node (Delete) và **4 phép xoay cây tự cân bằng (Single Right LL, Single Left RR, Double LR, Double RL Rotations)** với hiển thị hệ số Balance Factor thời gian thực.
 - ⚔️ **Chế độ So Sánh Đối Đầu (Algorithm Race Mode)**: Đặt 2 giải thuật sắp xếp lên cùng một bàn cân chạy đua song song trên cùng mảng dữ liệu (ví dụ: *Quick Sort* vs *Bubble Sort*), hiển thị bảng so sánh đối đầu thời gian thực, đếm số bước, phép so sánh và vinh danh thuật toán chiến thắng 🏆.
 - 🎬 **Điều khiển linh hoạt (Interactive Playback)**:
@@ -99,6 +105,12 @@
 | :--- | :---: | :---: | :---: | :---: | :--- |
 | **Binary Search Tree (BST)** | $O(1)$ | $O(\log N)$ | $O(N)$ | $O(N)$ | Chèn, Tìm kiếm, Xóa node 2 con (Inorder Successor) |
 | **AVL Tree (Self-Balancing)** | $O(1)$ | $O(\log N)$ | $O(\log N)$ | $O(N)$ | Tự cân bằng với 4 phép xoay: LL, RR, LR, RL ($BF \in \{-1, 0, 1\}$) |
+
+### 6. Pathfinding (Tìm đường trong Mê cung 2D)
+| Thuật toán | Best Time | Average Time | Worst Time | Space | Kỹ thuật & Tương tác |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Dijkstra's Algorithm (2D Grid)** | $O(V + E \log V)$ | $O(E + V \log V)$ | $O(E + V \log V)$ | $O(V)$ | Tìm đường ngắn nhất kinh điển với Min-Heap/Priority Queue, lan tỏa tròn |
+| **A\* Search Algorithm (2D Grid)** | $O(V)$ | $O(E)$ | $O(b^d)$ | $O(V)$ | Tìm đường Heuristic tối ưu $f(n) = g(n) + h(n)$ (Khoảng cách Manhattan) hướng đích |
 
 ---
 

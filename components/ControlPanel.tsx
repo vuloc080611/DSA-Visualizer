@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Check,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -225,7 +226,41 @@ export function ControlPanel({
       {/* Bottom Row: Data Generation Options */}
       {category !== "graph" && (
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-          {category === "tree" ? (
+          {category === "pathfinding" ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Mê cung:</span>
+              {onRandomize && (
+                <button
+                  onClick={onRandomize}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Tạo tường 30%</span>
+                </button>
+              )}
+              {onNearlySorted && (
+                <button
+                  onClick={onNearlySorted}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Mê cung ziczac</span>
+                </button>
+              )}
+              {onReversed && (
+                <button
+                  onClick={onReversed}
+                  disabled={isPlaying}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-50 transition-colors border border-slate-200 dark:border-slate-700"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Xóa tường</span>
+                </button>
+              )}
+            </div>
+          ) : category === "tree" ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Dữ liệu cây:</span>
               {onNearlySorted && (

@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Swords,
   GitFork,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,8 +52,9 @@ const CATEGORIES_DATA: NavCategory[] = [
   { id: "sorting", label: "Sorting", icon: BarChart2 },
   { id: "searching", label: "Searching", icon: Search },
   { id: "graph", label: "Graph", icon: Network },
-  { id: "array", label: "Array", icon: Layers },
   { id: "tree", label: "Tree", icon: GitFork },
+  { id: "array", label: "Array", icon: Layers },
+  { id: "pathfinding", label: "Pathfinding", icon: Compass },
 ];
 
 export function Navbar() {

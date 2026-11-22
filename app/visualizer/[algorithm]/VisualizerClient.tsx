@@ -15,6 +15,7 @@ import {
   generateReversedArray,
   playStepSound,
 } from "@/lib/utils";
+import { generateRandomWalls, generateStaircaseWalls } from "@/lib/algorithms/pathfinding";
 import confetti from "canvas-confetti";
 import {
   ArrowLeft,
@@ -40,6 +41,15 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
       : []
   );
   const [target, setTarget] = useState<number | undefined>(algorithm?.defaultTarget);
+  const [gridWalls, setGridWalls] = useState<[number, number][]>(
+    algorithm?.defaultGrid?.walls ? [...algorithm.defaultGrid.walls] : []
+  );
+  const [gridStart, setGridStart] = useState<[number, number]>(
+    algorithm?.defaultGrid?.start || [7, 4]
+  );
+  const [gridEnd, setGridEnd] = useState<[number, number]>(
+    algorithm?.defaultGrid?.end || [7, 20]
+  );
   const [steps, setSteps] = useState<Step[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,23 +57,49 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Re-generate steps when array or target changes
+  // Re-generate steps when array, target or grid changes
   const initSteps = useCallback(
-    (arr?: number[], tgt?: number) => {
+    (
+      arr?: number[],
+      tgt?: number,
+      walls?: [number, number][],
+      start?: [number, number],
+      end?: [number, number]
+    ) => {
       const activeArr = arr || arrayData;
       const activeTgt = tgt !== undefined ? tgt : target;
+      const activeWalls = walls !== undefined ? walls : gridWalls;
+      const activeStart = start || gridStart;
+      const activeEnd = end || gridEnd;
+
       const generated = algorithm.generateSteps({
         array: activeArr,
         treeValues: activeArr,
         target: activeTgt,
         graph: algorithm.defaultGraph,
+        walls: activeWalls,
+        start: activeStart,
+        end: activeEnd,
+        rows: algorithm.defaultGrid?.rows,
+        cols: algorithm.defaultGrid?.cols,
       });
       setSteps(generated);
       setCurrentStepIndex(0);
       setIsPlaying(false);
     },
-    [algorithm, arrayData, target]
+    [algorithm, arrayData, target, gridWalls, gridStart, gridEnd]
   );
+
+  const handleGridChange = (
+    nextWalls: [number, number][],
+    nextStart: [number, number],
+    nextEnd: [number, number]
+  ) => {
+    setGridWalls(nextWalls);
+    setGridStart(nextStart);
+    setGridEnd(nextEnd);
+    initSteps(arrayData, target, nextWalls, nextStart, nextEnd);
+  };
 
   useEffect(() => {
     initSteps();
@@ -82,7 +118,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
         playStepSound("swap");
       } else if (currentStep.highlights && currentStep.highlights.length > 0) {
         playStepSound("compare");
-      } else if (currentStep.currentNode) {
+      } else if (currentStep.currentNode || currentStep.currentCell) {
         playStepSound("visit");
       }
     }
@@ -288,6 +324,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             currentStep={currentStep}
             category={algorithm.category}
             arraySize={arrayData.length}
+            onGridChange={algorithm.category === "pathfinding" ? handleGridChange : undefined}
           />
 
           {/* Control Panel */}
@@ -308,10 +345,32 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             soundEnabled={soundEnabled}
             onSoundToggle={() => setSoundEnabled(!soundEnabled)}
             category={algorithm.category}
-            onRandomize={algorithm.category !== "graph" ? handleRandomize : undefined}
-            onNearlySorted={algorithm.category !== "graph" ? handleNearlySorted : undefined}
-            onReversed={algorithm.category !== "graph" ? handleReversed : undefined}
-            onCustomInput={algorithm.category !== "graph" ? handleCustomInput : undefined}
+            onRandomize={
+              algorithm.category === "pathfinding"
+                ? () => handleGridChange(generateRandomWalls(15, 25, gridStart, gridEnd, 0.28), gridStart, gridEnd)
+                : algorithm.category !== "graph"
+                ? handleRandomize
+                : undefined
+            }
+            onNearlySorted={
+              algorithm.category === "pathfinding"
+                ? () => handleGridChange(generateStaircaseWalls(15, 25, gridStart, gridEnd), gridStart, gridEnd)
+                : algorithm.category !== "graph"
+                ? handleNearlySorted
+                : undefined
+            }
+            onReversed={
+              algorithm.category === "pathfinding"
+                ? () => handleGridChange([], gridStart, gridEnd)
+                : algorithm.category !== "graph"
+                ? handleReversed
+                : undefined
+            }
+            onCustomInput={
+              algorithm.category !== "graph" && algorithm.category !== "pathfinding"
+                ? handleCustomInput
+                : undefined
+            }
             currentTarget={target}
           />
 
