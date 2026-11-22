@@ -14,6 +14,9 @@ import {
   generateNearlySortedArray,
   generateReversedArray,
   playStepSound,
+  playTone,
+  getPitchForValue,
+  playCompletionSweep,
 } from "@/lib/utils";
 import { generateRandomWalls, generateStaircaseWalls } from "@/lib/algorithms/pathfinding";
 import confetti from "canvas-confetti";
@@ -113,13 +116,38 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
 
     if (soundEnabled) {
       if (currentStepIndex === steps.length - 1) {
-        playStepSound("complete");
-      } else if (currentStep.swapping && currentStep.swapping.length > 0) {
-        playStepSound("swap");
-      } else if (currentStep.highlights && currentStep.highlights.length > 0) {
-        playStepSound("compare");
-      } else if (currentStep.currentNode || currentStep.currentCell) {
-        playStepSound("visit");
+        if (currentStep.array && currentStep.array.length > 0 && algorithm.category === "sorting") {
+          playCompletionSweep(currentStep.array);
+        } else {
+          playStepSound("complete");
+        }
+      } else {
+        // Pitch-based Audio: Sound frequency scales proportionally with the active element values
+        if (currentStep.array && currentStep.array.length > 0) {
+          const minVal = Math.min(...currentStep.array);
+          const maxVal = Math.max(...currentStep.array);
+
+          if (currentStep.swapping && currentStep.swapping.length > 0) {
+            const vals = currentStep.swapping.map((idx) => currentStep.array![idx]).filter((v) => v !== undefined);
+            playStepSound("swap", vals, minVal, maxVal);
+          } else if (currentStep.highlights && currentStep.highlights.length > 0) {
+            const vals = currentStep.highlights.map((idx) => currentStep.array![idx]).filter((v) => v !== undefined);
+            playStepSound("compare", vals, minVal, maxVal);
+          } else if (currentStep.pivot !== undefined) {
+            const pivotVal = currentStep.array[currentStep.pivot];
+            playStepSound("compare", [pivotVal], minVal, maxVal);
+          }
+        } else if (currentStep.activeNodeValue !== undefined) {
+          // Pitch-based audio for Tree algorithms (BST / AVL)
+          playStepSound("compare", [currentStep.activeNodeValue], 0, 100);
+        } else if (currentStep.currentCell) {
+          // Pathfinding grid: pitch scales with distance or progress
+          const dist = currentStep.cellMetrics?.distance ?? currentStepIndex;
+          playTone(getPitchForValue(dist, 0, Math.max(steps.length, 25), 220, 780), "sine", 0.035, 0.035);
+        } else if (currentStep.currentNode) {
+          // Graph: pitch scales with traversal progression
+          playTone(getPitchForValue(currentStepIndex, 0, Math.max(steps.length, 10), 260, 680), "sine", 0.04, 0.035);
+        }
       }
     }
 

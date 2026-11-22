@@ -28,14 +28,35 @@ export function generateReversedArray(size: number = 12): number[] {
   return Array.from({ length: size }, (_, i) => Math.floor(((size - i) * 90) / size) + 10);
 }
 
-// Web Audio API Synthesizer for delicate audio feedback (comparisons & swaps)
+// Web Audio API Synthesizer with Pitch-based Audio (tần số biến thiên theo giá trị)
 let audioCtx: AudioContext | null = null;
 
-export function playTone(frequency: number = 440, type: OscillatorType = "sine", duration: number = 0.05, volume: number = 0.05) {
+// Map element value to pitch frequency (180 Hz to 960 Hz) using natural musical exponential scaling
+export function getPitchForValue(
+  value: number,
+  min: number = 0,
+  max: number = 100,
+  minFreq: number = 180,
+  maxFreq: number = 960
+): number {
+  const safeRange = max - min || 1;
+  const normalized = Math.max(0, Math.min(1, (value - min) / safeRange));
+  // Exponential frequency scale sounds natural and melodic to the human ear
+  return minFreq * Math.pow(maxFreq / minFreq, normalized);
+}
+
+export function playTone(
+  frequency: number = 440,
+  type: OscillatorType = "sine",
+  duration: number = 0.05,
+  volume: number = 0.05
+) {
   if (typeof window === "undefined") return;
   try {
     if (!audioCtx) {
-      const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtxClass) {
         audioCtx = new AudioCtxClass();
       }
@@ -51,6 +72,7 @@ export function playTone(frequency: number = 440, type: OscillatorType = "sine",
     osc.type = type;
     osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
 
+    // Smooth envelope with exponential decay to prevent clicks/pops
     gain.gain.setValueAtTime(volume, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
 
@@ -64,24 +86,75 @@ export function playTone(frequency: number = 440, type: OscillatorType = "sine",
   }
 }
 
-export function playStepSound(actionType: "compare" | "swap" | "complete" | "visit" = "compare") {
+export function playStepSound(
+  actionType: "compare" | "swap" | "complete" | "visit" = "compare",
+  values?: number[],
+  min: number = 0,
+  max: number = 100
+) {
   if (typeof window === "undefined") return;
+
+  if (actionType === "complete") {
+    // Celebratory victory arpeggio: C5 -> E5 -> G5 -> C6
+    const chord = [523.25, 659.25, 783.99, 1046.5];
+    chord.forEach((freq, idx) => {
+      setTimeout(() => playTone(freq, "triangle", 0.12, 0.06), idx * 75);
+    });
+    return;
+  }
+
+  // Pitch-based Audio: Sound frequency scales proportionally with active element values
+  if (values && values.length > 0) {
+    const primaryVal = values[0];
+    const freq1 = getPitchForValue(primaryVal, min, max);
+
+    if (actionType === "swap") {
+      // Brighter triangle timbre for swaps
+      playTone(freq1, "triangle", 0.055, 0.055);
+      if (values.length > 1) {
+        const freq2 = getPitchForValue(values[1], min, max);
+        setTimeout(() => playTone(freq2, "triangle", 0.055, 0.045), 25);
+      }
+    } else {
+      // Warm sine timbre for comparisons
+      playTone(freq1, "sine", 0.045, 0.04);
+      if (values.length > 1) {
+        const freq2 = getPitchForValue(values[1], min, max);
+        setTimeout(() => playTone(freq2, "sine", 0.035, 0.03), 20);
+      }
+    }
+    return;
+  }
+
+  // Fallback defaults if no values provided
   switch (actionType) {
     case "compare":
-      playTone(320 + Math.random() * 80, "sine", 0.04, 0.03);
+      playTone(340 + Math.random() * 80, "sine", 0.04, 0.03);
       break;
     case "swap":
       playTone(550, "triangle", 0.06, 0.04);
       break;
     case "visit":
-      playTone(400, "sine", 0.05, 0.03);
-      break;
-    case "complete":
-      // Arpeggio
-      setTimeout(() => playTone(523.25, "triangle", 0.1, 0.06), 0);
-      setTimeout(() => playTone(659.25, "triangle", 0.1, 0.06), 80);
-      setTimeout(() => playTone(783.99, "triangle", 0.15, 0.06), 160);
-      setTimeout(() => playTone(1046.5, "triangle", 0.25, 0.08), 240);
+      playTone(420, "sine", 0.05, 0.03);
       break;
   }
+}
+
+// Iconic sorting verification sweep sound (Left-to-right ascending pitch sweep)
+export function playCompletionSweep(array: number[]) {
+  if (typeof window === "undefined" || !array.length) return;
+  const min = Math.min(...array);
+  const max = Math.max(...array);
+  const stepDelay = Math.max(15, Math.min(40, 600 / array.length));
+
+  array.forEach((val, idx) => {
+    setTimeout(() => {
+      const freq = getPitchForValue(val, min, max);
+      playTone(freq, "triangle", 0.04, 0.04);
+    }, idx * stepDelay);
+  });
+
+  setTimeout(() => {
+    playStepSound("complete");
+  }, array.length * stepDelay + 80);
 }

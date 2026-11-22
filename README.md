@@ -61,9 +61,11 @@
   - Hỗ trợ xem code ở 3 ngôn ngữ: **C++**, **Python**, **TypeScript**.
   - **Highlight dòng code tương ứng** theo từng bước thuật toán đang thực thi.
   - Tính năng copy code tiện lợi.
-- 🎵 **Hiệu ứng âm thanh tổng hợp (Web Audio API Synthesizer)**:
-  - Tạo âm thanh so sánh và hoán đổi thanh thoát bằng dao động sóng âm thuần túy (không cần file mp3 nặng nề).
-  - Hiệu ứng pháo hoa ăn mừng (Confetti) khi thuật toán hoàn thành.
+- 🎵 **Âm thanh biến đổi cao độ theo giá trị (Pitch-based Audio - The Sound of Sorting)**:
+  - Tần số âm thanh (180 Hz – 960 Hz) tỉ lệ thuận theo thang hàm mũ tự nhiên với giá trị phần tử đang so sánh hoặc hoán đổi (số nhỏ âm trầm, số lớn âm bổng).
+  - Khi Quick Sort hay Merge Sort chạy ở tốc độ cao, các tần số hòa quyện tạo thành giai điệu quét âm thanh mượt mà, cuốn hút (tương tự các video triệu view về "Sound of Sorting" trên YouTube).
+  - Hỗ trợ âm thanh lan tỏa cho Đồ thị & Mê cung 2D theo khoảng cách bước đi.
+  - Hiệu ứng quét kiểm tra toàn mảng tăng dần (Ascending Completion Sweep) và hợp âm ăn mừng (Victory Fanfare C5–E5–G5–C6) khi hoàn thành.
 - 🌓 **Hỗ trợ Dark Mode / Light Mode hoàn hảo**: Chuyển đổi giao diện mượt mà với `next-themes`.
 - 📱 **Responsive 100%**: Hoạt động tối ưu trên máy tính bảng, điện thoại và màn hình lớn.
 

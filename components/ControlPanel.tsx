@@ -192,14 +192,24 @@ export function ControlPanel({
           <button
             onClick={onSoundToggle}
             className={cn(
-              "p-2 rounded-xl border transition-colors",
+              "flex items-center gap-1.5 px-2.5 py-2 rounded-xl border transition-all text-xs font-semibold",
               soundEnabled
-                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-600 dark:hover:text-slate-200"
             )}
-            title={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh hiệu ứng"}
+            title={soundEnabled ? "Tắt âm thanh giải thuật" : "Bật âm thanh cao độ theo giá trị (Pitch Audio)"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? (
+              <>
+                <Volume2 className="w-4 h-4 text-emerald-500 animate-pulse" />
+                <span className="hidden sm:inline">Pitch Audio</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-4 h-4" />
+                <span className="hidden sm:inline">Bật tiếng</span>
+              </>
+            )}
           </button>
         </div>
       </div>

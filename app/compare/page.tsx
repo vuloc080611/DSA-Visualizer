@@ -113,11 +113,14 @@ export default function ComparePage() {
           if (finishedA && !finishedB && !winner) {
             setWinner("A");
             confetti({ particleCount: 70, spread: 60, origin: { x: 0.3, y: 0.6 } });
+            if (soundEnabled) playStepSound("complete");
           } else if (finishedB && !finishedA && !winner) {
             setWinner("B");
             confetti({ particleCount: 70, spread: 60, origin: { x: 0.7, y: 0.6 } });
+            if (soundEnabled) playStepSound("complete");
           } else if (finishedA && finishedB && !winner) {
             setWinner("tie");
+            if (soundEnabled) playStepSound("complete");
           }
 
           // Advance A if not finished
@@ -130,7 +133,23 @@ export default function ComparePage() {
           }
 
           if (soundEnabled) {
-            playStepSound("compare");
+            const stepA = stepsA[indexA];
+            const stepB = stepsB[indexB];
+            const activeStep = !finishedA && stepA ? stepA : stepB;
+            if (activeStep?.array && activeStep.array.length > 0) {
+              const minVal = Math.min(...activeStep.array);
+              const maxVal = Math.max(...activeStep.array);
+              const isSwap = Boolean(activeStep.swapping && activeStep.swapping.length > 0);
+              const indices = isSwap ? activeStep.swapping! : activeStep.highlights;
+              if (indices && indices.length > 0) {
+                const vals = indices.map((idx) => activeStep.array![idx]).filter((v) => v !== undefined);
+                playStepSound(isSwap ? "swap" : "compare", vals, minVal, maxVal);
+              } else {
+                playStepSound("compare");
+              }
+            } else {
+              playStepSound("compare");
+            }
           }
         }, speed);
       }
@@ -404,7 +423,7 @@ export default function ComparePage() {
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 ml-1"
-              title={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}
+              title={soundEnabled ? "Tắt âm thanh giải thuật" : "Bật âm thanh cao độ theo giá trị (Pitch Audio)"}
             >
               {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-500" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
