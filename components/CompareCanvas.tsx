@@ -4,6 +4,7 @@ import { Step, Algorithm } from "@/lib/types";
 import { ComplexityBadge } from "./ComplexityBadge";
 import { Trophy, Activity, ArrowLeftRight, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface CompareCanvasProps {
   algorithm: Algorithm;
@@ -166,15 +167,25 @@ export function CompareCanvas({
           }
 
           return (
-            <div
+            <motion.div
+              layout
               key={idx}
+              animate={
+                isSwapping
+                  ? { y: -8, scale: 1.05 }
+                  : isHighlight
+                  ? { y: -3 }
+                  : { y: 0, scale: 1 }
+              }
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
               className="flex-1 flex flex-col items-center justify-end h-full max-w-[28px] min-w-[4px]"
             >
               <div
                 style={{ height: `${normalizedHeight}px` }}
                 className={cn(
                   "w-full rounded-t transition-all duration-150 flex items-center justify-center",
-                  barBg
+                  barBg,
+                  isSwapping && "shadow-lg shadow-rose-500/50 ring-1 ring-rose-400"
                 )}
               >
                 {array.length <= 15 && (
@@ -183,7 +194,7 @@ export function CompareCanvas({
                   </span>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

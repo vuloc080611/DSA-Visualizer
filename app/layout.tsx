@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className="antialiased min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+      <body className="font-sans antialiased min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange={false}>
           <Navbar />
           <main className="flex-1">{children}</main>

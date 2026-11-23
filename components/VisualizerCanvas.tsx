@@ -208,37 +208,57 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
           }
 
           return (
-            <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full max-w-[56px] min-w-[20px]">
+            <motion.div
+              layout
+              key={`bar-col-${idx}`}
+              animate={
+                isSwapping
+                  ? { y: [0, -14, 0], scale: [1, 1.07, 1] }
+                  : isHighlight
+                  ? { y: [0, -5, 0] }
+                  : { y: 0, scale: 1 }
+              }
+              transition={{
+                layout: { type: "spring", stiffness: 350, damping: 26 },
+                y: { duration: 0.22, ease: "easeInOut" },
+              }}
+              className="flex-1 flex flex-col items-center justify-end h-full max-w-[56px] min-w-[20px] relative"
+            >
               {/* Pointer indicator above bar */}
               <div className="h-6 flex items-center justify-center">
                 {isPivot && (
                   <motion.div
-                    initial={{ y: -6, opacity: 0 }}
+                    initial={{ y: -8, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     className="flex flex-col items-center"
                   >
                     <span className="text-[10px] font-bold uppercase tracking-tight text-purple-600 dark:text-purple-300">
                       Pivot
                     </span>
-                    <ArrowDown className="w-3 h-3 text-purple-500 -mt-0.5 animate-bounce" />
+                    <ArrowDown className="w-3.5 h-3.5 text-purple-500 -mt-0.5 animate-bounce" />
                   </motion.div>
                 )}
                 {isSwapping && !isPivot && (
                   <motion.div
                     initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-2 h-2 rounded-full bg-rose-500 animate-ping"
-                  />
+                    animate={{ scale: [1, 1.4, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.6 }}
+                    className="flex items-center gap-1"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-500/50 animate-ping" />
+                  </motion.div>
                 )}
               </div>
 
-              {/* Animated Bar */}
+              {/* Animated Bar with Physical Elevation */}
               <motion.div
                 layout
                 initial={{ height: 0 }}
                 animate={{ height: `${normalizedHeight}px` }}
                 transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                className={`w-full rounded-t-lg sm:rounded-t-xl border flex flex-col justify-between items-center py-1.5 transition-colors duration-200 ${barBg} ${borderGlow}`}
+                className={`w-full rounded-t-lg sm:rounded-t-xl border flex flex-col justify-between items-center py-1.5 transition-colors duration-200 ${barBg} ${borderGlow} ${
+                  isSwapping ? "shadow-2xl shadow-rose-500/50 ring-2 ring-rose-400" : ""
+                }`}
               >
                 {/* Value at top */}
                 <span className="text-xs sm:text-sm font-bold font-mono tracking-tight drop-shadow-sm">
@@ -255,11 +275,11 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
 
               {/* Index at bottom */}
               <div className="mt-2 text-center">
-                <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">
+                <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 font-semibold">
                   {idx}
                 </span>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -343,7 +363,7 @@ function GraphCanvas({ currentStep }: { currentStep: Step }) {
             if (active) {
               strokeColor = "#06b6d4"; // cyan
               strokeWidth = 4;
-              strokeDash = "6 4";
+              strokeDash = "8 6";
             } else if (visited) {
               strokeColor = "#10b981"; // emerald
               strokeWidth = 3;
@@ -359,7 +379,7 @@ function GraphCanvas({ currentStep }: { currentStep: Step }) {
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
                 strokeDasharray={strokeDash}
-                className="transition-all duration-300"
+                className={active ? "animate-laser" : "transition-all duration-300"}
               />
             );
           })}
@@ -390,20 +410,32 @@ function GraphCanvas({ currentStep }: { currentStep: Step }) {
 
             return (
               <g key={node.id} className="cursor-pointer transition-transform duration-200">
-                {/* Ping ring for active node */}
+                {/* Ping rings for active node */}
                 {isCurrent && (
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={26}
-                    fill="none"
-                    stroke="#8b5cf6"
-                    strokeWidth="3"
-                    className="animate-ping opacity-60"
-                  />
+                  <>
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={28}
+                      fill="none"
+                      stroke="#8b5cf6"
+                      strokeWidth="2.5"
+                      className="animate-ping opacity-75"
+                    />
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={36}
+                      fill="none"
+                      stroke="#c084fc"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 3"
+                      className="animate-spin opacity-50"
+                    />
+                  </>
                 )}
 
-                {/* Node Circle */}
+                {/* Node Circle with Neon Glow */}
                 <circle
                   cx={node.x}
                   cy={node.y}
@@ -411,6 +443,13 @@ function GraphCanvas({ currentStep }: { currentStep: Step }) {
                   fill={fillColor}
                   stroke={strokeColor}
                   strokeWidth="3"
+                  filter={
+                    isCurrent
+                      ? "drop-shadow(0 0 10px rgba(139, 92, 246, 0.7))"
+                      : isVisited
+                      ? "drop-shadow(0 0 6px rgba(16, 185, 129, 0.45))"
+                      : undefined
+                  }
                   className="shadow-md transition-colors duration-300"
                 />
 
@@ -944,16 +983,16 @@ function PathfindingCanvas({
                   "bg-white dark:bg-slate-100 text-slate-900 ring-2 ring-amber-400 scale-110 z-30 shadow-md";
               } else if (isPath) {
                 cellClass =
-                  "bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow-md shadow-amber-400/50 border-amber-300 scale-[1.03] z-10 font-bold";
+                  "bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-950 shadow-lg shadow-amber-400/60 border-amber-300 scale-[1.08] z-20 font-extrabold animate-pulse";
               } else if (isWall) {
                 cellClass =
                   "bg-slate-800 dark:bg-slate-200 border-slate-700 dark:border-slate-300 shadow-sm";
               } else if (isVisited) {
                 cellClass =
-                  "bg-cyan-500/80 dark:bg-cyan-400/80 border-cyan-400 text-white shadow-sm";
+                  "bg-gradient-to-tr from-cyan-600 to-teal-400 border-cyan-300/80 text-white shadow-sm transition-transform duration-200";
               } else if (isFrontier) {
                 cellClass =
-                  "bg-purple-500/50 dark:bg-purple-500/50 border-purple-400 text-white animate-pulse";
+                  "bg-gradient-to-tr from-purple-600 to-indigo-500 border-purple-400 text-white animate-pulse shadow-sm";
               }
 
               return (

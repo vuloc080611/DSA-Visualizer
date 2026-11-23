@@ -4,6 +4,9 @@ import { useState, useMemo, useEffect } from "react";
 import { ALGORITHMS, CATEGORIES } from "@/lib/algorithms";
 import { AlgorithmCard } from "@/components/AlgorithmCard";
 import { AlgorithmCategory } from "@/lib/types";
+import { HeroConstellation } from "@/components/HeroConstellation";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { HeroLiveWidget } from "@/components/HeroLiveWidget";
 import {
   Search,
   Sparkles,
@@ -15,6 +18,8 @@ import {
   Filter,
   CheckCircle,
   Swords,
+  Play,
+  Terminal,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -85,72 +90,120 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-slate-200/80 dark:border-slate-800/80">
-        {/* Decorative background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-emerald-500/15 via-teal-500/10 to-indigo-500/15 blur-3xl pointer-events-none rounded-full" />
+        {/* Constellation Particle Canvas in background */}
+        <HeroConstellation />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Interactive Algorithm Visualization Web App</span>
-          </div>
+        {/* Ambient Living Aurora Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[380px] bg-gradient-to-tr from-emerald-500/20 via-teal-500/15 to-transparent blur-3xl pointer-events-none rounded-full animate-aurora" />
+        <div className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gradient-to-bl from-cyan-500/15 via-indigo-500/15 to-transparent blur-3xl pointer-events-none rounded-full animate-aurora-reverse" />
 
-          {/* Title */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight sm:leading-tight">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-7">
+          {/* Animated Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-50/90 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-sm backdrop-blur-md"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+            <span>Interactive Algorithm Visualization Web App • Next.js 15</span>
+          </motion.div>
+
+          {/* Title with Shimmer Gradient */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight sm:leading-tight"
+          >
             Hiểu Rõ Bản Chất Giải Thuật Bằng{" "}
-            <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 via-cyan-400 to-emerald-400 bg-clip-text text-transparent animate-shimmer">
               Hình Ảnh Tương Tác
             </span>
-          </h1>
+          </motion.h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Học và ôn tập 20+ thuật toán kinh điển từ Sorting, Searching, Graph, Cây BST/AVL, Mê cung 2D đến Danh sách liên kết & Ngăn xếp (Stack/Queue) với hoạt ảnh step-by-step mượt mà, phân tích độ phức tạp và code mẫu đa ngôn ngữ.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed"
+          >
+            Học và ôn tập 28 thuật toán kinh điển từ Sorting, Searching, Graph, Cây BST/AVL, Mê cung 2D, Quy hoạch động đến Quay lui với hoạt ảnh step-by-step 60 FPS mượt mà và code mẫu đa ngôn ngữ.
+          </motion.p>
 
           {/* Quick CTA Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-3 pt-1"
+          >
             <a
               href="#algorithms"
-              className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition-all hover:scale-105"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 animate-glow-pulse"
             >
               <span>Khám phá thuật toán</span>
               <ArrowRight className="w-4 h-4" />
             </a>
             <Link
               href="/compare"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold text-sm shadow-lg shadow-amber-500/25 flex items-center gap-2 transition-all hover:scale-105"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold text-sm shadow-lg shadow-amber-500/25 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
             >
               <Swords className="w-4 h-4" />
-              <span>Chế độ So Sánh (Race)</span>
+              <span>Đua 4 làn (Race)</span>
             </Link>
             <Link
-              href="/visualizer/bubble-sort"
-              className="px-6 py-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-slate-700 transition-all shadow-sm"
+              href="/playground"
+              className="px-6 py-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-slate-700 transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-2"
             >
-              Xem Demo Bubble Sort
+              <Terminal className="w-4 h-4 text-emerald-500" />
+              <span>Live Playground</span>
             </Link>
-          </div>
+          </motion.div>
 
-          {/* Stat Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-8">
-            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">20</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Thuật toán có sẵn</div>
+          {/* Hero Live Interactive Mini-Visualizer Sandbox */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.35 }}
+            className="pt-2"
+          >
+            <HeroLiveWidget />
+          </motion.div>
+
+          {/* Animated Stat Badges */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4"
+          >
+            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-mono">
+                <AnimatedCounter target={ALGORITHMS.length} />
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Thuật toán có sẵn</div>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-emerald-500">8</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Chủ đề kinh điển</div>
+            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-500 font-mono">
+                <AnimatedCounter target={CATEGORIES.length - 1} suffix=" Chủ đề" />
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Danh mục phong phú</div>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">3</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">C++, Python, TS</div>
+            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-mono">
+                3
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">C++, Python, TS</div>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm">
-              <div className="text-2xl font-bold text-emerald-500">60 FPS</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Framer Motion</div>
+            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-500 font-mono">
+                <AnimatedCounter target={60} suffix=" FPS" />
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Framer Motion</div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -167,22 +220,32 @@ export default function HomePage() {
         <div id="stack-queue" className="absolute -top-24" />
         {/* Search & Category Filter Bar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
-                  selectedCategory === cat.id
-                    ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
-                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
-                }`}
-              >
-                <span>{cat.name}</span>
-                <span className="ml-1.5 text-xs opacity-75">({cat.count})</span>
-              </button>
-            ))}
+          {/* Category Tabs with Sliding Active Pill */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            {CATEGORIES.map((cat) => {
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`relative px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                    isActive
+                      ? "text-white font-bold"
+                      : "text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-emerald-400 bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800"
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="category-tab-active-home"
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl shadow-md shadow-emerald-500/25 -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span>{cat.name}</span>
+                  <span className="ml-1.5 text-xs opacity-80">({cat.count})</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Search Input */}

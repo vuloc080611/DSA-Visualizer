@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import { ThemeToggle } from "./ThemeToggle";
 import { SearchModal } from "./SearchModal";
 import { ALGORITHMS } from "@/lib/algorithms";
@@ -278,12 +279,19 @@ export function Navbar() {
               <button
                 onClick={() => handleCategoryClick("all")}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer",
+                  "relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer",
                   pathname === "/" && !activeCategoryFromRoute
-                    ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-2xs border border-emerald-500/25"
+                    ? "text-emerald-600 dark:text-emerald-400 font-bold"
                     : "text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/60 dark:hover:bg-slate-800/60"
                 )}
               >
+                {pathname === "/" && !activeCategoryFromRoute && (
+                  <motion.div
+                    layoutId="navbar-ribbon-active"
+                    className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-emerald-500/30 -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
                 <Sparkles className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span>Tất cả</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
@@ -307,12 +315,19 @@ export function Navbar() {
                     onMouseEnter={(e) => handleMouseEnter(cat.id, e)}
                     onMouseLeave={handleMouseLeave}
                     className={cn(
-                      "group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer",
+                      "relative group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors cursor-pointer",
                       isActive || isOpen
-                        ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-2xs border border-emerald-500/30"
+                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
                         : "text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white/60 dark:hover:bg-slate-800/60"
                     )}
                   >
+                    {(isActive || isOpen) && (
+                      <motion.div
+                        layoutId="navbar-ribbon-active"
+                        className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-emerald-500/30 -z-10"
+                        transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                      />
+                    )}
                     <Icon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                     <span>{cat.label}</span>
                     <span
