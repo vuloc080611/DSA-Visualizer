@@ -49,12 +49,20 @@ interface VisualizerCanvasProps {
   category: AlgorithmCategory;
   arraySize?: number;
   onGridChange?: (walls: [number, number][], start: [number, number], end: [number, number]) => void;
+  isChallengeMode?: boolean;
+  selectedIndices?: number[];
+  onSelectIndex?: (index: number) => void;
+  onSelectNode?: (nodeId: string) => void;
 }
 
 export function VisualizerCanvas({
   currentStep,
   category,
   onGridChange,
+  isChallengeMode = false,
+  selectedIndices = [],
+  onSelectIndex,
+  onSelectNode,
 }: VisualizerCanvasProps) {
   // Trie (Prefix Tree & Autocomplete)
   if (currentStep.trie !== undefined) {
@@ -113,7 +121,13 @@ export function VisualizerCanvas({
 
   // If it's a graph algorithm (BFS/DFS), render the Graph Canvas
   if (category === "graph" && currentStep.graph) {
-    return <GraphCanvas currentStep={currentStep} />;
+    return (
+      <GraphCanvas
+        currentStep={currentStep}
+        isChallengeMode={isChallengeMode}
+        onSelectNode={onSelectNode}
+      />
+    );
   }
 
   // If it's a tree algorithm (BST / AVL), render the Tree Canvas
@@ -122,11 +136,28 @@ export function VisualizerCanvas({
   }
 
   // Array / Sorting / Searching / Window Canvas
-  return <ArrayCanvas currentStep={currentStep} />;
+  return (
+    <ArrayCanvas
+      currentStep={currentStep}
+      isChallengeMode={isChallengeMode}
+      selectedIndices={selectedIndices}
+      onSelectIndex={onSelectIndex}
+    />
+  );
 }
 
 // ==================== ARRAY CANVAS ====================
-function ArrayCanvas({ currentStep }: { currentStep: Step }) {
+function ArrayCanvas({
+  currentStep,
+  isChallengeMode = false,
+  selectedIndices = [],
+  onSelectIndex,
+}: {
+  currentStep: Step;
+  isChallengeMode?: boolean;
+  selectedIndices?: number[];
+  onSelectIndex?: (index: number) => void;
+}) {
   const array = currentStep.array || [];
   if (array.length === 0) {
     return (
@@ -168,6 +199,7 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
       <div className="relative z-10 w-full flex items-end justify-center gap-1.5 sm:gap-2.5 max-w-4xl h-[280px]">
         {array.map((value, idx) => {
           // Status priority
+          const isSelected = selectedIndices.includes(idx);
           const isSorted = currentStep.sorted?.includes(idx);
           const isSwapping = currentStep.swapping?.includes(idx);
           const isHighlight = currentStep.highlights?.includes(idx);
@@ -186,7 +218,11 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
           let borderGlow = "border-slate-300 dark:border-slate-600";
           let labelText = "Default";
 
-          if (isSorted) {
+          if (isSelected) {
+            barBg = "bg-gradient-to-t from-cyan-500 to-sky-400 text-white shadow-xl shadow-cyan-500/40";
+            borderGlow = "border-cyan-300 ring-4 ring-cyan-400/80";
+            labelText = "Selected";
+          } else if (isSorted) {
             barBg = "bg-gradient-to-t from-emerald-600 to-emerald-400 text-white shadow-lg shadow-emerald-500/25";
             borderGlow = "border-emerald-400";
             labelText = "Sorted";
@@ -211,22 +247,38 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
             <motion.div
               layout
               key={`bar-col-${idx}`}
+              onClick={() => {
+                if (isChallengeMode) {
+                  onSelectIndex?.(idx);
+                }
+              }}
               animate={
                 isSwapping
                   ? { y: [0, -14, 0], scale: [1, 1.07, 1] }
-                  : isHighlight
-                  ? { y: [0, -5, 0] }
+                  : isHighlight || isSelected
+                  ? { y: [0, -5, 0], scale: isSelected ? 1.05 : 1 }
                   : { y: 0, scale: 1 }
               }
               transition={{
                 layout: { type: "spring", stiffness: 350, damping: 26 },
                 y: { duration: 0.22, ease: "easeInOut" },
               }}
-              className="flex-1 flex flex-col items-center justify-end h-full max-w-[56px] min-w-[20px] relative"
+              className={`flex-1 flex flex-col items-center justify-end h-full max-w-[56px] min-w-[20px] relative ${
+                isChallengeMode ? "cursor-pointer hover:brightness-110" : ""
+              }`}
             >
               {/* Pointer indicator above bar */}
               <div className="h-6 flex items-center justify-center">
-                {isPivot && (
+                {isSelected && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="px-1.5 py-0.2 rounded-md bg-cyan-500 text-white text-[9px] font-bold shadow-md shadow-cyan-500/30 flex items-center gap-0.5"
+                  >
+                    <span>✓ Chọn</span>
+                  </motion.div>
+                )}
+                {!isSelected && isPivot && (
                   <motion.div
                     initial={{ y: -8, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -238,7 +290,7 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
                     <ArrowDown className="w-3.5 h-3.5 text-purple-500 -mt-0.5 animate-bounce" />
                   </motion.div>
                 )}
-                {isSwapping && !isPivot && (
+                {!isSelected && isSwapping && !isPivot && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: [1, 1.4, 1] }}
@@ -312,7 +364,15 @@ function ArrayCanvas({ currentStep }: { currentStep: Step }) {
 }
 
 // ==================== GRAPH CANVAS (BFS / DFS) ====================
-function GraphCanvas({ currentStep }: { currentStep: Step }) {
+function GraphCanvas({
+  currentStep,
+  isChallengeMode = false,
+  onSelectNode,
+}: {
+  currentStep: Step;
+  isChallengeMode?: boolean;
+  onSelectNode?: (nodeId: string) => void;
+}) {
   const graph = currentStep.graph;
   if (!graph) return null;
 
@@ -409,7 +469,17 @@ function GraphCanvas({ currentStep }: { currentStep: Step }) {
             }
 
             return (
-              <g key={node.id} className="cursor-pointer transition-transform duration-200">
+              <g
+                key={node.id}
+                onClick={() => {
+                  if (isChallengeMode) {
+                    onSelectNode?.(node.id);
+                  }
+                }}
+                className={`cursor-pointer transition-transform duration-200 ${
+                  isChallengeMode ? "hover:scale-110" : ""
+                }`}
+              >
                 {/* Ping rings for active node */}
                 {isCurrent && (
                   <>

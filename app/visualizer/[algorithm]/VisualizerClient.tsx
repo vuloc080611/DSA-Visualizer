@@ -22,6 +22,16 @@ import { generateRandomWalls, generateStaircaseWalls } from "@/lib/algorithms/pa
 import { generateQuizQuestions, QuizQuestion } from "@/lib/quiz";
 import { QuizModal } from "@/components/QuizModal";
 import { ExportModal } from "@/components/ExportModal";
+import { ChallengeHUD } from "@/components/challenge/ChallengeHUD";
+import { ChallengeHintBanner } from "@/components/challenge/ChallengeHintBanner";
+import { ChallengeVictoryModal } from "@/components/challenge/ChallengeVictoryModal";
+import {
+  getChallengePrompt,
+  getChallengeHint,
+  calculateChallengeRank,
+  ChallengeFeedback,
+  ChallengeStats,
+} from "@/lib/challenge";
 import confetti from "canvas-confetti";
 import {
   ArrowLeft,
@@ -33,6 +43,8 @@ import {
   Lightbulb,
   Trophy,
   Camera,
+  Eye,
+  Gamepad2,
 } from "lucide-react";
 
 interface VisualizerClientProps {
@@ -65,6 +77,22 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  // Challenge Mode State
+  const [isChallengeMode, setIsChallengeMode] = useState(false);
+  const [challengeHearts, setChallengeHearts] = useState(3);
+  const [challengeScore, setChallengeScore] = useState(0);
+  const [challengeStreak, setChallengeStreak] = useState(0);
+  const [challengeMaxStreak, setChallengeMaxStreak] = useState(0);
+  const [challengeMistakes, setChallengeMistakes] = useState(0);
+  const [challengeTotalActions, setChallengeTotalActions] = useState(0);
+  const [challengeHintsUsed, setChallengeHintsUsed] = useState(0);
+  const [challengeElapsedSeconds, setChallengeElapsedSeconds] = useState(0);
+  const [challengeSelectedIndices, setChallengeSelectedIndices] = useState<number[]>([]);
+  const [challengeFeedback, setChallengeFeedback] = useState<ChallengeFeedback | null>(null);
+  const [challengeActiveHint, setChallengeActiveHint] = useState<string | null>(null);
+  const [isChallengeVictoryModalOpen, setIsChallengeVictoryModalOpen] = useState(false);
+  const [isChallengeGameOver, setIsChallengeGameOver] = useState(false);
 
   // Quiz Mode State
   const [isQuizMode, setIsQuizMode] = useState(false);
@@ -376,6 +404,243 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
     }
   };
 
+  // Challenge Timer Loop
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isChallengeMode && !isChallengeVictoryModalOpen && !isChallengeGameOver) {
+      timer = setInterval(() => {
+        setChallengeElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isChallengeMode, isChallengeVictoryModalOpen, isChallengeGameOver]);
+
+  const handleRestartChallenge = () => {
+    handleRandomize();
+    setCurrentStepIndex(0);
+    setChallengeHearts(3);
+    setChallengeScore(0);
+    setChallengeStreak(0);
+    setChallengeMaxStreak(0);
+    setChallengeMistakes(0);
+    setChallengeTotalActions(0);
+    setChallengeHintsUsed(0);
+    setChallengeElapsedSeconds(0);
+    setChallengeSelectedIndices([]);
+    setChallengeFeedback(null);
+    setChallengeActiveHint(null);
+    setIsChallengeGameOver(false);
+    setIsChallengeVictoryModalOpen(false);
+  };
+
+  const handleChallengeSelectIndex = (idx: number) => {
+    if (isChallengeGameOver || isChallengeVictoryModalOpen) return;
+    setChallengeSelectedIndices((prev) => {
+      if (prev.includes(idx)) {
+        return prev.filter((i) => i !== idx);
+      }
+      if (prev.length < 2) {
+        return [...prev, idx];
+      }
+      return [prev[1], idx];
+    });
+    playTone(320 + idx * 30, "sine", 0.04, 0.03);
+  };
+
+  const handleChallengeSelectNode = (nodeId: string) => {
+    if (isChallengeGameOver || isChallengeVictoryModalOpen) return;
+    const nextStep = steps[currentStepIndex + 1];
+    setChallengeTotalActions((prev) => prev + 1);
+
+    if (nextStep && nextStep.currentNode === nodeId) {
+      const nextStreak = challengeStreak + 1;
+      setChallengeStreak(nextStreak);
+      setChallengeMaxStreak((prev) => Math.max(prev, nextStreak));
+      setChallengeScore((prev) => prev + 20 * nextStreak);
+      setChallengeFeedback({
+        type: "success",
+        message: `Chính xác! Đỉnh '${nodeId}' được lấy ra xử lý tiếp theo (+${20 * nextStreak} XP)!`,
+      });
+      playTone(550, "triangle", 0.08, 0.05);
+
+      if (currentStepIndex + 1 >= steps.length - 1) {
+        setIsChallengeVictoryModalOpen(true);
+      } else {
+        setCurrentStepIndex((prev) => prev + 1);
+      }
+    } else {
+      const nextHearts = challengeHearts - 1;
+      setChallengeHearts(nextHearts);
+      setChallengeMistakes((prev) => prev + 1);
+      setChallengeStreak(0);
+      setChallengeFeedback({
+        type: "error",
+        message: `Chưa đúng! Đỉnh '${nodeId}' chưa phải là đỉnh tiếp theo cần duyệt!`,
+        hint: `Gợi ý: Kiểm tra thứ tự các đỉnh trong hàng đợi / ngăn xếp!`,
+      });
+      playTone(180, "sawtooth", 0.1, 0.08);
+
+      if (nextHearts <= 0) {
+        setIsChallengeGameOver(true);
+        setIsChallengeVictoryModalOpen(true);
+      }
+    }
+  };
+
+  const handleChallengeSwap = () => {
+    if (challengeSelectedIndices.length !== 2) return;
+    const [i, j] = challengeSelectedIndices;
+    const nextStep = steps[currentStepIndex + 1];
+    setChallengeTotalActions((prev) => prev + 1);
+
+    if (
+      nextStep &&
+      nextStep.swapping &&
+      nextStep.swapping.includes(i) &&
+      nextStep.swapping.includes(j)
+    ) {
+      const nextStreak = challengeStreak + 1;
+      setChallengeStreak(nextStreak);
+      setChallengeMaxStreak((prev) => Math.max(prev, nextStreak));
+      setChallengeScore((prev) => prev + 20 * nextStreak);
+      setChallengeFeedback({
+        type: "success",
+        message: `Chính xác! Đã hoán đổi vị trí [${i}] và [${j}] thành công (+${20 * nextStreak} XP)!`,
+      });
+      setChallengeSelectedIndices([]);
+      setChallengeActiveHint(null);
+      playTone(600, "triangle", 0.07, 0.05);
+
+      if (currentStepIndex + 1 >= steps.length - 1) {
+        setIsChallengeVictoryModalOpen(true);
+      } else {
+        setCurrentStepIndex((prev) => prev + 1);
+      }
+    } else {
+      const nextHearts = challengeHearts - 1;
+      setChallengeHearts(nextHearts);
+      setChallengeMistakes((prev) => prev + 1);
+      setChallengeStreak(0);
+      setChallengeFeedback({
+        type: "error",
+        message: `Chưa đúng! Trong lượt này cặp [${i}] và [${j}] không cần hoán đổi (hoặc chưa đến lượt xét)!`,
+        hint: `Gợi ý: Xem kỹ chiều duyệt và quy tắc so sánh của ${algorithm.name}!`,
+      });
+      playTone(180, "sawtooth", 0.1, 0.08);
+
+      if (nextHearts <= 0) {
+        setIsChallengeGameOver(true);
+        setIsChallengeVictoryModalOpen(true);
+      }
+    }
+  };
+
+  const handleChallengeNoSwap = () => {
+    if (challengeSelectedIndices.length !== 2) return;
+    const [i, j] = challengeSelectedIndices;
+    const nextStep = steps[currentStepIndex + 1];
+    setChallengeTotalActions((prev) => prev + 1);
+
+    const isNextSwapping = nextStep && nextStep.swapping && nextStep.swapping.includes(i) && nextStep.swapping.includes(j);
+
+    if (!isNextSwapping) {
+      const nextStreak = challengeStreak + 1;
+      setChallengeStreak(nextStreak);
+      setChallengeMaxStreak((prev) => Math.max(prev, nextStreak));
+      setChallengeScore((prev) => prev + 20 * nextStreak);
+      setChallengeFeedback({
+        type: "success",
+        message: `Chính xác! Cặp [${i}] và [${j}] đã đúng thứ tự nên không cần hoán đổi (+${20 * nextStreak} XP)!`,
+      });
+      setChallengeSelectedIndices([]);
+      setChallengeActiveHint(null);
+      playTone(550, "sine", 0.06, 0.04);
+
+      if (currentStepIndex + 1 >= steps.length - 1) {
+        setIsChallengeVictoryModalOpen(true);
+      } else {
+        setCurrentStepIndex((prev) => prev + 1);
+      }
+    } else {
+      const nextHearts = challengeHearts - 1;
+      setChallengeHearts(nextHearts);
+      setChallengeMistakes((prev) => prev + 1);
+      setChallengeStreak(0);
+      setChallengeFeedback({
+        type: "error",
+        message: `Chưa đúng! Cặp [${i}] và [${j}] đang sai thứ tự nên bắt buộc phải hoán đổi!`,
+      });
+      playTone(180, "sawtooth", 0.1, 0.08);
+
+      if (nextHearts <= 0) {
+        setIsChallengeGameOver(true);
+        setIsChallengeVictoryModalOpen(true);
+      }
+    }
+  };
+
+  const handleChallengeConfirmSelection = () => {
+    if (challengeSelectedIndices.length === 0) return;
+    const idx = challengeSelectedIndices[0];
+    const nextStep = steps[currentStepIndex + 1];
+    setChallengeTotalActions((prev) => prev + 1);
+
+    if (algorithm.id === "binary-search" && nextStep && nextStep.pivot === idx) {
+      const nextStreak = challengeStreak + 1;
+      setChallengeStreak(nextStreak);
+      setChallengeMaxStreak((prev) => Math.max(prev, nextStreak));
+      setChallengeScore((prev) => prev + 25 * nextStreak);
+      setChallengeFeedback({
+        type: "success",
+        message: `Chính xác! Vị trí mid = ${idx} là trung điểm chính xác (+${25 * nextStreak} XP)!`,
+      });
+      setChallengeSelectedIndices([]);
+      setChallengeActiveHint(null);
+      playTone(650, "triangle", 0.07, 0.05);
+
+      if (currentStepIndex + 1 >= steps.length - 1) {
+        setIsChallengeVictoryModalOpen(true);
+      } else {
+        setCurrentStepIndex((prev) => prev + 1);
+      }
+    } else {
+      const nextHearts = challengeHearts - 1;
+      setChallengeHearts(nextHearts);
+      setChallengeMistakes((prev) => prev + 1);
+      setChallengeStreak(0);
+      setChallengeFeedback({
+        type: "error",
+        message: `Chưa đúng! Vị trí [${idx}] không phải là điểm cần chọn ở bước này.`,
+      });
+      playTone(180, "sawtooth", 0.1, 0.08);
+
+      if (nextHearts <= 0) {
+        setIsChallengeGameOver(true);
+        setIsChallengeVictoryModalOpen(true);
+      }
+    }
+  };
+
+  const handleChallengeUseHint = () => {
+    setChallengeHintsUsed((prev) => prev + 1);
+    setChallengeScore((prev) => Math.max(0, prev - 5));
+    const hint = getChallengeHint(algorithm, steps[currentStepIndex], steps[currentStepIndex + 1]);
+    setChallengeActiveHint(hint);
+  };
+
+  const handleChallengeGiveUp = () => {
+    setIsChallengeGameOver(true);
+    setIsChallengeVictoryModalOpen(true);
+  };
+
+  const challengePrompt = getChallengePrompt(
+    algorithm,
+    steps[currentStepIndex] || {},
+    steps[currentStepIndex + 1]
+  );
+
   const currentStep = steps[currentStepIndex] || {
     description: "Đang tải dữ liệu thuật toán...",
   };
@@ -461,6 +726,45 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
         )}
       </div>
 
+      {/* Mode Selector Pill: Auto Visualizer vs Play-by-Hand Challenge */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <button
+            onClick={() => {
+              setIsChallengeMode(false);
+              setIsPlaying(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              !isChallengeMode
+                ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-500/20"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Eye className="w-4 h-4 text-emerald-500" />
+            <span>Mô phỏng tự động</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsChallengeMode(true);
+              setIsPlaying(false);
+              handleRestartChallenge();
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              isChallengeMode
+                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/25"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Gamepad2 className="w-4 h-4 text-amber-300" />
+            <span>Tự giải bằng tay (Challenge)</span>
+            <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-black">
+              LIVE
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Visualizer Canvas + Controls + Step Description */}
@@ -471,56 +775,91 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             category={algorithm.category}
             arraySize={arrayData.length}
             onGridChange={algorithm.category === "pathfinding" ? handleGridChange : undefined}
+            isChallengeMode={isChallengeMode}
+            selectedIndices={challengeSelectedIndices}
+            onSelectIndex={handleChallengeSelectIndex}
+            onSelectNode={handleChallengeSelectNode}
           />
 
-          {/* Control Panel */}
-          <ControlPanel
-            isPlaying={isPlaying}
-            onPlayPause={handlePlayPause}
-            onNext={handleNext}
-            onPrev={handlePrev}
-            onReset={handleReset}
-            currentStepIndex={currentStepIndex}
-            totalSteps={steps.length}
-            onSeek={(idx) => {
-              setCurrentStepIndex(idx);
-              setIsPlaying(false);
-            }}
-            speed={speed}
-            onSpeedChange={setSpeed}
-            soundEnabled={soundEnabled}
-            onSoundToggle={() => setSoundEnabled(!soundEnabled)}
-            isQuizMode={isQuizMode}
-            onQuizToggle={handleToggleQuiz}
-            category={algorithm.category}
-            onRandomize={
-              algorithm.category === "pathfinding"
-                ? () => handleGridChange(generateRandomWalls(15, 25, gridStart, gridEnd, 0.28), gridStart, gridEnd)
-                : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
-                ? handleRandomize
-                : undefined
-            }
-            onNearlySorted={
-              algorithm.category === "pathfinding"
-                ? () => handleGridChange(generateStaircaseWalls(15, 25, gridStart, gridEnd), gridStart, gridEnd)
-                : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
-                ? handleNearlySorted
-                : undefined
-            }
-            onReversed={
-              algorithm.category === "pathfinding"
-                ? () => handleGridChange([], gridStart, gridEnd)
-                : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
-                ? handleReversed
-                : undefined
-            }
-            onCustomInput={
-              (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array")
-                ? handleCustomInput
-                : undefined
-            }
-            currentTarget={target}
-          />
+          {/* Control Panel vs Challenge HUD */}
+          {isChallengeMode ? (
+            <div className="space-y-4">
+              <ChallengeHintBanner
+                prompt={challengePrompt.prompt}
+                feedback={challengeFeedback}
+                activeHint={challengeActiveHint}
+              />
+              <ChallengeHUD
+                hearts={challengeHearts}
+                maxHearts={3}
+                score={challengeScore}
+                streak={challengeStreak}
+                elapsedSeconds={challengeElapsedSeconds}
+                selectedIndices={challengeSelectedIndices}
+                canSwap={algorithm.category === "sorting"}
+                onSwap={handleChallengeSwap}
+                onNoSwap={handleChallengeNoSwap}
+                onConfirmSelection={
+                  algorithm.id === "binary-search" || algorithm.category === "graph"
+                    ? handleChallengeConfirmSelection
+                    : undefined
+                }
+                onUseHint={handleChallengeUseHint}
+                onGiveUp={handleChallengeGiveUp}
+                onRestart={handleRestartChallenge}
+                isCompleted={currentStepIndex >= steps.length - 1}
+                isGameOver={isChallengeGameOver}
+              />
+            </div>
+          ) : (
+            <ControlPanel
+              isPlaying={isPlaying}
+              onPlayPause={handlePlayPause}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              onReset={handleReset}
+              currentStepIndex={currentStepIndex}
+              totalSteps={steps.length}
+              onSeek={(idx) => {
+                setCurrentStepIndex(idx);
+                setIsPlaying(false);
+              }}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              soundEnabled={soundEnabled}
+              onSoundToggle={() => setSoundEnabled(!soundEnabled)}
+              isQuizMode={isQuizMode}
+              onQuizToggle={handleToggleQuiz}
+              category={algorithm.category}
+              onRandomize={
+                algorithm.category === "pathfinding"
+                  ? () => handleGridChange(generateRandomWalls(15, 25, gridStart, gridEnd, 0.28), gridStart, gridEnd)
+                  : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
+                  ? handleRandomize
+                  : undefined
+              }
+              onNearlySorted={
+                algorithm.category === "pathfinding"
+                  ? () => handleGridChange(generateStaircaseWalls(15, 25, gridStart, gridEnd), gridStart, gridEnd)
+                  : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
+                  ? handleNearlySorted
+                  : undefined
+              }
+              onReversed={
+                algorithm.category === "pathfinding"
+                  ? () => handleGridChange([], gridStart, gridEnd)
+                  : (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array" || algorithm.category === "tree")
+                  ? handleReversed
+                  : undefined
+              }
+              onCustomInput={
+                (algorithm.category === "sorting" || algorithm.category === "searching" || algorithm.category === "array")
+                  ? handleCustomInput
+                  : undefined
+              }
+              currentTarget={target}
+            />
+          )}
 
           {/* Step Description */}
           <StepDescription step={currentStep} totalSteps={steps.length} />
@@ -586,6 +925,30 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
         onPlayFromStart={() => {
           setCurrentStepIndex(0);
           setIsPlaying(true);
+        }}
+      />
+
+      {/* Challenge Mode Victory / Game Over Modal */}
+      <ChallengeVictoryModal
+        isOpen={isChallengeVictoryModalOpen}
+        isGameOver={isChallengeGameOver}
+        algorithm={algorithm}
+        stats={{
+          score: challengeScore,
+          hearts: challengeHearts,
+          maxHearts: 3,
+          streak: challengeStreak,
+          maxStreak: challengeMaxStreak,
+          hintsUsed: challengeHintsUsed,
+          mistakes: challengeMistakes,
+          totalActions: challengeTotalActions,
+          elapsedSeconds: challengeElapsedSeconds,
+          rank: calculateChallengeRank(challengeMistakes, challengeHintsUsed, challengeTotalActions),
+        }}
+        onRestart={handleRestartChallenge}
+        onSwitchToVisualizer={() => {
+          setIsChallengeVictoryModalOpen(false);
+          setIsChallengeMode(false);
         }}
       />
     </div>
