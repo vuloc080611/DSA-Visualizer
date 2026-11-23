@@ -28,6 +28,12 @@ import {
 import { generateValidParenthesesSteps, DEFAULT_PARENTHESES_STRING } from "./stackQueue";
 import { generateKnapsackSteps, DEFAULT_KNAPSACK_ITEMS, DEFAULT_KNAPSACK_CAPACITY } from "./dp";
 import { generateNQueensSteps, DEFAULT_N_QUEENS_SIZE } from "./backtracking";
+import { generateTrieSteps, DEFAULT_TRIE_WORDS } from "./trie";
+import { generateKMPSteps, DEFAULT_KMP_TEXT, DEFAULT_KMP_PATTERN } from "./kmp";
+import { generateKruskalSteps, DEFAULT_KRUSKAL_GRAPH } from "./dsu";
+import { generateSegmentTreeSteps, DEFAULT_SEG_TREE_ARRAY } from "./segmentTree";
+import { generateTopologicalSortSteps, DEFAULT_DAG_GRAPH } from "./topologicalSort";
+import { generateLCSSteps, DEFAULT_LCS_STR1, DEFAULT_LCS_STR2 } from "./lcs";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -1513,6 +1519,373 @@ function solveNQueens(board: number[], row: number, n: number): boolean {
     },
     generateSteps: () => generateNQueensSteps(),
   },
+
+  // =================== STRING & TRIE ===================
+  {
+    id: "trie",
+    name: "Trie (Prefix Tree & Autocomplete)",
+    category: "string",
+    shortDescription: "Cây tiền tố (Trie) hỗ trợ chèn từ, tra cứu và tự động gợi ý tìm kiếm (Autocomplete) siêu tốc trong thời gian O(L).",
+    fullDescription:
+      "Trie (còn gọi là Prefix Tree) là cấu trúc dữ liệu cây chuyên dùng để lưu trữ tập hợp các chuỗi ký tự. Mỗi cạnh hoặc node biểu diễn một ký tự. Các từ có cùng tiền tố sẽ dùng chung một nhánh từ gốc, giúp tiết kiệm bộ nhớ và tìm kiếm nhanh chóng trong O(L) với L là độ dài từ. Ứng dụng phổ biến trong tính năng Autocomplete của Google và bộ kiểm tra chính tả.",
+    complexity: {
+      best: "O(L)",
+      average: "O(L)",
+      worst: "O(L)",
+      space: "O(N × L)",
+    },
+    properties: {
+      stable: false,
+      inPlace: false,
+      dataStructure: "Prefix Tree",
+    },
+    code: {
+      cpp: `class TrieNode {
+public:
+    unordered_map<char, TrieNode*> children;
+    bool isEndOfWord = false;
+};
+
+void insert(TrieNode* root, string word) {
+    TrieNode* curr = root;
+    for (char c : word) {
+        if (!curr->children.count(c))
+            curr->children[c] = new TrieNode();
+        curr = curr->children[c];
+    }
+    curr->isEndOfWord = true;
+}`,
+      python: `class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.is_end = False
+
+def insert(root, word):
+    curr = root
+    for char in word:
+        if char not in curr.children:
+            curr.children[char] = TrieNode()
+        curr = curr.children[char]
+    curr.is_end = True`,
+      typescript: `class TrieNode {
+  children: Record<string, TrieNode> = {};
+  isEndOfWord = false;
+}
+
+function insert(root: TrieNode, word: string): void {
+  let curr = root;
+  for (const char of word) {
+    if (!curr.children[char]) {
+      curr.children[char] = new TrieNode();
+    }
+    curr = curr.children[char];
+  }
+  curr.isEndOfWord = true;
+}`,
+    },
+    generateSteps: () => generateTrieSteps(),
+  },
+
+  {
+    id: "kmp",
+    name: "KMP (Knuth-Morris-Pratt)",
+    category: "string",
+    shortDescription: "Thuật toán tìm kiếm xâu mẫu (Pattern Matching) tuyến tính O(N + M) sử dụng mảng tiền tố LPS để nhảy cóc bỏ qua các ký tự đã so khớp.",
+    fullDescription:
+      "KMP là một trong những giải thuật xử lý chuỗi kinh điển nhất trong khoa học máy tính. Bằng cách tính toán trước mảng LPS (Longest Prefix Suffix), khi gặp một vị trí không khớp (mismatch), KMP không bao giờ lùi con trỏ của văn bản mà dùng mảng LPS để trượt mẫu tìm kiếm sang vị trí thích hợp tiếp theo.",
+    complexity: {
+      best: "O(N)",
+      average: "O(N + M)",
+      worst: "O(N + M)",
+      space: "O(M)",
+    },
+    properties: {
+      stable: true,
+      inPlace: true,
+      dataStructure: "Array / String",
+    },
+    code: {
+      cpp: `vector<int> computeLPS(string pat) {
+    int m = pat.length(), len = 0, i = 1;
+    vector<int> lps(m, 0);
+    while (i < m) {
+        if (pat[i] == pat[len]) {
+            len++; lps[i] = len; i++;
+        } else if (len != 0) {
+            len = lps[len - 1];
+        } else {
+            lps[i] = 0; i++;
+        }
+    }
+    return lps;
+}`,
+      python: `def compute_lps(pattern):
+    lps = [0] * len(pattern)
+    length, i = 0, 1
+    while i < len(pattern):
+        if pattern[i] == pattern[length]:
+            length += 1
+            lps[i] = length
+            i += 1
+        elif length != 0:
+            length = lps[length - 1]
+        else:
+            lps[i] = 0
+            i += 1
+    return lps`,
+      typescript: `function computeLPS(pattern: string): number[] {
+  const lps = Array(pattern.length).fill(0);
+  let len = 0, i = 1;
+  while (i < pattern.length) {
+    if (pattern[i] === pattern[len]) {
+      len++; lps[i] = len; i++;
+    } else if (len !== 0) {
+      len = lps[len - 1];
+    } else {
+      lps[i] = 0; i++;
+    }
+  }
+  return lps;
+}`,
+    },
+    generateSteps: () => generateKMPSteps(),
+  },
+
+  // =================== GRAPH ADVANCED ===================
+  {
+    id: "kruskal-dsu",
+    name: "Kruskal's MST (Cây khung DSU)",
+    category: "graph",
+    shortDescription: "Tìm Cây Khung Nhỏ Nhất (MST) kết nối toàn bộ đồ thị với chi phí tối thiểu bằng giải thuật Kruskal và cấu trúc dữ liệu Disjoint Set Union (DSU).",
+    fullDescription:
+      "Thuật toán Kruskal sắp xếp toàn bộ cạnh theo trọng số tăng dần, sau đó lần lượt xét từng cạnh và dùng cấu trúc tập hợp rời rạc (DSU) với phép Find và Union để kiểm tra xem cạnh đó có tạo chu trình kín hay không. Nếu an toàn, cạnh được nạp vào MST cho đến khi đủ V-1 cạnh.",
+    complexity: {
+      best: "O(E log E)",
+      average: "O(E log E)",
+      worst: "O(E log E)",
+      space: "O(V + E)",
+    },
+    properties: {
+      stable: false,
+      inPlace: false,
+      dataStructure: "Graph & Disjoint Set",
+    },
+    code: {
+      cpp: `int find(int i, vector<int>& parent) {
+    if (parent[i] == i) return i;
+    return parent[i] = find(parent[i], parent); // Path compression
+}
+
+void unionSet(int i, int j, vector<int>& parent) {
+    int rootI = find(i, parent);
+    int rootJ = find(j, parent);
+    if (rootI != rootJ) parent[rootI] = rootJ;
+}`,
+      python: `def find(parent, i):
+    if parent[i] == i:
+        return i
+    parent[i] = find(parent, parent[i]) # Path compression
+    return parent[i]
+
+def union(parent, i, j):
+    root_i = find(parent, i)
+    root_j = find(parent, j)
+    if root_i != root_j:
+        parent[root_i] = root_j`,
+      typescript: `function find(parent: Record<string, string>, i: string): string {
+  if (parent[i] === i) return i;
+  parent[i] = find(parent, parent[i]); // Path compression
+  return parent[i];
+}
+
+function union(parent: Record<string, string>, i: string, j: string): void {
+  const rootI = find(parent, i);
+  const rootJ = find(parent, j);
+  if (rootI !== rootJ) parent[rootI] = rootJ;
+}`,
+    },
+    generateSteps: () => generateKruskalSteps(),
+  },
+
+  {
+    id: "topological-sort",
+    name: "Topological Sort (Thuật toán Kahn)",
+    category: "graph",
+    shortDescription: "Sắp xếp các đỉnh của đồ thị có hướng không chu trình (DAG) theo thứ tự tuyến tính hợp lệ (bài toán Course Schedule / Build Dependencies).",
+    fullDescription:
+      "Topological Sort dùng thuật toán Kahn dựa trên Bán bậc vào (In-Degree). Hàng đợi lưu các đỉnh có bán bậc vào bằng 0 (không phụ thuộc vào môn nào). Mỗi lượt lấy một đỉnh ra khỏi hàng đợi và giảm bán bậc vào của các đỉnh kề. Nếu tất cả đỉnh được xếp, đồ thị là DAG hợp lệ; nếu còn sót, phát hiện có chu trình phụ thuộc lẫn nhau.",
+    complexity: {
+      best: "O(V + E)",
+      average: "O(V + E)",
+      worst: "O(V + E)",
+      space: "O(V)",
+    },
+    properties: {
+      stable: true,
+      inPlace: false,
+      dataStructure: "Directed Acyclic Graph (DAG)",
+    },
+    code: {
+      cpp: `vector<int> topologicalSort(int V, vector<vector<int>>& adj) {
+    vector<int> inDegree(V, 0), order;
+    for (int u = 0; u < V; u++)
+        for (int v : adj[u]) inDegree[v]++;
+    queue<int> q;
+    for (int i = 0; i < V; i++)
+        if (inDegree[i] == 0) q.push(i);
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        order.push_back(u);
+        for (int v : adj[u])
+            if (--inDegree[v] == 0) q.push(v);
+    }
+    return order;
+}`,
+      python: `def topological_sort(V, adj):
+    in_degree = [0] * V
+    for u in range(V):
+        for v in adj[u]:
+            in_degree[v] += 1
+    queue = [i for i in range(V) if in_degree[i] == 0]
+    order = []
+    while queue:
+        u = queue.pop(0)
+        order.append(u)
+        for v in adj[u]:
+            in_degree[v] -= 1
+            if in_degree[v] == 0:
+                queue.append(v)
+    return order`,
+      typescript: `function topologicalSort(V: number, adj: Record<string, string[]>): string[] {
+  const inDegree: Record<string, number> = {};
+  const order: string[] = [];
+  const queue: string[] = [];
+  // Kahn's Algorithm
+  while (queue.length > 0) {
+    const u = queue.shift()!;
+    order.push(u);
+    for (const v of adj[u] || []) {
+      inDegree[v]--;
+      if (inDegree[v] === 0) queue.push(v);
+    }
+  }
+  return order;
+}`,
+    },
+    generateSteps: () => generateTopologicalSortSteps(),
+  },
+
+  // =================== TREE ADVANCED ===================
+  {
+    id: "segment-tree",
+    name: "Segment Tree (Cây Phân Đoạn)",
+    category: "tree",
+    shortDescription: "Cấu trúc cây nhị phân lưu trữ thông tin đoạn [L, R], hỗ trợ truy vấn tổng đoạn (Range Sum) và cập nhật điểm (Point Update) đều trong O(log N).",
+    fullDescription:
+      "Segment Tree là cấu trúc dữ liệu nâng cao quan trọng bậc nhất trong lập trình thi đấu CP. Mỗi node quản lý một khoảng chỉ số [L, R] và tổng của nó. Mọi truy vấn đoạn bất kỳ đều chỉ cần duyệt qua tối đa 4 node ở mỗi tầng, mang lại độ phức tạp O(log N) cho cả thao tác truy vấn và cập nhật giá trị.",
+    complexity: {
+      best: "O(log N)",
+      average: "O(log N)",
+      worst: "O(log N)",
+      space: "O(4N)",
+    },
+    properties: {
+      stable: false,
+      inPlace: false,
+      dataStructure: "Binary Segment Tree",
+    },
+    code: {
+      cpp: `void update(int node, int start, int end, int idx, int val, vector<int>& tree) {
+    if (start == end) {
+        tree[node] = val;
+        return;
+    }
+    int mid = (start + end) / 2;
+    if (idx <= mid) update(2 * node, start, mid, idx, val, tree);
+    else update(2 * node + 1, mid + 1, end, idx, val, tree);
+    tree[node] = tree[2 * node] + tree[2 * node + 1];
+}`,
+      python: `def update(node, start, end, idx, val, tree):
+    if start == end:
+        tree[node] = val
+        return
+    mid = (start + end) // 2
+    if idx <= mid:
+        update(2 * node, start, mid, idx, val, tree)
+    else:
+        update(2 * node + 1, mid + 1, end, idx, val, tree)
+    tree[node] = tree[2 * node] + tree[2 * node + 1]`,
+      typescript: `function update(node: number, start: number, end: number, idx: number, val: number, tree: number[]): void {
+  if (start === end) {
+    tree[node] = val;
+    return;
+  }
+  const mid = Math.floor((start + end) / 2);
+  if (idx <= mid) update(2 * node, start, mid, idx, val, tree);
+  else update(2 * node + 1, mid + 1, end, idx, val, tree);
+  tree[node] = tree[2 * node] + tree[2 * node + 1];
+}`,
+    },
+    generateSteps: () => generateSegmentTreeSteps(),
+  },
+
+  // =================== DYNAMIC PROGRAMMING ADVANCED ===================
+  {
+    id: "lcs",
+    name: "Longest Common Subsequence (LCS)",
+    category: "dp",
+    shortDescription: "Tìm độ dài và chuỗi con chung dài nhất giữa hai xâu bằng Quy hoạch động ma trận 2D và truy vết ngược (thuật toán cốt lõi của Git Diff).",
+    fullDescription:
+      "LCS là bài toán quy hoạch động cổ điển: dp[i][j] lưu độ dài chuỗi con chung dài nhất của tiền tố xâu 1 độ dài i và tiền tố xâu 2 độ dài j. Nếu hai ký tự trùng nhau, giá trị tăng lên 1 từ đường chéo dp[i-1][j-1]; nếu khác nhau, lấy giá trị max giữa ô trên và ô trái. Sau đó, thuật toán truy vết ngược từ ô cuối để xuất chuỗi con chung.",
+    complexity: {
+      best: "O(M × N)",
+      average: "O(M × N)",
+      worst: "O(M × N)",
+      space: "O(M × N)",
+    },
+    properties: {
+      stable: true,
+      inPlace: false,
+      dataStructure: "2D DP Table",
+    },
+    code: {
+      cpp: `int lcs(string s1, string s2) {
+    int m = s1.size(), n = s2.size();
+    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (s1[i - 1] == s2[j - 1])
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            else
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
+        }
+    }
+    return dp[m][n];
+}`,
+      python: `def lcs(s1, s2):
+    m, n = len(s1), len(s2)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if s1[i - 1] == s2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            else:
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+    return dp[m][n]`,
+      typescript: `function lcs(s1: string, s2: string): number {
+  const m = s1.length, n = s2.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (s1[i - 1] === s2[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
+      else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}`,
+    },
+    generateSteps: () => generateLCSSteps(),
+  },
 ];
 
 export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: number }[] = [
@@ -1521,7 +1894,8 @@ export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: n
   { id: "searching", name: "Searching (Tìm kiếm)", count: ALGORITHMS.filter((a) => a.category === "searching").length },
   { id: "graph", name: "Graph (Đồ thị)", count: ALGORITHMS.filter((a) => a.category === "graph").length },
   { id: "array", name: "Array & Window", count: ALGORITHMS.filter((a) => a.category === "array").length },
-  { id: "tree", name: "Tree (Cây BST & AVL)", count: ALGORITHMS.filter((a) => a.category === "tree").length },
+  { id: "tree", name: "Tree (Cây BST, AVL, Segment)", count: ALGORITHMS.filter((a) => a.category === "tree").length },
+  { id: "string", name: "String & Trie (Chuỗi)", count: ALGORITHMS.filter((a) => a.category === "string").length },
   { id: "pathfinding", name: "Pathfinding (Mê cung 2D)", count: ALGORITHMS.filter((a) => a.category === "pathfinding").length },
   { id: "linked-list", name: "Linked List (DS Liên kết)", count: ALGORITHMS.filter((a) => a.category === "linked-list").length },
   { id: "stack-queue", name: "Stack & Queue", count: ALGORITHMS.filter((a) => a.category === "stack-queue").length },

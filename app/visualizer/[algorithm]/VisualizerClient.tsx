@@ -215,6 +215,35 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             const [r, c] = currentStep.currentQueen;
             playTone(320 + r * 70 + c * 35, "sine", 0.05, 0.04); // Safe placement tone
           }
+        } else if (currentStep.trie) {
+          // Trie: pitch scales with prefix path depth
+          const depth = currentStep.trieActivePath?.length || 1;
+          playTone(280 + depth * 70, "sine", 0.04, 0.035);
+        } else if (currentStep.kmpText) {
+          // KMP: matching vs mismatching tones
+          if (currentStep.kmpState === "found" || currentStep.kmpState === "match") {
+            const pIdx = currentStep.kmpPatternIndex ?? 0;
+            playTone(320 + pIdx * 45, "sine", 0.04, 0.035);
+          } else if (currentStep.kmpState === "mismatch" || currentStep.kmpState === "lps-jump") {
+            playTone(190, "sawtooth", 0.035, 0.03);
+          }
+        } else if (currentStep.dsuEdges) {
+          // Kruskal / DSU: accepted edge vs cycle
+          const considering = currentStep.dsuEdges.find((e) => e.status === "considering");
+          if (considering) {
+            playTone(300 + (considering.weight || 0) * 30, "triangle", 0.04, 0.035);
+          }
+        } else if (currentStep.segTree) {
+          // Segment Tree: query inspection vs matched node
+          playTone(getPitchForValue(currentStepIndex, 0, Math.max(steps.length, 12), 260, 680), "sine", 0.04, 0.035);
+        } else if (currentStep.inDegree) {
+          // Topological Sort: popping courses
+          const count = currentStep.topoOrder?.length || 0;
+          playTone(260 + count * 65, "sine", 0.05, 0.04);
+        } else if (currentStep.lcsTable) {
+          // LCS: cell updates
+          const [i, j] = currentStep.currentLcsCell || [0, 0];
+          playTone(220 + i * 35 + j * 25, "triangle", 0.035, 0.03);
         }
       }
     }

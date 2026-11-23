@@ -8,7 +8,25 @@ export type AlgorithmCategory =
   | "linked-list"
   | "stack-queue"
   | "dp"
-  | "backtracking";
+  | "backtracking"
+  | "string";
+
+export interface TrieNodeData {
+  id: string;
+  char: string;
+  isEndOfWord: boolean;
+  word?: string;
+  children: Record<string, TrieNodeData>;
+}
+
+export interface SegTreeNodeData {
+  id: string;
+  range: [number, number]; // [L, R]
+  sum: number;
+  status?: "normal" | "inspecting" | "matched" | "updated";
+  left?: SegTreeNodeData | null;
+  right?: SegTreeNodeData | null;
+}
 
 export interface Complexity {
   best: string;
@@ -152,6 +170,58 @@ export interface Step {
   backtrackCount?: number;
   isSolution?: boolean;
   solutionCount?: number;
+
+  // Trie (Prefix Tree) state
+  trie?: TrieNodeData;
+  trieActivePath?: string[]; // array of node ids
+  trieCurrentWord?: string;
+  trieAction?: "insert" | "search" | "autocomplete";
+  trieSuggestions?: string[];
+
+  // KMP (Knuth-Morris-Pratt) state
+  kmpText?: string;
+  kmpPattern?: string;
+  kmpLps?: number[];
+  kmpTextIndex?: number;
+  kmpPatternIndex?: number;
+  kmpMatchedIndices?: number[];
+  kmpState?: "comparing" | "match" | "mismatch" | "lps-jump" | "found";
+
+  // DSU & Kruskal's MST state
+  dsuEdges?: {
+    from: string;
+    to: string;
+    weight: number;
+    status: "considering" | "accepted" | "rejected" | "normal";
+  }[];
+  dsuParent?: Record<string, string>;
+  dsuRank?: Record<string, number>;
+  dsuComponents?: Record<string, string>; // node -> component color/id
+  mstWeight?: number;
+  mstEdgesCount?: number;
+
+  // Segment Tree state
+  segTree?: SegTreeNodeData | null;
+  segTreeArray?: number[];
+  segTreeQueryRange?: [number, number];
+  segTreeUpdatedIndex?: number;
+  segTreeAction?: "build" | "query" | "update";
+
+  // Topological Sort (Kahn's Algorithm) state
+  inDegree?: Record<string, number>;
+  topoQueue?: string[];
+  topoOrder?: string[];
+  activeTopoNode?: string;
+  activeOutgoingEdges?: [string, string][];
+
+  // Longest Common Subsequence (LCS) state
+  lcsString1?: string;
+  lcsString2?: string;
+  lcsTable?: number[][];
+  currentLcsCell?: [number, number];
+  lcsMatchChar?: string;
+  lcsBacktrackPath?: [number, number][];
+  lcsResult?: string;
 }
 
 export interface GridConfig {

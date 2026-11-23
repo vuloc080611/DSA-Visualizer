@@ -25,6 +25,14 @@ import {
   Table2,
   Calculator,
   AlertCircle,
+  GitBranch,
+  ArrowRight,
+  CornerDownRight,
+  ListOrdered,
+  Check,
+  CaseSensitive,
+  Network,
+  GitFork,
 } from "lucide-react";
 import {
   DEFAULT_GRID_ROWS,
@@ -48,6 +56,36 @@ export function VisualizerCanvas({
   category,
   onGridChange,
 }: VisualizerCanvasProps) {
+  // Trie (Prefix Tree & Autocomplete)
+  if (currentStep.trie !== undefined) {
+    return <TrieCanvas currentStep={currentStep} />;
+  }
+
+  // KMP String Pattern Matching
+  if (currentStep.kmpText !== undefined) {
+    return <KmpCanvas currentStep={currentStep} />;
+  }
+
+  // Kruskal's MST & DSU
+  if (currentStep.dsuEdges !== undefined) {
+    return <DsuCanvas currentStep={currentStep} />;
+  }
+
+  // Segment Tree
+  if (currentStep.segTree !== undefined) {
+    return <SegmentTreeCanvas currentStep={currentStep} />;
+  }
+
+  // Topological Sort (Kahn's Algorithm)
+  if (currentStep.topoQueue !== undefined || currentStep.inDegree !== undefined) {
+    return <TopologicalSortCanvas currentStep={currentStep} />;
+  }
+
+  // Longest Common Subsequence (LCS)
+  if (currentStep.lcsTable !== undefined) {
+    return <LcsCanvas currentStep={currentStep} />;
+  }
+
   // If it's a dynamic programming algorithm (0/1 Knapsack), render DpCanvas
   if (category === "dp" || currentStep.dpTable !== undefined) {
     return <DpCanvas currentStep={currentStep} />;
@@ -1762,4 +1800,948 @@ function NQueensCanvas({ currentStep }: { currentStep: Step }) {
     </div>
   );
 }
+
+// ==================== TRIE (PREFIX TREE) CANVAS ====================
+function TrieCanvas({ currentStep }: { currentStep: Step }) {
+  const root = currentStep.trie;
+  const activePath = currentStep.trieActivePath || [];
+  const currentWord = currentStep.trieCurrentWord;
+  const action = currentStep.trieAction || "insert";
+  const suggestions = currentStep.trieSuggestions || [];
+
+  const renderTrieNode = (node: import("@/lib/types").TrieNodeData, level: number = 0) => {
+    const isActive = activePath.includes(node.id);
+    const childrenKeys = Object.keys(node.children);
+
+    return (
+      <div key={node.id} className="flex flex-col items-center">
+        {/* Node Circle */}
+        <div
+          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex flex-col items-center justify-center font-mono font-bold text-sm shadow-md transition-all duration-300 relative ${
+            isActive
+              ? "bg-amber-400 text-slate-950 scale-110 shadow-lg shadow-amber-500/40 ring-4 ring-amber-400/50"
+              : node.isEndOfWord
+              ? "bg-emerald-500 text-white shadow-emerald-500/30 ring-2 ring-emerald-400"
+              : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-300 dark:border-slate-700"
+          }`}
+        >
+          <span>{node.char}</span>
+          {node.isEndOfWord && (
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900" title={`Từ: ${node.word}`} />
+          )}
+        </div>
+
+        {node.word && node.isEndOfWord && (
+          <span className="mt-1 px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950/80 text-[10px] font-sans font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+            {node.word}
+          </span>
+        )}
+
+        {/* Children Row */}
+        {childrenKeys.length > 0 && (
+          <div className="flex items-start gap-4 sm:gap-6 mt-4 pt-3 border-t border-slate-200 dark:border-slate-800">
+            {childrenKeys.map((char) => renderTrieNode(node.children[char], level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="relative w-full min-h-[460px] flex flex-col justify-between items-center p-4 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none space-y-4">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <GitBranch className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Cây Tiền Tố Trie (Prefix Tree)</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                {action === "autocomplete" ? "Gợi ý Autocomplete" : "Nạp từ vào từ điển"}
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Chia sẻ tiền tố chung giữa các từ, tìm kiếm theo độ dài từ O(L)
+            </p>
+          </div>
+        </div>
+
+        {currentWord && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs font-bold text-amber-800 dark:text-amber-300 shadow-2xs">
+            <span>Từ đang xét:</span>
+            <span className="font-mono text-sm uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border">
+              {currentWord}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Autocomplete Suggestions Banner */}
+      {suggestions.length > 0 && (
+        <div className="relative z-10 w-full p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+            <Sparkles className="w-4 h-4 text-emerald-500" />
+            <span>Kết quả gợi ý tìm kiếm cho tiền tố &quot;{currentWord}&quot;:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {suggestions.map((s, idx) => (
+              <span
+                key={idx}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500 text-white font-mono font-bold text-xs shadow-sm animate-bounce"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tree Visualization Area */}
+      <div className="relative z-10 w-full overflow-x-auto no-scrollbar py-4 flex justify-center items-center min-h-[260px]">
+        {root ? renderTrieNode(root) : <div className="text-slate-400">Đang tải Trie...</div>}
+      </div>
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-500" />
+            <span>Node đang duyệt (Active Path)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 border border-emerald-600" />
+            <span>Ký tự kết thúc từ (isEndOfWord)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-400" />
+            <span>Node tiền tố thông thường</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 italic">
+          💡 Tất cả từ có chung tiền tố sẽ hội tụ về cùng một đường đi từ Root
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== KMP (STRING MATCHING) CANVAS ====================
+function KmpCanvas({ currentStep }: { currentStep: Step }) {
+  const text = currentStep.kmpText || "";
+  const pattern = currentStep.kmpPattern || "";
+  const lps = currentStep.kmpLps || [];
+  const textIdx = currentStep.kmpTextIndex ?? -1;
+  const patIdx = currentStep.kmpPatternIndex ?? -1;
+  const matches = currentStep.kmpMatchedIndices || [];
+  const state = currentStep.kmpState;
+
+  return (
+    <div className="relative w-full min-h-[460px] flex flex-col justify-between items-center p-4 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none space-y-4">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+            <CaseSensitive className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Thuật Toán KMP (Knuth-Morris-Pratt)</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800">
+                LPS Array O(N+M)
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Tìm kiếm chuỗi con không quay lui con trỏ văn bản nhờ bảng tiền tố LPS
+            </p>
+          </div>
+        </div>
+
+        {/* Live Matches Counter */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-2xs">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Tìm thấy:</span>
+            <span className="font-mono text-sm">{matches.length} lần</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Text vs Pattern Alignment Box */}
+      <div className="relative z-10 w-full p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 overflow-x-auto no-scrollbar">
+        {/* Text String Row */}
+        <div>
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1.5">
+            <span>Văn bản (Text) - Con trỏ i = {textIdx >= 0 ? textIdx : 0}</span>
+            <span className="font-mono text-[11px]">Độ dài: {text.length}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {text.split("").map((char, idx) => {
+              const isCurrent = idx === textIdx;
+              const isMatched = matches.some((m) => idx >= m && idx < m + pattern.length);
+
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  <div
+                    className={`w-8 h-9 sm:w-9 sm:h-10 rounded-lg flex items-center justify-center font-mono font-bold text-sm transition-all duration-150 ${
+                      isCurrent
+                        ? state === "match" || state === "found"
+                          ? "bg-emerald-500 text-white scale-110 shadow-lg ring-2 ring-emerald-400"
+                          : state === "mismatch"
+                          ? "bg-rose-500 text-white scale-110 shadow-lg ring-2 ring-rose-400"
+                          : "bg-amber-400 text-slate-950 scale-110 shadow-lg ring-2 ring-amber-400"
+                        : isMatched
+                        ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-400"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {char}
+                  </div>
+                  <span className="text-[9px] font-mono text-slate-400 mt-0.5">{idx}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Pattern String Row */}
+        <div>
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1.5">
+            <span>Mẫu tìm kiếm (Pattern) - Con trỏ j = {patIdx >= 0 ? patIdx : 0}</span>
+            <span className="font-mono text-[11px]">Độ dài: {pattern.length}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {pattern.split("").map((char, idx) => {
+              const isCurrent = idx === patIdx;
+
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  <div
+                    className={`w-8 h-9 sm:w-9 sm:h-10 rounded-lg flex items-center justify-center font-mono font-bold text-sm transition-all duration-150 ${
+                      isCurrent
+                        ? state === "match" || state === "found"
+                          ? "bg-emerald-500 text-white scale-110 shadow-lg ring-2 ring-emerald-400"
+                          : state === "mismatch"
+                          ? "bg-rose-500 text-white scale-110 shadow-lg ring-2 ring-rose-400"
+                          : "bg-amber-400 text-slate-950 scale-110 shadow-lg ring-2 ring-amber-400"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {char}
+                  </div>
+                  <span className="text-[9px] font-mono text-slate-400 mt-0.5">j={idx}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* LPS Table Display */}
+      {lps.length > 0 && (
+        <div className="relative z-10 w-full p-3 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 space-y-1.5 overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span>Bảng Tiền tố - Hậu tố LPS (Longest Prefix Suffix Array)</span>
+            <span className="text-[11px] text-slate-400 italic">Vị trí nhảy cóc khi mismatch</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {lps.map((val, idx) => {
+              const isCurrent = idx === patIdx;
+
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center font-mono font-bold text-xs transition-colors ${
+                      isCurrent
+                        ? "bg-cyan-500 text-white shadow-md ring-2 ring-cyan-300 font-extrabold"
+                        : "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700"
+                    }`}
+                  >
+                    {val}
+                  </div>
+                  <span className="text-[9px] font-mono text-slate-400 mt-0.5">{pattern[idx]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-emerald-500" />
+            <span>Ký tự trùng khớp (Match)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-rose-500" />
+            <span>Ký tự lệch (Mismatch)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-cyan-500" />
+            <span>Nhảy con trỏ LPS Jump</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 italic">
+          💡 Con trỏ văn bản i luôn chỉ tiến, không bao giờ quay lui
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== KRUSKAL & DSU CANVAS ====================
+function DsuCanvas({ currentStep }: { currentStep: Step }) {
+  const graph = currentStep.graph;
+  const edges = currentStep.dsuEdges || [];
+  const components = currentStep.dsuComponents || {};
+  const activeEdge = currentStep.activeEdge;
+  const mstWeight = currentStep.mstWeight ?? 0;
+  const acceptedCount = currentStep.mstEdgesCount ?? 0;
+  const totalNodes = graph?.nodes.length || 6;
+
+  return (
+    <div className="relative w-full min-h-[480px] flex flex-col justify-between items-center p-4 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none space-y-4">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+            <Network className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Kruskal&apos;s MST & Disjoint Set Union (DSU)</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800">
+                Cây Khung Nhỏ Nhất
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Sắp xếp cạnh tăng dần và dùng DSU kiểm tra chu trình trong O(E log E)
+            </p>
+          </div>
+        </div>
+
+        {/* Live MST Metrics */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border text-xs font-semibold">
+            <span>Cạnh MST:</span>
+            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+              {acceptedCount} / {totalNodes - 1}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Tổng Trọng Số:</span>
+            <span className="font-mono text-sm">{mstWeight}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Graph Display Area */}
+      <div className="relative z-10 w-full h-[260px] flex items-center justify-center">
+        <svg className="w-full h-full" viewBox="0 0 620 340">
+          {/* Edges */}
+          {edges.map((e, idx) => {
+            const uNode = graph?.nodes.find((n) => n.id === e.from);
+            const vNode = graph?.nodes.find((n) => n.id === e.to);
+            if (!uNode || !vNode) return null;
+
+            const isAccepted = e.status === "accepted";
+            const isRejected = e.status === "rejected";
+            const isConsidering = e.status === "considering";
+
+            let strokeColor = "#94a3b8";
+            let strokeWidth = 2;
+            let strokeDasharray = undefined;
+
+            if (isAccepted) {
+              strokeColor = "#10b981";
+              strokeWidth = 4;
+            } else if (isRejected) {
+              strokeColor = "#f43f5e";
+              strokeWidth = 2;
+              strokeDasharray = "5,5";
+            } else if (isConsidering) {
+              strokeColor = "#f59e0b";
+              strokeWidth = 4;
+            }
+
+            const midX = (uNode.x + vNode.x) / 2;
+            const midY = (uNode.y + vNode.y) / 2;
+
+            return (
+              <g key={idx}>
+                <line
+                  x1={uNode.x}
+                  y1={uNode.y}
+                  x2={vNode.x}
+                  y2={vNode.y}
+                  stroke={strokeColor}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={strokeDasharray}
+                  className="transition-all duration-300"
+                />
+                <circle cx={midX} cy={midY} r={12} fill="#ffffff" stroke={strokeColor} strokeWidth={1.5} />
+                <text
+                  x={midX}
+                  y={midY + 4}
+                  textAnchor="middle"
+                  className="text-[11px] font-mono font-bold fill-slate-800 dark:fill-slate-900"
+                >
+                  {e.weight}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Nodes */}
+          {graph?.nodes.map((node) => {
+            const color = components[node.id] || "#10b981";
+
+            return (
+              <g key={node.id}>
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r={20}
+                  fill={color}
+                  stroke="#ffffff"
+                  strokeWidth={3}
+                  className="shadow-md transition-all duration-300"
+                />
+                <text
+                  x={node.x}
+                  y={node.y + 5}
+                  textAnchor="middle"
+                  className="text-sm font-bold font-mono fill-white drop-shadow-sm select-none"
+                >
+                  {node.label}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Sorted Edge Queue Shelf */}
+      <div className="relative z-10 w-full p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 overflow-x-auto no-scrollbar">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
+          <span>Hàng đợi cạnh sắp xếp tăng dần ({edges.length} cạnh)</span>
+          <span className="text-[11px]">Xét lần lượt từ nhỏ đến lớn</span>
+        </div>
+        <div className="flex items-center gap-1.5 pt-1">
+          {edges.map((e, idx) => {
+            let badgeStyle = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+            if (e.status === "accepted") {
+              badgeStyle = "bg-emerald-500 text-white border-emerald-600 shadow-xs font-bold";
+            } else if (e.status === "rejected") {
+              badgeStyle = "bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800 line-through opacity-70";
+            } else if (e.status === "considering") {
+              badgeStyle = "bg-amber-400 text-slate-950 border-amber-500 ring-2 ring-amber-400 shadow-md font-bold scale-105 animate-pulse";
+            }
+
+            return (
+              <div
+                key={idx}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono border whitespace-nowrap transition-all duration-200 ${badgeStyle}`}
+              >
+                <span>{e.from}-{e.to}</span>
+                <span className="opacity-80 ml-1">({e.weight})</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-emerald-500" />
+            <span>Cạnh chấp nhận (Accepted vào MST)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-rose-500" />
+            <span>Cạnh loại bỏ (Tạo chu trình kín)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" />
+            <span>Màu sắc = Tập hợp DSU (Cùng màu là cùng nhóm)</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 italic">
+          💡 find(u) == find(v) ➔ Cùng gốc sẽ tạo chu trình kín, bỏ qua ngay!
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== SEGMENT TREE CANVAS ====================
+function SegmentTreeCanvas({ currentStep }: { currentStep: Step }) {
+  const root = currentStep.segTree;
+  const arr = currentStep.segTreeArray || [];
+  const queryRange = currentStep.segTreeQueryRange;
+  const updatedIdx = currentStep.segTreeUpdatedIndex;
+  const action = currentStep.segTreeAction;
+
+  const renderSegNode = (node: import("@/lib/types").SegTreeNodeData) => {
+    let nodeStyle = "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700";
+
+    if (node.status === "matched") {
+      nodeStyle = "bg-emerald-500 text-white border-emerald-600 ring-4 ring-emerald-400/50 shadow-lg scale-105 font-extrabold";
+    } else if (node.status === "inspecting") {
+      nodeStyle = "bg-cyan-500 text-white border-cyan-600 ring-2 ring-cyan-400 shadow-md font-bold";
+    } else if (node.status === "updated") {
+      nodeStyle = "bg-amber-400 text-slate-950 border-amber-500 ring-4 ring-amber-400/50 shadow-lg scale-105 font-extrabold animate-pulse";
+    }
+
+    return (
+      <div key={node.id} className="flex flex-col items-center">
+        <div
+          className={`px-3 py-1.5 rounded-xl flex flex-col items-center justify-center font-mono text-xs border shadow-sm transition-all duration-200 ${nodeStyle}`}
+        >
+          <span className="font-bold text-sm">{node.sum}</span>
+          <span className="text-[10px] opacity-80">[{node.range[0]}, {node.range[1]}]</span>
+        </div>
+
+        {(node.left || node.right) && (
+          <div className="flex items-start gap-4 sm:gap-8 mt-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+            {node.left && renderSegNode(node.left)}
+            {node.right && renderSegNode(node.right)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="relative w-full min-h-[480px] flex flex-col justify-between items-center p-4 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none space-y-4">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+            <GitFork className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Cây Phân Đoạn (Segment Tree)</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 border border-teal-300 dark:border-teal-800">
+                Range Query & Update O(log N)
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Lưu trữ tổng đoạn con, hỗ trợ truy vấn và cập nhật điểm siêu tốc
+            </p>
+          </div>
+        </div>
+
+        {queryRange && action === "query" && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-300 shadow-2xs">
+            <span>Truy vấn đoạn:</span>
+            <span className="font-mono text-sm px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border">
+              [{queryRange[0]}, {queryRange[1]}]
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Underlying Array Row */}
+      <div className="relative z-10 w-full p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>Mảng gốc (Underlying Array)</span>
+          <span className="text-[11px] font-mono">N = {arr.length}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {arr.map((val, idx) => {
+            const inQuery = queryRange && idx >= queryRange[0] && idx <= queryRange[1] && action === "query";
+            const isUpdated = idx === updatedIdx && action === "update";
+
+            return (
+              <div key={idx} className="flex flex-col items-center">
+                <div
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-mono font-bold text-sm transition-all duration-200 ${
+                    isUpdated
+                      ? "bg-amber-400 text-slate-950 scale-110 shadow-md ring-2 ring-amber-400"
+                      : inQuery
+                      ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-400 font-extrabold"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                  }`}
+                >
+                  {val}
+                </div>
+                <span className="text-[9px] font-mono text-slate-400 mt-0.5">[{idx}]</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Segment Tree Render Area */}
+      <div className="relative z-10 w-full overflow-x-auto no-scrollbar py-3 flex justify-center items-center min-h-[220px]">
+        {root ? renderSegNode(root) : <div className="text-slate-400">Đang tải Segment Tree...</div>}
+      </div>
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-emerald-500" />
+            <span>Node khớp hoàn toàn (Lấy ngay giá trị sum)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-cyan-500" />
+            <span>Giao nhau một phần (Rẽ xuống 2 con)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-amber-400" />
+            <span>Đường cập nhật giá trị Point Update</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 italic">
+          💡 Đoạn bất kỳ luôn được biểu diễn bằng không quá 2 × log₂(N) node
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== TOPOLOGICAL SORT CANVAS ====================
+function TopologicalSortCanvas({ currentStep }: { currentStep: Step }) {
+  const graph = currentStep.graph;
+  const inDegree = currentStep.inDegree || {};
+  const queue = currentStep.topoQueue || [];
+  const order = currentStep.topoOrder || [];
+  const activeNode = currentStep.activeTopoNode;
+  const activeEdges = currentStep.activeOutgoingEdges || [];
+
+  return (
+    <div className="relative w-full min-h-[480px] flex flex-col justify-between items-center p-4 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none space-y-4">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+            <ListOrdered className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Sắp Xếp Tô-pô (Topological Sort - Thuật toán Kahn)</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-800">
+                DAG & In-Degree O(V+E)
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Lập trình tự hoàn thành môn học hợp lệ theo các điều kiện tiên quyết
+            </p>
+          </div>
+        </div>
+
+        {/* Live Queue Box */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs font-semibold">
+          <span>Hàng đợi In-Degree = 0:</span>
+          {queue.length === 0 ? (
+            <span className="text-slate-400 italic font-mono text-[11px]">(Trống)</span>
+          ) : (
+            <div className="flex items-center gap-1 font-mono font-bold text-amber-700 dark:text-amber-300">
+              {queue.map((q, idx) => (
+                <span key={idx} className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-amber-300">
+                  {q}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Graph Display Area */}
+      <div className="relative z-10 w-full h-[240px] flex items-center justify-center">
+        <svg className="w-full h-full" viewBox="0 0 650 300">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+            </marker>
+            <marker id="arrow-active" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+            </marker>
+          </defs>
+
+          {/* Directed Edges */}
+          {graph?.edges.map((e, idx) => {
+            const uNode = graph.nodes.find((n) => n.id === e.from);
+            const vNode = graph.nodes.find((n) => n.id === e.to);
+            if (!uNode || !vNode) return null;
+
+            const isRemoved = activeEdges.some(([from, to]) => from === e.from && to === e.to);
+            const isFinished = order.includes(e.from);
+
+            return (
+              <line
+                key={idx}
+                x1={uNode.x}
+                y1={uNode.y}
+                x2={vNode.x}
+                y2={vNode.y}
+                stroke={isRemoved ? "#f59e0b" : isFinished ? "#cbd5e1" : "#94a3b8"}
+                strokeWidth={isRemoved ? 3 : 2}
+                strokeDasharray={isFinished && !isRemoved ? "4,4" : undefined}
+                markerEnd={isRemoved ? "url(#arrow-active)" : "url(#arrow)"}
+                className="transition-all duration-300"
+              />
+            );
+          })}
+
+          {/* Nodes */}
+          {graph?.nodes.map((node) => {
+            const deg = inDegree[node.id] ?? 0;
+            const isCompleted = order.includes(node.id);
+            const isActive = activeNode === node.id;
+            const inQueue = queue.includes(node.id);
+
+            let nodeColor = "#3b82f6";
+            if (isCompleted) nodeColor = "#10b981";
+            if (isActive) nodeColor = "#f59e0b";
+            if (inQueue) nodeColor = "#06b6d4";
+
+            return (
+              <g key={node.id}>
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r={22}
+                  fill={nodeColor}
+                  stroke="#ffffff"
+                  strokeWidth={3}
+                  className="shadow-md transition-all duration-300"
+                />
+                <text
+                  x={node.x}
+                  y={node.y + 4}
+                  textAnchor="middle"
+                  className="text-xs font-bold font-mono fill-white drop-shadow-sm select-none"
+                >
+                  {node.id}
+                </text>
+
+                {/* In-Degree Counter Badge */}
+                <circle cx={node.x + 16} cy={node.y - 16} r={10} fill="#0f172a" stroke="#ffffff" strokeWidth={1.5} />
+                <text
+                  x={node.x + 16}
+                  y={node.y - 13}
+                  textAnchor="middle"
+                  className="text-[10px] font-mono font-bold fill-white"
+                >
+                  {deg}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Sorted Linear Runway */}
+      <div className="relative z-10 w-full p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>Thứ tự học tập hợp lệ (Topological Order)</span>
+          <span className="font-mono text-[11px]">{order.length} / {graph?.nodes.length || 6} môn</span>
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          {order.length === 0 ? (
+            <span className="text-xs text-slate-400 italic">Chưa có môn nào được xuất...</span>
+          ) : (
+            order.map((cId, idx) => (
+              <div key={idx} className="flex items-center gap-2 shrink-0">
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-500 text-white font-mono font-bold text-xs shadow-sm flex items-center gap-1.5">
+                  <span className="text-[10px] opacity-80">#{idx + 1}</span>
+                  <span>{cId}</span>
+                </div>
+                {idx < order.length - 1 && <ArrowRight className="w-3.5 h-3.5 text-slate-400" />}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-emerald-500" />
+            <span>Môn đã hoàn thành (Xếp vào danh sách)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-cyan-500" />
+            <span>In-Degree = 0 (Đang đợi trong Queue)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full bg-amber-500" />
+            <span>Đang gỡ bỏ các cạnh tiên quyết</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 italic">
+          💡 Số tròn nhỏ góc trên mỗi node là Bán bậc vào (In-Degree)
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== LCS (LONGEST COMMON SUBSEQUENCE) CANVAS ====================
+function LcsCanvas({ currentStep }: { currentStep: Step }) {
+  const str1 = currentStep.lcsString1 || "";
+  const str2 = currentStep.lcsString2 || "";
+  const dp = currentStep.lcsTable || [];
+  const currentCell = currentStep.currentLcsCell;
+  const backtrackPath = currentStep.lcsBacktrackPath || [];
+  const result = currentStep.lcsResult || "";
+
+  return (
+    <div className="relative w-full min-h-[480px] flex flex-col justify-between items-center p-4 sm:p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm overflow-hidden select-none space-y-4">
+      {/* Background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+      {/* Header Bar */}
+      <div className="relative z-10 w-full flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+            <Calculator className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span>Chuỗi Con Chung Dài Nhất (Longest Common Subsequence)</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-800">
+                2D DP Table & Git Diff
+              </span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Công thức: Nếu khớp dp[i][j] = dp[i-1][j-1] + 1; Ngược lại max(Trên, Trái)
+            </p>
+          </div>
+        </div>
+
+        {/* Live LCS Result */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Chuỗi LCS:</span>
+            <span className="font-mono text-sm uppercase px-1.5 py-0.2 rounded bg-white dark:bg-slate-900 border">
+              {result.length > 0 ? result : "..."}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2D DP Table for LCS */}
+      <div className="relative z-10 w-full overflow-x-auto no-scrollbar py-2">
+        <table className="w-full border-collapse text-xs font-mono select-none">
+          <thead>
+            <tr>
+              <th className="p-2 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-center font-bold text-slate-500">
+                S1 \ S2
+              </th>
+              <th className="p-2 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-center font-bold text-slate-400 min-w-[36px]">
+                Ø
+              </th>
+              {str2.split("").map((c, idx) => (
+                <th
+                  key={idx}
+                  className={`p-2 border border-slate-200 dark:border-slate-800 text-center font-bold min-w-[36px] ${
+                    currentCell && currentCell[1] === idx + 1
+                      ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {c}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dp.map((row, rIdx) => {
+              const isCurrentRow = currentCell && currentCell[0] === rIdx;
+              const rowChar = rIdx === 0 ? "Ø" : str1[rIdx - 1];
+
+              return (
+                <tr key={rIdx} className={isCurrentRow ? "bg-amber-500/5 dark:bg-amber-500/10" : ""}>
+                  <td
+                    className={`p-2 border border-slate-200 dark:border-slate-800 font-sans text-xs font-bold text-center ${
+                      isCurrentRow
+                        ? "bg-amber-100 dark:bg-slate-800 text-amber-800 dark:text-amber-300 border-l-4 border-l-amber-500"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    {rowChar}
+                  </td>
+
+                  {row.map((val, cIdx) => {
+                    const isCellActive = currentCell && currentCell[0] === rIdx && currentCell[1] === cIdx;
+                    const inBacktrack = backtrackPath.some(([br, bc]) => br === rIdx && bc === cIdx);
+
+                    let cellStyle = "bg-white/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800";
+
+                    if (isCellActive) {
+                      cellStyle = "bg-amber-400 text-slate-950 font-extrabold scale-110 shadow-lg shadow-amber-500/40 ring-2 ring-amber-500 z-10 transition-transform duration-150";
+                    } else if (inBacktrack) {
+                      cellStyle = "bg-emerald-500 text-white font-extrabold shadow-sm ring-2 ring-emerald-400 z-10";
+                    }
+
+                    return (
+                      <td
+                        key={cIdx}
+                        className={`p-2 border text-center font-mono font-bold text-sm transition-all duration-200 ${cellStyle}`}
+                      >
+                        {val}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Legend */}
+      <div className="relative z-10 w-full pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-amber-400" />
+            <span>Ô đang tính dp[i][j]</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-emerald-500" />
+            <span>Đường truy vết (Backtrack Path tạo chuỗi LCS)</span>
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-500 italic">
+          💡 Khi 2 ký tự trùng nhau, ta lùi chéo lên trên và ghi nhận ký tự vào kết quả
+        </div>
+      </div>
+    </div>
+  );
+}
+
 

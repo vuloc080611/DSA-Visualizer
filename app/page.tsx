@@ -38,6 +38,7 @@ export default function HomePage() {
           "stack-queue",
           "dp",
           "backtracking",
+          "string",
         ].includes(hash)
       ) {
         setSelectedCategory(hash as AlgorithmCategory);

@@ -24,6 +24,7 @@ import {
   Link2,
   Calculator,
   Crown,
+  CaseSensitive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ const CATEGORIES_DATA: NavCategory[] = [
   { id: "searching", label: "Searching", icon: Search },
   { id: "graph", label: "Graph", icon: Network },
   { id: "tree", label: "Tree", icon: GitFork },
+  { id: "string", label: "Chuỗi & Trie", icon: CaseSensitive },
   { id: "array", label: "Array", icon: Layers },
   { id: "linked-list", label: "Linked List", icon: Link2 },
   { id: "stack-queue", label: "Stack & Queue", icon: Layers },

@@ -352,6 +352,120 @@ export function generateQuizQuestions(steps: Step[], algorithm: Algorithm): Quiz
     });
   }
 
+  // 9. Check for Trie
+  if (algorithm.id === "trie") {
+    questions.push({
+      id: "trie-complexity",
+      stepIndex: 2,
+      question: `Thời gian tìm kiếm một từ có độ dài L trong cây tiền tố (Trie) là bao nhiêu?`,
+      options: [
+        { id: "A", text: "O(L) - Tỉ lệ thuận với độ dài từ, độc lập với số lượng từ trong từ điển" },
+        { id: "B", text: "O(N) - Phải duyệt qua tất cả từ trong từ điển" },
+        { id: "C", text: "O(N²)" },
+        { id: "D", text: "O(2^L)" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Mỗi ký tự chỉ cần đi xuống 1 node con trong bảng băm/mảng con, do đó tìm kiếm trong Trie chỉ mất O(L) bất kể từ điển có hàng triệu từ!`,
+      category: "string",
+      points: 120,
+    });
+  }
+
+  // 10. Check for KMP
+  if (algorithm.id === "kmp") {
+    questions.push({
+      id: "kmp-lps-jump",
+      stepIndex: 5,
+      question: `Ưu điểm lớn nhất của thuật toán KMP so với thuật toán so khớp chuỗi ngây thơ (Brute Force) là gì?`,
+      options: [
+        { id: "A", text: "Con trỏ văn bản i không bao giờ phải quay lui nhờ mảng tiền tố LPS" },
+        { id: "B", text: "KMP sắp xếp lại các ký tự trong văn bản trước khi tìm" },
+        { id: "C", text: "KMP chỉ tìm được các từ có độ dài chẵn" },
+        { id: "D", text: "KMP tốn ít bộ nhớ hơn Brute Force" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Khi có ký tự không khớp, KMP dùng mảng LPS để nhảy con trỏ mẫu j mà giữ nguyên con trỏ văn bản i, giúp độ phức tạp đạt O(N + M) tuyến tính!`,
+      category: "string",
+      points: 120,
+    });
+  }
+
+  // 11. Check for Kruskal & DSU
+  if (algorithm.id === "kruskal-dsu") {
+    questions.push({
+      id: "kruskal-cycle-check",
+      stepIndex: 3,
+      question: `Trong thuật toán Kruskal, làm thế nào để biết thêm một cạnh (u, v) có tạo thành chu trình kín hay không?`,
+      options: [
+        { id: "A", text: "Kiểm tra find(u) === find(v) (Nếu cùng gốc tức là đã liên thông với nhau)" },
+        { id: "B", text: "Kiểm tra trọng số cạnh có âm hay không" },
+        { id: "C", text: "Kiểm tra số đỉnh kề của u lớn hơn 3" },
+        { id: "D", text: "Kiểm tra u và v có cùng tên chữ cái" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Nếu hai đỉnh u và v đã thuộc cùng một tập hợp (find(u) == find(v)), việc nối chúng sẽ tạo ra chu trình khép kín, nên cạnh đó phải bị loại bỏ!`,
+      category: "graph",
+      points: 120,
+    });
+  }
+
+  // 12. Check for Segment Tree
+  if (algorithm.id === "segment-tree") {
+    questions.push({
+      id: "segtree-complexity",
+      stepIndex: 3,
+      question: `Độ phức tạp thời gian của thao tác truy vấn tổng đoạn (Range Sum Query) trên Cây Phân Đoạn (Segment Tree) là bao nhiêu?`,
+      options: [
+        { id: "A", text: "O(log N)" },
+        { id: "B", text: "O(N)" },
+        { id: "C", text: "O(1)" },
+        { id: "D", text: "O(N log N)" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Mọi đoạn truy vấn [L, R] bất kỳ đều được chia nhỏ thành tối đa 2 × log₂(N) node con rời rạc trên cây, giúp tính toán cực nhanh trong O(log N).`,
+      category: "tree",
+      points: 120,
+    });
+  }
+
+  // 13. Check for Topological Sort
+  if (algorithm.id === "topological-sort") {
+    questions.push({
+      id: "topo-indegree-zero",
+      stepIndex: 2,
+      question: `Trong thuật toán Kahn (Topological Sort), điều kiện để một node được đưa vào Hàng đợi (Queue) để xử lý là gì?`,
+      options: [
+        { id: "A", text: "Bán bậc vào (In-Degree) bằng 0 (Không còn môn học tiên quyết nào)" },
+        { id: "B", text: "Bán bậc ra (Out-Degree) bằng 0" },
+        { id: "C", text: "Node có trọng số nhỏ nhất" },
+        { id: "D", text: "Node nằm ở vị trí trung tâm đồ thị" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! In-Degree = 0 nghĩa là node không phụ thuộc vào bất kỳ node nào khác (đã hoàn thành đủ môn tiên quyết), nên có thể xử lý ngay lập tức!`,
+      category: "graph",
+      points: 120,
+    });
+  }
+
+  // 14. Check for LCS
+  if (algorithm.id === "lcs") {
+    questions.push({
+      id: "lcs-recurrence",
+      stepIndex: 3,
+      question: `Trong bài toán LCS, nếu hai ký tự tại s1[i-1] và s2[j-1] trùng khớp nhau, giá trị dp[i][j] được tính như thế nào?`,
+      options: [
+        { id: "A", text: "dp[i][j] = dp[i-1][j-1] + 1 (Lấy giá trị từ ô đường chéo cộng thêm 1)" },
+        { id: "B", text: "dp[i][j] = max(dp[i-1][j], dp[i][j-1])" },
+        { id: "C", text: "dp[i][j] = dp[i-1][j] + dp[i][j-1]" },
+        { id: "D", text: "dp[i][j] = 1" },
+      ],
+      correctOptionId: "A",
+      explanation: `Chính xác! Khi 2 ký tự trùng nhau, ta tăng độ dài chuỗi con chung lên 1 đơn vị so với kết quả của 2 tiền tố trước đó: dp[i][j] = dp[i-1][j-1] + 1.`,
+      category: "dp",
+      points: 120,
+    });
+  }
+
   // 7. Fallback general algorithmic questions if too few
   if (questions.length < 2) {
     questions.push({
