@@ -30,8 +30,23 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        mono: ["var(--font-jetbrains)", "monospace"],
+        sans: [
+          "var(--font-inter)",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "'Segoe UI'",
+          "Roboto",
+          "'Helvetica Neue'",
+          "Arial",
+          "sans-serif",
+        ],
+        mono: [
+          "var(--font-jetbrains)",
+          "'JetBrains Mono'",
+          "Consolas",
+          "'Fira Code'",
+          "monospace",
+        ],
       },
       animation: {
         pulseFast: "pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite",

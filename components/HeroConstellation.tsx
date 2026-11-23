@@ -31,15 +31,15 @@ export function HeroConstellation() {
     };
     window.addEventListener("resize", handleResize);
 
-    const colors = ["#10b981", "#06b6d4", "#3b82f6", "#8b5cf6"];
-    const particleCount = Math.min(Math.floor((width * height) / 18000), 45);
+    const colors = ["#10b981", "#06b6d4", "#3b82f6", "#8b5cf6", "#34d399"];
+    const particleCount = Math.min(Math.floor((width * height) / 12000), 75);
 
     const particles: Particle[] = Array.from({ length: particleCount }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.6,
-      vy: (Math.random() - 0.5) * 0.6,
-      radius: Math.random() * 2 + 1.2,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.8,
+      radius: Math.random() * 2.2 + 1.4,
       color: colors[Math.floor(Math.random() * colors.length)],
     }));
 
@@ -57,15 +57,41 @@ export function HeroConstellation() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
+      // Draw mouse radial glow
+      if (mouseX > 0 && mouseY > 0) {
+        const mouseGlow = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 140);
+        mouseGlow.addColorStop(0, "rgba(16, 185, 129, 0.15)");
+        mouseGlow.addColorStop(1, "transparent");
+        ctx.fillStyle = mouseGlow;
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 140, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       // Draw connecting lines
       for (let i = 0; i < particles.length; i++) {
+        // Connect to mouse if close
+        if (mouseX > 0 && mouseY > 0) {
+          const mdx = particles[i].x - mouseX;
+          const mdy = particles[i].y - mouseY;
+          const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+          if (mDist < 120) {
+            ctx.strokeStyle = `rgba(52, 211, 153, ${(1 - mDist / 120) * 0.4})`;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(mouseX, mouseY);
+            ctx.stroke();
+          }
+        }
+
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 110) {
-            const alpha = (1 - dist / 110) * 0.18;
+          if (dist < 130) {
+            const alpha = (1 - dist / 130) * 0.28;
             ctx.strokeStyle = `rgba(16, 185, 129, ${alpha})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -117,7 +143,7 @@ export function HeroConstellation() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-60 z-0"
+      className="absolute inset-0 pointer-events-none opacity-80 dark:opacity-90 z-0"
     />
   );
 }

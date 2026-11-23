@@ -13,6 +13,7 @@ import {
   BarChart2,
   Code2,
   Cpu,
+  Layers,
   Zap,
   ArrowRight,
   Filter,
@@ -110,54 +111,64 @@ export default function HomePage() {
           </motion.div>
 
           {/* Title with Shimmer Gradient */}
-          <motion.h1
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight sm:leading-tight"
+            className="relative"
           >
-            Hiểu Rõ Bản Chất Giải Thuật Bằng{" "}
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 via-cyan-400 to-emerald-400 bg-clip-text text-transparent animate-shimmer">
-              Hình Ảnh Tương Tác
-            </span>
-          </motion.h1>
+            <div className="absolute -inset-x-10 top-1/2 -translate-y-1/2 h-28 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none -z-10" />
+            <h1
+              style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight sm:leading-tight drop-shadow-sm"
+            >
+              Hiểu Rõ Bản Chất Giải Thuật Bằng{" "}
+              <span
+                style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
+                className="bg-gradient-to-r from-emerald-400 via-teal-300 via-cyan-400 to-emerald-400 bg-clip-text text-transparent animate-shimmer filter drop-shadow-[0_0_25px_rgba(16,185,129,0.35)]"
+              >
+                Hình Ảnh Tương Tác
+              </span>
+            </h1>
+          </motion.div>
 
           {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
+            style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
             className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed"
           >
             Học và ôn tập 28 thuật toán kinh điển từ Sorting, Searching, Graph, Cây BST/AVL, Mê cung 2D, Quy hoạch động đến Quay lui với hoạt ảnh step-by-step 60 FPS mượt mà và code mẫu đa ngôn ngữ.
           </motion.p>
 
-          {/* Quick CTA Buttons */}
+          {/* Quick CTA Buttons with Radiant Glow */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-3 pt-1"
+            className="flex flex-wrap items-center justify-center gap-4 pt-2"
           >
             <a
               href="#algorithms"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 animate-glow-pulse"
+              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-sm shadow-[0_0_25px_rgba(16,185,129,0.45)] hover:shadow-[0_0_40px_rgba(16,185,129,0.7)] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
               <span>Khám phá thuật toán</span>
               <ArrowRight className="w-4 h-4" />
             </a>
             <Link
               href="/compare"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold text-sm shadow-lg shadow-amber-500/25 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-sm shadow-[0_0_25px_rgba(245,158,11,0.45)] hover:shadow-[0_0_40px_rgba(245,158,11,0.7)] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
               <Swords className="w-4 h-4" />
               <span>Đua 4 làn (Race)</span>
             </Link>
             <Link
               href="/playground"
-              className="px-6 py-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-sm border border-slate-200 dark:border-slate-700 transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center gap-2"
+              className="px-6 py-3.5 rounded-xl bg-slate-900/90 dark:bg-slate-900/90 hover:bg-slate-800 text-white font-bold text-sm border-2 border-emerald-500/50 hover:border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.25)] hover:shadow-[0_0_35px_rgba(16,185,129,0.5)] flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
-              <Terminal className="w-4 h-4 text-emerald-500" />
+              <Terminal className="w-4 h-4 text-emerald-400" />
               <span>Live Playground</span>
             </Link>
           </motion.div>
@@ -172,37 +183,70 @@ export default function HomePage() {
             <HeroLiveWidget />
           </motion.div>
 
-          {/* Animated Stat Badges */}
+          {/* Animated 3D Interactive Stat Badges */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
             className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4"
           >
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-mono">
-                <AnimatedCounter target={ALGORITHMS.length} />
+            {/* Card 1: 28 Thuật toán */}
+            <motion.div
+              whileHover={{ y: -6, scale: 1.03 }}
+              className="relative group p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/90 dark:border-slate-800/90 backdrop-blur-md shadow-sm hover:border-emerald-500 hover:shadow-[0_0_30px_rgba(16,185,129,0.35)] transition-all overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">
+                  <AnimatedCounter target={ALGORITHMS.length} />
+                </span>
+                <Cpu className="w-5 h-5 text-emerald-500" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Thuật toán có sẵn</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-500 font-mono">
-                <AnimatedCounter target={CATEGORIES.length - 1} suffix=" Chủ đề" />
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Thuật toán có sẵn</div>
+            </motion.div>
+
+            {/* Card 2: 11 Chủ đề */}
+            <motion.div
+              whileHover={{ y: -6, scale: 1.03 }}
+              className="relative group p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/90 dark:border-slate-800/90 backdrop-blur-md shadow-sm hover:border-amber-500 hover:shadow-[0_0_30px_rgba(245,158,11,0.35)] transition-all overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl sm:text-3xl font-black text-amber-500 font-mono">
+                  <AnimatedCounter target={CATEGORIES.length - 1} suffix=" Chủ đề" />
+                </span>
+                <Layers className="w-5 h-5 text-amber-500" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Danh mục phong phú</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
-              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-mono">
-                3
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Danh mục phong phú</div>
+            </motion.div>
+
+            {/* Card 3: 3 Ngôn ngữ */}
+            <motion.div
+              whileHover={{ y: -6, scale: 1.03 }}
+              className="relative group p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/90 dark:border-slate-800/90 backdrop-blur-md shadow-sm hover:border-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.35)] transition-all overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl sm:text-3xl font-black text-cyan-500 font-mono">3</span>
+                <Code2 className="w-5 h-5 text-cyan-500" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">C++, Python, TS</div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-sm shadow-sm hover:border-emerald-500/40 transition-colors">
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-500 font-mono">
-                <AnimatedCounter target={60} suffix=" FPS" />
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">C++, Python, TS</div>
+            </motion.div>
+
+            {/* Card 4: 60 FPS */}
+            <motion.div
+              whileHover={{ y: -6, scale: 1.03 }}
+              className="relative group p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/90 dark:border-slate-800/90 backdrop-blur-md shadow-sm hover:border-purple-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.35)] transition-all overflow-hidden"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-2xl sm:text-3xl font-black text-purple-500 font-mono">
+                  <AnimatedCounter target={60} suffix=" FPS" />
+                </span>
+                <Zap className="w-5 h-5 text-purple-500" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Framer Motion</div>
-            </div>
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Framer Motion</div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
