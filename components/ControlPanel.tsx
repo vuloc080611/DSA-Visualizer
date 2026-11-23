@@ -16,6 +16,9 @@ import {
   Check,
   Trash2,
   Gamepad2,
+  Upload,
+  FileText,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,11 +70,58 @@ export function ControlPanel({
   currentTarget,
 }: ControlPanelProps) {
   const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customTab, setCustomTab] = useState<"manual" | "file">("manual");
   const [customArrayStr, setCustomArrayStr] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [customTargetStr, setCustomTargetStr] = useState(
     currentTarget !== undefined ? String(currentTarget) : ""
   );
   const [inputError, setInputError] = useState("");
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadedFileName(file.name);
+    setInputError("");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        let numbers: number[] = [];
+
+        if (file.name.endsWith(".json")) {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) {
+            numbers = parsed.filter((n) => typeof n === "number");
+          } else if (parsed.array && Array.isArray(parsed.array)) {
+            numbers = parsed.array.filter((n: any) => typeof n === "number");
+          }
+        } else {
+          // CSV or TXT
+          numbers = text
+            .split(/[\r\n,;\s]+/)
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .map(Number)
+            .filter((n) => !isNaN(n));
+        }
+
+        if (numbers.length < 3) {
+          setInputError("Tệp cần chứa ít nhất 3 số nguyên hợp lệ.");
+          return;
+        }
+
+        // Limit to max 25 for clear visualization
+        const finalNumbers = numbers.slice(0, 25);
+        setCustomArrayStr(finalNumbers.join(", "));
+      } catch (err: any) {
+        setInputError("Lỗi đọc tệp: " + (err.message || "Định dạng không hợp lệ"));
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleApplyCustom = () => {
     try {
@@ -381,27 +431,97 @@ export function ControlPanel({
 
       {/* Custom Input Modal */}
       {showCustomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Tùy chỉnh mảng đầu vào
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Nhập các số nguyên phân cách bằng dấu phẩy hoặc khoảng trắng (3 đến 20 phần tử).
-            </p>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Các phần tử mảng:
-              </label>
-              <input
-                type="text"
-                placeholder="Ví dụ: 35, 12, 89, 45, 60, 23, 78"
-                value={customArrayStr}
-                onChange={(e) => setCustomArrayStr(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-              />
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-emerald-500" />
+                <span>Tùy chỉnh dữ liệu đầu vào</span>
+              </h3>
+              <button
+                onClick={() => setShowCustomModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm"
+              >
+                ✕
+              </button>
             </div>
+
+            {/* Tab switch */}
+            <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setCustomTab("manual")}
+                className={cn(
+                  "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                  customTab === "manual"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                )}
+              >
+                ✏️ Nhập tay
+              </button>
+              <button
+                onClick={() => setCustomTab("file")}
+                className={cn(
+                  "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
+                  customTab === "file"
+                    ? "bg-emerald-500 text-white shadow-xs font-bold"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                )}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>📥 Tải tệp lên</span>
+              </button>
+            </div>
+
+            {customTab === "manual" ? (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Nhập các số nguyên phân cách bằng dấu phẩy hoặc khoảng trắng (3 đến 20 phần tử).
+                </p>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Các phần tử mảng:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: 35, 12, 89, 45, 60, 23, 78"
+                    value={customArrayStr}
+                    onChange={(e) => setCustomArrayStr(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Kéo thả hoặc chọn tệp .csv, .json, hoặc .txt từ máy tính để tự động trích xuất các số.
+                </p>
+
+                <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-5 text-center hover:border-emerald-500 transition-colors">
+                  <input
+                    type="file"
+                    id="panel-file-upload"
+                    accept=".csv,.json,.txt"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <label htmlFor="panel-file-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                    <FileText className="w-8 h-8 text-slate-400 hover:text-emerald-500 transition-colors" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      {uploadedFileName ? uploadedFileName : "Chọn hoặc kéo thả tệp tại đây"}
+                    </span>
+                    <span className="text-[10px] text-slate-400">.csv, .json, .txt (tối đa 25 số)</span>
+                  </label>
+                </div>
+
+                {customArrayStr && (
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border text-xs font-mono text-slate-600 dark:text-slate-300 break-all max-h-16 overflow-y-auto">
+                    [{customArrayStr}]
+                  </div>
+                )}
+              </div>
+            )}
 
             {(category === "searching" || category === "array") && (
               <div>
@@ -419,22 +539,25 @@ export function ControlPanel({
             )}
 
             {inputError && (
-              <p className="text-xs text-rose-500 font-medium">{inputError}</p>
+              <p className="text-xs text-rose-500 font-medium flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>{inputError}</span>
+              </p>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 onClick={() => setShowCustomModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={handleApplyCustom}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/25 flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/25 flex items-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>Áp dụng</span>
+                <span>Áp dụng dữ liệu</span>
               </button>
             </div>
           </div>

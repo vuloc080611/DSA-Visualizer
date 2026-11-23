@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ALGORITHMS } from "@/lib/algorithms";
-import { Step } from "@/lib/types";
+import { Step, Algorithm } from "@/lib/types";
 import { CompareCanvas } from "@/components/CompareCanvas";
 import {
   generateRandomArray,
   generateNearlySortedArray,
   generateReversedArray,
   playStepSound,
+  playTone,
 } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import {
@@ -25,39 +26,57 @@ import {
   Trophy,
   ArrowRight,
   Zap,
-  Info,
-  Scale,
+  Upload,
+  FileText,
+  Check,
+  AlertCircle,
+  Flag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SORTING_ALGORITHMS = ALGORITHMS.filter((a) => a.category === "sorting");
 
-export default function ComparePage() {
-  // Algorithm selection
-  const [algAId, setAlgAId] = useState("bubble-sort");
-  const [algBId, setAlgBId] = useState("quick-sort");
+interface RacerState {
+  id: string;
+  algorithm: Algorithm;
+  steps: Step[];
+  index: number;
+  rank: number | null;
+}
 
-  // Configuration
+export default function ComparePage() {
+  // Track Mode: 2 (1v1) or 4 (Grand Prix)
+  const [trackMode, setTrackMode] = useState<2 | 4>(4);
+
+  // Selected Algorithm IDs
+  const [selectedIds, setSelectedIds] = useState<string[]>([
+    "quick-sort",
+    "merge-sort",
+    "heap-sort",
+    "bubble-sort",
+  ]);
+
+  // Array configuration
   const [arraySize, setArraySize] = useState(15);
   const [arrayType, setArrayType] = useState<"random" | "nearly" | "reversed">("random");
   const [currentBaseArray, setCurrentBaseArray] = useState<number[]>([]);
 
-  // Steps state
-  const [stepsA, setStepsA] = useState<Step[]>([]);
-  const [stepsB, setStepsB] = useState<Step[]>([]);
-  const [indexA, setIndexA] = useState(0);
-  const [indexB, setIndexB] = useState(0);
+  // Racers state
+  const [racers, setRacers] = useState<RacerState[]>([]);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(150); // faster by default for race
+  const [speed, setSpeed] = useState(120);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [winner, setWinner] = useState<"A" | "B" | "tie" | null>(null);
+  const rankCounterRef = useRef<number>(1);
 
-  const algA = SORTING_ALGORITHMS.find((a) => a.id === algAId) || SORTING_ALGORITHMS[0];
-  const algB = SORTING_ALGORITHMS.find((a) => a.id === algBId) || SORTING_ALGORITHMS[4];
+  // File import modal state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importedArray, setImportedArray] = useState<number[] | null>(null);
+  const [importFileName, setImportFileName] = useState("");
+  const [importError, setImportError] = useState("");
 
-  // Generate base array
+  // Helper to generate base array
   const createArray = useCallback((size: number, type: "random" | "nearly" | "reversed") => {
     switch (type) {
       case "nearly":
@@ -70,87 +89,104 @@ export default function ComparePage() {
     }
   }, []);
 
-  // Initialize both algorithms with the same array
+  // Initialize all active racers
   const initRace = useCallback(
     (arr?: number[]) => {
       const baseArr = arr || currentBaseArray;
       if (baseArr.length === 0) return;
 
-      const genA = algA.generateSteps({ array: [...baseArr] });
-      const genB = algB.generateSteps({ array: [...baseArr] });
+      const activeIds = selectedIds.slice(0, trackMode);
+      const newRacers: RacerState[] = activeIds.map((id) => {
+        const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
+        const steps = alg.generateSteps({ array: [...baseArr] });
+        return {
+          id: alg.id,
+          algorithm: alg,
+          steps,
+          index: 0,
+          rank: null,
+        };
+      });
 
-      setStepsA(genA);
-      setStepsB(genB);
-      setIndexA(0);
-      setIndexB(0);
+      setRacers(newRacers);
       setIsPlaying(false);
-      setWinner(null);
+      rankCounterRef.current = 1;
     },
-    [algA, algB, currentBaseArray]
+    [currentBaseArray, selectedIds, trackMode]
   );
 
-  // Initial load
+  // Initial load or size/type change
   useEffect(() => {
     const initialArr = createArray(arraySize, arrayType);
     setCurrentBaseArray(initialArr);
     initRace(initialArr);
-  }, [arraySize, arrayType, algAId, algBId, createArray, initRace]);
+  }, [arraySize, arrayType, trackMode, createArray, initRace]);
 
-  // Race loop: advances both steps concurrently
+  // Race Loop: Advances all active racers concurrently
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
 
     if (isPlaying) {
-      const finishedA = indexA >= stepsA.length - 1;
-      const finishedB = indexB >= stepsB.length - 1;
+      const allFinished = racers.every((r) => r.index >= r.steps.length - 1);
 
-      // Both finished
-      if (finishedA && finishedB) {
+      if (allFinished) {
         setIsPlaying(false);
       } else {
         timer = setTimeout(() => {
-          // Check winner on first completion
-          if (finishedA && !finishedB && !winner) {
-            setWinner("A");
-            confetti({ particleCount: 70, spread: 60, origin: { x: 0.3, y: 0.6 } });
-            if (soundEnabled) playStepSound("complete");
-          } else if (finishedB && !finishedA && !winner) {
-            setWinner("B");
-            confetti({ particleCount: 70, spread: 60, origin: { x: 0.7, y: 0.6 } });
-            if (soundEnabled) playStepSound("complete");
-          } else if (finishedA && finishedB && !winner) {
-            setWinner("tie");
-            if (soundEnabled) playStepSound("complete");
-          }
+          setRacers((prevRacers) => {
+            const nextRacers = [...prevRacers];
+            let newlyFinished = false;
 
-          // Advance A if not finished
-          if (!finishedA) {
-            setIndexA((prev) => prev + 1);
-          }
-          // Advance B if not finished
-          if (!finishedB) {
-            setIndexB((prev) => prev + 1);
-          }
+            for (let i = 0; i < nextRacers.length; i++) {
+              const r = nextRacers[i];
+              if (r.index < r.steps.length - 1) {
+                const nextIdx = r.index + 1;
+                const isNowDone = nextIdx >= r.steps.length - 1;
 
-          if (soundEnabled) {
-            const stepA = stepsA[indexA];
-            const stepB = stepsB[indexB];
-            const activeStep = !finishedA && stepA ? stepA : stepB;
-            if (activeStep?.array && activeStep.array.length > 0) {
-              const minVal = Math.min(...activeStep.array);
-              const maxVal = Math.max(...activeStep.array);
-              const isSwap = Boolean(activeStep.swapping && activeStep.swapping.length > 0);
-              const indices = isSwap ? activeStep.swapping! : activeStep.highlights;
-              if (indices && indices.length > 0) {
-                const vals = indices.map((idx) => activeStep.array![idx]).filter((v) => v !== undefined);
-                playStepSound(isSwap ? "swap" : "compare", vals, minVal, maxVal);
-              } else {
-                playStepSound("compare");
+                let assignedRank = r.rank;
+                if (isNowDone && assignedRank === null) {
+                  assignedRank = rankCounterRef.current;
+                  rankCounterRef.current++;
+                  newlyFinished = true;
+
+                  // First place celebration
+                  if (assignedRank === 1) {
+                    confetti({
+                      particleCount: 90,
+                      spread: 70,
+                      origin: { y: 0.6 },
+                      colors: ["#f59e0b", "#10b981", "#3b82f6", "#ec4899"],
+                    });
+                    if (soundEnabled) {
+                      playTone(587, "sine", 0.08, 0.06);
+                      setTimeout(() => playTone(880, "sine", 0.15, 0.1), 80);
+                    }
+                  }
+                }
+
+                nextRacers[i] = {
+                  ...r,
+                  index: nextIdx,
+                  rank: assignedRank,
+                };
               }
-            } else {
-              playStepSound("compare");
             }
-          }
+
+            // Audio tick for leading racer
+            if (soundEnabled && !newlyFinished) {
+              const active = nextRacers.find((r) => r.index < r.steps.length - 1);
+              if (active && active.steps[active.index]) {
+                const step = active.steps[active.index];
+                if (step.swapping?.length) {
+                  playStepSound("swap");
+                } else if (step.highlights?.length) {
+                  playStepSound("compare");
+                }
+              }
+            }
+
+            return nextRacers;
+          });
         }, speed);
       }
     }
@@ -158,15 +194,13 @@ export default function ComparePage() {
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isPlaying, indexA, indexB, stepsA.length, stepsB.length, speed, winner, soundEnabled]);
+  }, [isPlaying, racers, speed, soundEnabled]);
 
-  // Handlers
+  // Controls
   const handleStartPause = () => {
-    if (indexA >= stepsA.length - 1 && indexB >= stepsB.length - 1) {
-      // Re-run
-      setIndexA(0);
-      setIndexB(0);
-      setWinner(null);
+    const allFinished = racers.every((r) => r.index >= r.steps.length - 1);
+    if (allFinished) {
+      initRace();
       setIsPlaying(true);
     } else {
       setIsPlaying(!isPlaying);
@@ -174,375 +208,533 @@ export default function ComparePage() {
   };
 
   const handleReset = () => {
-    setIndexA(0);
-    setIndexB(0);
+    initRace();
+  };
+
+  const handleAlgChange = (laneIdx: number, newAlgId: string) => {
+    const updated = [...selectedIds];
+    updated[laneIdx] = newAlgId;
+    setSelectedIds(updated);
+
+    const baseArr = currentBaseArray;
+    const newRacers = updated.slice(0, trackMode).map((id) => {
+      const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
+      const steps = alg.generateSteps({ array: [...baseArr] });
+      return {
+        id: alg.id,
+        algorithm: alg,
+        steps,
+        index: 0,
+        rank: null,
+      };
+    });
+    setRacers(newRacers);
     setIsPlaying(false);
-    setWinner(null);
+    rankCounterRef.current = 1;
   };
 
-  const handleGenerateNewArray = (type: "random" | "nearly" | "reversed") => {
-    setArrayType(type);
-    const newArr = createArray(arraySize, type);
-    setCurrentBaseArray(newArr);
-    initRace(newArr);
+  const handleApplyPreset = (ids: string[]) => {
+    setSelectedIds(ids);
+    setTrackMode(ids.length as 2 | 4);
+    const baseArr = currentBaseArray;
+    const newRacers = ids.map((id) => {
+      const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
+      const steps = alg.generateSteps({ array: [...baseArr] });
+      return {
+        id: alg.id,
+        algorithm: alg,
+        steps,
+        index: 0,
+        rank: null,
+      };
+    });
+    setRacers(newRacers);
+    setIsPlaying(false);
+    rankCounterRef.current = 1;
   };
 
-  const handleSizeChange = (newSize: number) => {
-    setArraySize(newSize);
-    const newArr = createArray(newSize, arrayType);
-    setCurrentBaseArray(newArr);
-    initRace(newArr);
+  // File Upload Parser
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportFileName(file.name);
+    setImportError("");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        let numbers: number[] = [];
+
+        if (file.name.endsWith(".json")) {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed)) {
+            numbers = parsed.filter((n) => typeof n === "number");
+          } else if (parsed.array && Array.isArray(parsed.array)) {
+            numbers = parsed.array.filter((n: any) => typeof n === "number");
+          }
+        } else {
+          // CSV or TXT
+          numbers = text
+            .split(/[\r\n,;\s]+/)
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .map(Number)
+            .filter((n) => !isNaN(n));
+        }
+
+        if (numbers.length < 4) {
+          setImportError("Tệp cần chứa ít nhất 4 số hợp lệ để đua thuật toán.");
+          return;
+        }
+
+        // Limit to max 40 numbers for optimal display
+        const finalNumbers = numbers.slice(0, 40);
+        setImportedArray(finalNumbers);
+      } catch (err: any) {
+        setImportError("Lỗi đọc tệp: " + (err.message || "Định dạng không hợp lệ"));
+      }
+    };
+    reader.readAsText(file);
   };
 
-  // Presets
-  const applyPreset = (idA: string, idB: string) => {
-    setAlgAId(idA);
-    setAlgBId(idB);
+  const handleApplyImportedData = () => {
+    if (importedArray && importedArray.length >= 4) {
+      setCurrentBaseArray(importedArray);
+      setArraySize(importedArray.length);
+      initRace(importedArray);
+      setShowImportModal(false);
+    }
   };
 
-  const currentStepA = stepsA[indexA] || { description: "" };
-  const currentStepB = stepsB[indexB] || { description: "" };
-  const finishedA = indexA >= stepsA.length - 1;
-  const finishedB = indexB >= stepsB.length - 1;
-  const bothFinished = finishedA && finishedB;
+  const allFinished = racers.length > 0 && racers.every((r) => r.index >= r.steps.length - 1);
+  const firstPlaceRacer = racers.find((r) => r.rank === 1);
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
               <Swords className="w-5 h-5" />
             </span>
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Algorithm Race &amp; Benchmark
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              Grand Prix &amp; Algorithm Arena
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            So Sánh Đối Đầu Giải Thuật
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <span>Đại Hội Đua Thuật Toán {trackMode === 4 ? "4 Làn" : "Đối Đầu"}</span>
+            <span className="text-xs uppercase font-extrabold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+              {trackMode === 4 ? "4-Way Grand Prix" : "1v1 Duel"}
+            </span>
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mt-1">
-            Chạy đua 2 giải thuật sắp xếp cùng lúc trên cùng 1 mảng dữ liệu. Trực tiếp kiểm chứng sự chênh lệch vượt trội giữa các bậc độ phức tạp Big-O.
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl mt-1">
+            Chạy đua song song {trackMode} giải thuật sắp xếp trên cùng 1 bộ dữ liệu chuẩn. Trực tiếp kiểm chứng tốc độ thực tế và sự chênh lệch Big-O.
           </p>
         </div>
 
-        {/* Preset Buttons */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Gợi ý:</span>
+        {/* Mode Switch & Presets */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Mode toggle */}
+          <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <button
+              onClick={() => setTrackMode(2)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                trackMode === 2
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              )}
+            >
+              2 Làn (1v1)
+            </button>
+            <button
+              onClick={() => setTrackMode(4)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
+                trackMode === 4
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/20"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              )}
+            >
+              <Flag className="w-3.5 h-3.5" />
+              <span>4 Làn (Grand Prix)</span>
+            </button>
+          </div>
+
+          {/* Import File Button */}
           <button
-            onClick={() => applyPreset("bubble-sort", "quick-sort")}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+            title="Nhập dữ liệu bài tập từ tệp CSV / JSON / TXT"
           >
-            Bubble vs Quick
-          </button>
-          <button
-            onClick={() => applyPreset("merge-sort", "quick-sort")}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
-          >
-            Merge vs Quick
-          </button>
-          <button
-            onClick={() => applyPreset("insertion-sort", "selection-sort")}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
-          >
-            Insertion vs Selection
+            <Upload className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Nhập File</span>
           </button>
         </div>
+      </div>
+
+      {/* Preset Quick Buttons */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs font-semibold text-slate-500 mr-1">Giải đấu mẫu:</span>
+        <button
+          onClick={() => handleApplyPreset(["quick-sort", "merge-sort", "heap-sort", "bubble-sort"])}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-100 transition-colors"
+        >
+          🏁 Tứ Đại Đỉnh Cao: Quick vs Merge vs Heap vs Bubble
+        </button>
+        <button
+          onClick={() => handleApplyPreset(["quick-sort", "merge-sort", "heap-sort", "insertion-sort"])}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition-colors"
+        >
+          ⚡ O(N log N) So Găng: Quick vs Merge vs Heap vs Insertion
+        </button>
+        <button
+          onClick={() => handleApplyPreset(["bubble-sort", "selection-sort", "insertion-sort", "quick-sort"])}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition-colors"
+        >
+          🐢 Nhóm O(N²) vs Quick Sort
+        </button>
       </div>
 
       {/* Control & Configuration Bar */}
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-          {/* Select Algorithm A */}
-          <div className="md:col-span-4 space-y-1">
-            <label className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              Thuật toán A:
-            </label>
-            <select
-              value={algAId}
-              onChange={(e) => setAlgAId(e.target.value)}
-              disabled={isPlaying}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            >
-              {SORTING_ALGORITHMS.map((alg) => (
-                <option key={alg.id} value={alg.id}>
-                  {alg.name} ({alg.complexity.average})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Racer Selectors Grid */}
+        <div className={cn("grid gap-3", trackMode === 4 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2")}>
+          {Array.from({ length: trackMode }).map((_, laneIdx) => {
+            const laneLabels = ["Làn 1 (Xanh lam)", "Làn 2 (Lục bảo)", "Làn 3 (Tím)", "Làn 4 (Hổ phách)"];
+            const currentId = selectedIds[laneIdx] || SORTING_ALGORITHMS[laneIdx]?.id;
 
-          {/* VS Center Indicator */}
-          <div className="md:col-span-4 flex items-center justify-center">
-            {/* Big Action Button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleStartPause}
-                className={cn(
-                  "px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg flex items-center gap-2 transition-all hover:scale-105",
-                  isPlaying
-                    ? "bg-amber-500 hover:bg-amber-600 shadow-amber-500/25"
-                    : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/25"
-                )}
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-4 h-4 fill-white" />
-                    <span>Tạm dừng</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 fill-white" />
-                    <span>{bothFinished ? "Đua lại" : "Bắt đầu cuộc đua!"}</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleReset}
-                className="p-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
-                title="Reset về bước đầu"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Select Algorithm B */}
-          <div className="md:col-span-4 space-y-1">
-            <label className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              Thuật toán B:
-            </label>
-            <select
-              value={algBId}
-              onChange={(e) => setAlgBId(e.target.value)}
-              disabled={isPlaying}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-            >
-              {SORTING_ALGORITHMS.map((alg) => (
-                <option key={alg.id} value={alg.id}>
-                  {alg.name} ({alg.complexity.average})
-                </option>
-              ))}
-            </select>
-          </div>
+            return (
+              <div key={laneIdx} className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>{laneLabels[laneIdx]}:</span>
+                </label>
+                <select
+                  value={currentId}
+                  onChange={(e) => handleAlgChange(laneIdx, e.target.value)}
+                  disabled={isPlaying}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                >
+                  {SORTING_ALGORITHMS.map((alg) => (
+                    <option key={alg.id} value={alg.id}>
+                      {alg.name} ({alg.complexity.average})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Options Row: Array Size, Array Type, Speed, Sound */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-          {/* Array Size */}
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-slate-500 dark:text-slate-400">Số phần tử:</span>
-            {[10, 15, 25, 40].map((size) => (
-              <button
-                key={size}
-                disabled={isPlaying}
-                onClick={() => handleSizeChange(size)}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg font-mono font-semibold transition-all",
-                  arraySize === size
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
-                )}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-
-          {/* Array Type */}
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-slate-500 dark:text-slate-400">Dữ liệu:</span>
-            <button
-              disabled={isPlaying}
-              onClick={() => handleGenerateNewArray("random")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1",
-                arrayType === "random"
-                  ? "bg-emerald-500 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-              )}
-            >
-              <Shuffle className="w-3 h-3" />
-              <span>Ngẫu nhiên</span>
-            </button>
-            <button
-              disabled={isPlaying}
-              onClick={() => handleGenerateNewArray("nearly")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1",
-                arrayType === "nearly"
-                  ? "bg-amber-500 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-              )}
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>Gần sắp xếp</span>
-            </button>
-            <button
-              disabled={isPlaying}
-              onClick={() => handleGenerateNewArray("reversed")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1",
-                arrayType === "reversed"
-                  ? "bg-rose-500 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-              )}
-            >
-              <TrendingDown className="w-3 h-3" />
-              <span>Đảo ngược</span>
-            </button>
-          </div>
-
-          {/* Speed & Sound */}
+        {/* Global Controls & Dataset Generation */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+          {/* Main Action Buttons */}
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-500 dark:text-slate-400">Tốc độ:</span>
-            {[
-              { label: "1x", val: 300 },
-              { label: "2x", val: 150 },
-              { label: "4x", val: 60 },
-              { label: "Turbo", val: 25 },
-            ].map((spd) => (
-              <button
-                key={spd.val}
-                onClick={() => setSpeed(spd.val)}
-                className={cn(
-                  "px-2 py-1 rounded-lg font-mono font-semibold transition-all",
-                  speed === spd.val
-                    ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                )}
-              >
-                {spd.label}
-              </button>
-            ))}
+            <button
+              onClick={handleStartPause}
+              className={cn(
+                "px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer",
+                isPlaying
+                  ? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                  : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20"
+              )}
+            >
+              {isPlaying ? (
+                <>
+                  <Pause className="w-4 h-4" />
+                  <span>Tạm dừng</span>
+                </>
+              ) : allFinished ? (
+                <>
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Đua lại từ đầu</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>BẮT ĐẦU ĐUA (START)</span>
+                </>
+              )}
+            </button>
 
+            <button
+              onClick={handleReset}
+              disabled={isPlaying}
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 disabled:opacity-50 transition-colors"
+              title="Đặt lại mảng đua"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+
+            {/* Sound Toggle */}
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 ml-1"
-              title={soundEnabled ? "Tắt âm thanh giải thuật" : "Bật âm thanh cao độ theo giá trị (Pitch Audio)"}
+              className={cn(
+                "p-2.5 rounded-xl border transition-colors",
+                soundEnabled
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700"
+              )}
+              title={soundEnabled ? "Tắt âm thanh" : "Bật âm thanh cuộc đua"}
             >
-              {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-500" /> : <VolumeX className="w-3.5 h-3.5" />}
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
+          </div>
+
+          {/* Dataset Generator Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">Mẫu:</span>
+            <button
+              onClick={() => {
+                setArrayType("random");
+                const arr = createArray(arraySize, "random");
+                setCurrentBaseArray(arr);
+                initRace(arr);
+              }}
+              disabled={isPlaying}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700"
+            >
+              <Shuffle className="w-3.5 h-3.5 inline mr-1 text-emerald-500" />
+              Ngẫu nhiên
+            </button>
+            <button
+              onClick={() => {
+                setArrayType("nearly");
+                const arr = createArray(arraySize, "nearly");
+                setCurrentBaseArray(arr);
+                initRace(arr);
+              }}
+              disabled={isPlaying}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700"
+            >
+              <Sparkles className="w-3.5 h-3.5 inline mr-1 text-amber-500" />
+              Gần sắp xếp
+            </button>
+            <button
+              onClick={() => {
+                setArrayType("reversed");
+                const arr = createArray(arraySize, "reversed");
+                setCurrentBaseArray(arr);
+                initRace(arr);
+              }}
+              disabled={isPlaying}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700"
+            >
+              <TrendingDown className="w-3.5 h-3.5 inline mr-1 text-rose-500" />
+              Đảo ngược
+            </button>
+
+            {/* Size Selector */}
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200 dark:border-slate-800 text-xs font-mono">
+              <span className="text-slate-400">N={arraySize}</span>
+              {[15, 25, 40].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    setArraySize(s);
+                    const arr = createArray(s, arrayType);
+                    setCurrentBaseArray(arr);
+                    initRace(arr);
+                  }}
+                  disabled={isPlaying}
+                  className={cn(
+                    "px-2 py-0.5 rounded text-xs",
+                    arraySize === s
+                      ? "bg-emerald-500 text-white font-bold"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Duel Battlefield (Side-by-Side Grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
-        {/* Left Side: Algorithm A */}
-        <CompareCanvas
-          algorithm={algA}
-          currentStep={currentStepA}
-          stepIndex={indexA}
-          totalSteps={stepsA.length}
-          isFinished={finishedA}
-          isWinner={winner === "A"}
-          side="left"
-        />
-
-        {/* Right Side: Algorithm B */}
-        <CompareCanvas
-          algorithm={algB}
-          currentStep={currentStepB}
-          stepIndex={indexB}
-          totalSteps={stepsB.length}
-          isFinished={finishedB}
-          isWinner={winner === "B"}
-          side="right"
-        />
-      </div>
-
-      {/* Winner Summary Report & Analysis Box */}
-      {bothFinished && (
-        <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-tr from-emerald-500/5 via-teal-500/5 to-cyan-500/5 dark:from-emerald-950/20 dark:via-teal-950/20 dark:to-slate-900 p-6 space-y-4 shadow-xl">
+      {/* Winner Podium Banner */}
+      {firstPlaceRacer && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-emerald-500/20 border-2 border-amber-400 dark:border-amber-500/40 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 animate-in fade-in">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
-              <Trophy className="w-5 h-5 fill-white" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/30">
+              <Trophy className="w-6 h-6 fill-current" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Kết Quả Cuộc Đua:{" "}
-                <span className="text-emerald-500">
-                  {winner === "A"
-                    ? `${algA.name} Chiến Thắng!`
-                    : winner === "B"
-                    ? `${algB.name} Chiến Thắng!`
-                    : "Hòa nhau!"}
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Thống kê hiệu năng thực tế trên mảng gồm {arraySize} phần tử.
-              </p>
+              <div className="text-xs uppercase font-extrabold text-amber-600 dark:text-amber-400 tracking-wider">
+                Nhà Vô Địch Cuộc Đua (Champion 🥇)
+              </div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                {firstPlaceRacer.algorithm.name} ({firstPlaceRacer.algorithm.complexity.average})
+              </h2>
             </div>
           </div>
+          <div className="text-xs font-mono text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-xl border border-amber-300/50">
+            Số phép so sánh: <strong>{firstPlaceRacer.steps[firstPlaceRacer.index]?.comparisons ?? 0}</strong> | Hoán đổi: <strong>{firstPlaceRacer.steps[firstPlaceRacer.index]?.swaps ?? 0}</strong>
+          </div>
+        </div>
+      )}
 
-          {/* Stats Comparison Table */}
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <table className="w-full text-left text-xs font-mono">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider">
-                  <th className="py-2.5 px-4 font-sans font-semibold">Chỉ số so sánh</th>
-                  <th className="py-2.5 px-4 text-blue-600 dark:text-blue-400 font-bold">{algA.name}</th>
-                  <th className="py-2.5 px-4 text-purple-600 dark:text-purple-400 font-bold">{algB.name}</th>
-                  <th className="py-2.5 px-4 text-emerald-600 dark:text-emerald-400 font-bold">Chênh lệch</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                <tr>
-                  <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                    Tổng số bước (Steps)
-                  </td>
-                  <td className="py-2.5 px-4 font-bold">{stepsA.length}</td>
-                  <td className="py-2.5 px-4 font-bold">{stepsB.length}</td>
-                  <td className="py-2.5 px-4 font-bold text-emerald-500">
-                    {stepsA.length < stepsB.length
-                      ? `${algA.name} ít hơn ${stepsB.length - stepsA.length} bước`
-                      : stepsB.length < stepsA.length
-                      ? `${algB.name} ít hơn ${stepsA.length - stepsB.length} bước`
-                      : "Bằng nhau"}
-                  </td>
-                </tr>
+      {/* Racers Grid: 2 columns or 4 columns */}
+      <div className={cn("grid gap-5", trackMode === 4 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2")}>
+        {racers.map((racer, idx) => {
+          const currentStep = racer.steps[racer.index] || { description: "" };
+          const isFinished = racer.index >= racer.steps.length - 1;
 
-                <tr>
-                  <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                    Số phép so sánh (Comparisons)
-                  </td>
-                  <td className="py-2.5 px-4 font-bold">{currentStepA.comparisons ?? 0}</td>
-                  <td className="py-2.5 px-4 font-bold">{currentStepB.comparisons ?? 0}</td>
-                  <td className="py-2.5 px-4 font-bold text-emerald-500">
-                    {Math.abs((currentStepA.comparisons || 0) - (currentStepB.comparisons || 0))} phép
-                  </td>
-                </tr>
+          return (
+            <CompareCanvas
+              key={`${racer.id}-${idx}`}
+              algorithm={racer.algorithm}
+              currentStep={currentStep}
+              stepIndex={racer.index}
+              totalSteps={racer.steps.length}
+              isFinished={isFinished}
+              isWinner={racer.rank === 1}
+              rank={racer.rank}
+              laneIndex={idx}
+            />
+          );
+        })}
+      </div>
 
-                <tr>
-                  <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                    Số lần hoán đổi (Swaps)
-                  </td>
-                  <td className="py-2.5 px-4 font-bold">{currentStepA.swaps ?? 0}</td>
-                  <td className="py-2.5 px-4 font-bold">{currentStepB.swaps ?? 0}</td>
-                  <td className="py-2.5 px-4 font-bold text-emerald-500">
-                    {Math.abs((currentStepA.swaps || 0) - (currentStepB.swaps || 0))} lần
-                  </td>
-                </tr>
+      {/* Grand Prix Live Leaderboard Table */}
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
+        <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-amber-500" />
+          <span>Bảng Xếp Hạng &amp; Thống Kê Chi Tiết (Grand Prix Leaderboard)</span>
+        </h3>
 
-                <tr>
-                  <td className="py-2.5 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">
-                    Độ phức tạp trung bình (Average Big-O)
-                  </td>
-                  <td className="py-2.5 px-4 font-bold text-amber-500">{algA.complexity.average}</td>
-                  <td className="py-2.5 px-4 font-bold text-amber-500">{algB.complexity.average}</td>
-                  <td className="py-2.5 px-4 font-sans text-slate-600 dark:text-slate-400">
-                    {algA.complexity.average === algB.complexity.average
-                      ? "Cùng bậc độ phức tạp"
-                      : "Khác biệt bậc thời gian"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div className="overflow-x-auto no-scrollbar">
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400">
+                <th className="pb-2">Hạng</th>
+                <th className="pb-2">Làn</th>
+                <th className="pb-2">Thuật toán</th>
+                <th className="pb-2">Độ phức tạp</th>
+                <th className="pb-2">Số phép so sánh</th>
+                <th className="pb-2">Số phép hoán đổi</th>
+                <th className="pb-2">Tổng số bước</th>
+                <th className="pb-2 text-right">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {racers.map((r, idx) => {
+                const currentStep = r.steps[r.index] || {};
+                const isDone = r.index >= r.steps.length - 1;
+
+                let rankBadge = <span className="text-slate-400">Đang chạy...</span>;
+                if (r.rank === 1) rankBadge = <span className="text-amber-500 font-extrabold text-sm">🥇 Hạng 1</span>;
+                else if (r.rank === 2) rankBadge = <span className="text-slate-400 font-extrabold text-sm">🥈 Hạng 2</span>;
+                else if (r.rank === 3) rankBadge = <span className="text-amber-700 font-extrabold text-sm">🥉 Hạng 3</span>;
+                else if (r.rank === 4) rankBadge = <span className="text-slate-500 font-bold">Hạng 4</span>;
+
+                return (
+                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="py-2.5 font-bold">{rankBadge}</td>
+                    <td className="py-2.5 font-bold text-slate-400">#{idx + 1}</td>
+                    <td className="py-2.5 font-sans font-bold text-slate-900 dark:text-white">{r.algorithm.name}</td>
+                    <td className="py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">{r.algorithm.complexity.average}</td>
+                    <td className="py-2.5 text-slate-700 dark:text-slate-300">{currentStep.comparisons ?? 0}</td>
+                    <td className="py-2.5 text-slate-700 dark:text-slate-300">{currentStep.swaps ?? 0}</td>
+                    <td className="py-2.5 text-slate-500">{r.index + 1} / {r.steps.length}</td>
+                    <td className="py-2.5 text-right font-sans font-semibold">
+                      {isDone ? (
+                        <span className="text-emerald-500">Đã về đích ✔</span>
+                      ) : (
+                        <span className="text-amber-500 animate-pulse">Đang đua...</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ================= FILE IMPORT MODAL ================= */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Upload className="w-5 h-5 text-emerald-500" />
+                <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                  Nhập Dữ Liệu Từ File (CSV / JSON / TXT)
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Kéo thả hoặc tải lên tệp bài tập thực tế từ máy tính của bạn. Hệ thống sẽ tự động trích xuất các số nguyên để đưa vào cuộc đua.
+            </p>
+
+            {/* Dropzone */}
+            <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 text-center hover:border-emerald-500 transition-colors">
+              <input
+                type="file"
+                id="file-upload"
+                accept=".csv,.json,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                <FileText className="w-10 h-10 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  {importFileName ? importFileName : "Bấm để chọn file hoặc kéo thả vào đây"}
+                </span>
+                <span className="text-xs text-slate-400">
+                  Hỗ trợ định dạng: .csv, .json, .txt (Tối đa 40 số)
+                </span>
+              </label>
+            </div>
+
+            {/* Error or Preview */}
+            {importError && (
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{importError}</span>
+              </div>
+            )}
+
+            {importedArray && (
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <span>Trích xuất thành công: {importedArray.length} số</span>
+                  <span className="text-emerald-500 font-bold">Sẵn sàng</span>
+                </div>
+                <div className="text-xs font-mono text-slate-500 dark:text-slate-400 break-all max-h-20 overflow-y-auto">
+                  [{importedArray.join(", ")}]
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleApplyImportedData}
+                disabled={!importedArray || importedArray.length < 4}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+              >
+                Áp dụng vào cuộc đua
+              </button>
+            </div>
           </div>
         </div>
       )}

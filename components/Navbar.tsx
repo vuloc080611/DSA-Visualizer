@@ -25,6 +25,7 @@ import {
   Calculator,
   Crown,
   CaseSensitive,
+  Terminal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -218,7 +219,25 @@ export function Navbar() {
                   <span className="hidden sm:inline">So sánh</span>
                   <span className="sm:hidden">Race</span>
                   <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-amber-200/90 dark:bg-amber-900/90 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shrink-0">
-                    Race
+                    4-Way
+                  </span>
+                </Link>
+
+                {/* Live Code Playground Link */}
+                <Link
+                  href="/playground"
+                  className={cn(
+                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    pathname === "/playground"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/25"
+                      : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/70 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:border-emerald-300 dark:hover:border-emerald-700"
+                  )}
+                >
+                  <Terminal className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span className="hidden sm:inline">Playground</span>
+                  <span className="sm:hidden">Code</span>
+                  <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-emerald-200/90 dark:bg-emerald-900/90 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 shrink-0">
+                    Live
                   </span>
                 </Link>
 
@@ -347,9 +366,24 @@ export function Navbar() {
             >
               <div className="flex items-center gap-2.5">
                 <Swords className="w-4 h-4 text-amber-500" />
-                <span>So sánh đối đầu (Race Mode)</span>
+                <span>So sánh 4 làn (Grand Prix Race)</span>
               </div>
               <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
+                4-Way
+              </span>
+            </Link>
+
+            {/* Live Code Playground in Drawer */}
+            <Link
+              href="/playground"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800"
+            >
+              <div className="flex items-center gap-2.5">
+                <Terminal className="w-4 h-4 text-emerald-500" />
+                <span>Trình gõ code trực tiếp (Playground)</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
                 Live
               </span>
             </Link>
