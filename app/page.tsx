@@ -21,6 +21,8 @@ import {
   Swords,
   Play,
   Terminal,
+  Map,
+  TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -247,6 +249,68 @@ export default function HomePage() {
               </div>
               <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Framer Motion</div>
             </motion.div>
+          </motion.div>
+
+          {/* Feature Spotlight: Roadmap & Big-O Cheatsheet */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.55 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto pt-4 text-left"
+          >
+            {/* Card 1: Roadmap */}
+            <Link
+              href="/roadmap"
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-950/40 via-slate-900/80 to-slate-900/80 border border-teal-500/30 hover:border-teal-400 p-5 shadow-lg transition-all hover:scale-[1.02] hover:shadow-teal-500/10 cursor-pointer"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-teal-500/20 transition-all" />
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-teal-500/20 border border-teal-500/30 text-teal-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Map className="w-6 h-6" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                      Cây Kỹ Năng • 4 Chặng
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white group-hover:text-teal-300 transition-colors flex items-center justify-between">
+                    <span>Lộ Trình Học DSA</span>
+                    <ArrowRight className="w-4 h-4 text-teal-400 transform group-hover:translate-x-1 transition-transform" />
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    Lộ trình bài bản 4 cấp độ từ Khởi động đến Đỉnh cao DP. Tự động lưu tiến độ vào trình duyệt và mở khóa 4 huy hiệu vinh danh!
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            {/* Card 2: Big-O Cheatsheet */}
+            <Link
+              href="/cheatsheet"
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-950/30 via-slate-900/80 to-slate-900/80 border border-amber-500/30 hover:border-amber-400 p-5 shadow-lg transition-all hover:scale-[1.02] hover:shadow-amber-500/10 cursor-pointer"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-all" />
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Biểu Đồ & Ma Trận
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors flex items-center justify-between">
+                    <span>Bảng Tra Cứu Big-O</span>
+                    <ArrowRight className="w-4 h-4 text-amber-400 transform group-hover:translate-x-1 transition-transform" />
+                  </h3>
+                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                    So sánh đồ thị toán học trực quan $O(1)$ đến $O(2^N)$, ma trận Thời gian & Không gian của 28 thuật toán và bí quyết phỏng vấn Big Tech.
+                  </p>
+                </div>
+              </div>
+            </Link>
           </motion.div>
         </div>
       </section>

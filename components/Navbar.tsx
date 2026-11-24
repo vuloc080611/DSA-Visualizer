@@ -27,6 +27,8 @@ import {
   Crown,
   CaseSensitive,
   Terminal,
+  Map,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -206,6 +208,42 @@ export function Navbar() {
                   <Search className="w-5 h-5" />
                 </button>
 
+                {/* Learning Roadmap Link */}
+                <Link
+                  href="/roadmap"
+                  className={cn(
+                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    pathname === "/roadmap"
+                      ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-emerald-500/25"
+                      : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/70 hover:bg-teal-100 dark:hover:bg-teal-900/40 hover:border-teal-300 dark:hover:border-teal-700"
+                  )}
+                >
+                  <Map className="w-4 h-4 text-teal-500 shrink-0" />
+                  <span className="hidden sm:inline">Lộ trình</span>
+                  <span className="sm:hidden">Roadmap</span>
+                  <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-teal-200/90 dark:bg-teal-900/90 text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 shrink-0">
+                    4-Tiers
+                  </span>
+                </Link>
+
+                {/* Big-O Cheat Sheet Link */}
+                <Link
+                  href="/cheatsheet"
+                  className={cn(
+                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    pathname === "/cheatsheet"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/25"
+                      : "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/70 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 hover:border-cyan-300 dark:hover:border-cyan-700"
+                  )}
+                >
+                  <TrendingUp className="w-4 h-4 text-cyan-500 shrink-0" />
+                  <span className="hidden sm:inline">Big-O</span>
+                  <span className="sm:hidden">Big-O</span>
+                  <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-cyan-200/90 dark:bg-cyan-900/90 text-cyan-900 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-700 shrink-0">
+                    Chart
+                  </span>
+                </Link>
+
                 {/* Compare / Race Mode Link */}
                 <Link
                   href="/compare"
@@ -372,6 +410,36 @@ export function Navbar() {
                 ⌘K
               </kbd>
             </button>
+
+            {/* Learning Roadmap in Drawer */}
+            <Link
+              href="/roadmap"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800"
+            >
+              <div className="flex items-center gap-2.5">
+                <Map className="w-4 h-4 text-teal-500" />
+                <span>Lộ trình học tập (Skill Tree)</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-teal-200 dark:bg-teal-900 text-teal-800 dark:text-teal-200">
+                4-Tiers
+              </span>
+            </Link>
+
+            {/* Big-O Cheat Sheet in Drawer */}
+            <Link
+              href="/cheatsheet"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800"
+            >
+              <div className="flex items-center gap-2.5">
+                <TrendingUp className="w-4 h-4 text-cyan-500" />
+                <span>Bảng tra cứu Big-O & Đồ thị</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-cyan-200 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200">
+                Chart
+              </span>
+            </Link>
 
             {/* Race Mode Link in Drawer */}
             <Link
