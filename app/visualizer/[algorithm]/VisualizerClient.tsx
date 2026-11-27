@@ -118,15 +118,28 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   // 3-Panel Studio Layout States
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLessonPanelOpen, setIsLessonPanelOpen] = useState(true);
 
-  // Automatically adjust sidebars on smaller screens initially
+  // Load saved sidebar preference on mount
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 1280) {
-      setIsSidebarOpen(false);
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("dsa_studio_sidebar_open");
+      if (saved !== null) {
+        setIsSidebarOpen(saved === "true" && window.innerWidth >= 1024);
+      }
     }
   }, []);
+
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("dsa_studio_sidebar_open", String(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setIsCompletedInRoadmap(isAlgorithmCompleted(algorithm.id));
@@ -722,13 +735,13 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
         {/* Left Side: Sidebar Toggle & Chapter Context */}
         <div className="flex items-center gap-2.5 truncate">
           <button
-            onClick={() => setIsSidebarOpen((prev) => !prev)}
-            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
+            onClick={handleToggleSidebar}
+            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border cursor-pointer ${
               isSidebarOpen
                 ? "bg-slate-100 dark:bg-slate-800 text-[#e06c53] border-slate-300 dark:border-slate-700"
                 : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
             }`}
-            title={isSidebarOpen ? "Đóng danh mục khóa học" : "Mở danh mục khóa học"}
+            title={isSidebarOpen ? "Ẩn danh mục khóa học" : "Hiện danh mục khóa học"}
           >
             {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
             <span className="hidden sm:inline">Khóa học</span>
@@ -811,7 +824,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
           currentAlgorithmId={algorithm.id}
           completedIds={completedIds}
           isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          onToggle={handleToggleSidebar}
         />
 
         {/* ================= CENTER COLUMN: CANVAS STAGE ================= */}
@@ -1033,6 +1046,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
           onStepChange={setCurrentStepIndex}
           isOpen={isLessonPanelOpen}
           onToggle={() => setIsLessonPanelOpen(!isLessonPanelOpen)}
+          isSidebarCollapsed={!isSidebarOpen}
         />
       </div>
 

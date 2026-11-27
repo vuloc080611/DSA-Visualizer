@@ -23,6 +23,7 @@ interface StudioLessonPanelProps {
   onStepChange: (index: number) => void;
   isOpen: boolean;
   onToggle: () => void;
+  isSidebarCollapsed?: boolean;
 }
 
 export function StudioLessonPanel({
@@ -32,6 +33,7 @@ export function StudioLessonPanel({
   onStepChange,
   isOpen,
   onToggle,
+  isSidebarCollapsed = false,
 }: StudioLessonPanelProps) {
   const [selectedLang, setSelectedLang] = useState<"pseudocode" | "python" | "cpp" | "typescript">("pseudocode");
   const [isCodeExpanded, setIsCodeExpanded] = useState(true);
@@ -165,7 +167,11 @@ export function StudioLessonPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="w-80 lg:w-96 shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-l border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex flex-col z-20 transition-all select-none overflow-y-auto custom-scrollbar p-4 space-y-4">
+    <div
+      className={`${
+        isSidebarCollapsed ? "w-80 lg:w-[410px] xl:w-[440px]" : "w-80 lg:w-96"
+      } shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-l border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex flex-col z-20 transition-all select-none overflow-y-auto custom-scrollbar p-4 space-y-4`}
+    >
       {/* ================= 1. PEDAGOGICAL STEP CARD ================= */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-4 space-y-3 shadow-xs">
         {/* Step Progress & Tag */}

@@ -20,6 +20,8 @@ import {
   Sparkles,
   Filter,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 interface StudioSyllabusSidebarProps {
@@ -90,22 +92,59 @@ export function StudioSyllabusSidebar({
     return completedIds.length;
   }, [completedIds]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return (
+      <aside className="hidden md:flex w-11 shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex-col items-center py-3 gap-4 z-20 transition-all select-none">
+        <button
+          onClick={onToggle}
+          title="Hiện danh mục khóa học"
+          aria-label="Hiện danh mục khóa học"
+          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-[#e06c53] hover:bg-[#e06c53]/10 border border-slate-200 dark:border-slate-800 transition-colors cursor-pointer"
+        >
+          <PanelLeftOpen className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={onToggle}
+          title="Mở danh sách 31 bài học DSA"
+          className="flex flex-col items-center gap-2.5 text-slate-400 hover:text-[#e06c53] transition-colors cursor-pointer group"
+        >
+          <BookOpen className="w-4 h-4 text-[#e06c53]" />
+          <span className="text-[11px] font-bold tracking-wider uppercase [writing-mode:vertical-rl] rotate-180">
+            Khóa học
+          </span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 group-hover:border-[#e06c53]/40">
+            {totalCompletedCount}/{totalAlgsCount}
+          </span>
+        </button>
+      </aside>
+    );
+  }
 
   return (
-    <aside className="w-72 xl:w-80 shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex flex-col z-20 transition-all select-none">
+    <aside className="w-64 xl:w-72 shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex flex-col z-20 transition-all select-none">
       {/* Header & Overall progress */}
-      <div className="p-4 border-b border-slate-200/80 dark:border-slate-800/80 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-[#e06c53]" />
-            <span className="font-bold text-sm text-slate-900 dark:text-white">
+      <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800/80 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <BookOpen className="w-4 h-4 text-[#e06c53] shrink-0" />
+            <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
               Khóa học DSA
             </span>
           </div>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-            {totalCompletedCount}/{totalAlgsCount} bài học
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+              {totalCompletedCount}/{totalAlgsCount}
+            </span>
+            <button
+              onClick={onToggle}
+              title="Ẩn thanh khóa học"
+              aria-label="Ẩn thanh khóa học"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-[#e06c53] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Global Progress Bar */}
