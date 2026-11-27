@@ -222,3 +222,113 @@ export function generateDFSSteps(graph: GraphData = defaultGraphData, startNodeI
 
   return steps;
 }
+
+export const defaultBellmanFordGraph: GraphData = {
+  nodes: [
+    { id: "S", label: "S", x: 100, y: 160 },
+    { id: "A", label: "A", x: 240, y: 70 },
+    { id: "B", label: "B", x: 240, y: 250 },
+    { id: "C", label: "C", x: 400, y: 70 },
+    { id: "D", label: "D", x: 400, y: 250 },
+    { id: "E", label: "E", x: 520, y: 160 },
+  ],
+  edges: [
+    { from: "S", to: "A", weight: 6 },
+    { from: "S", to: "B", weight: 5 },
+    { from: "A", to: "C", weight: 3 },
+    { from: "B", to: "A", weight: -2 },
+    { from: "C", to: "D", weight: -3 },
+    { from: "B", to: "D", weight: 7 },
+    { from: "D", to: "E", weight: 2 },
+    { from: "C", to: "E", weight: 4 },
+  ],
+};
+
+export function generateBellmanFordSteps(
+  graph: GraphData = defaultBellmanFordGraph,
+  startNodeId: string = "S"
+): Step[] {
+  const steps: Step[] = [];
+  const V = graph.nodes.length;
+  const dist: Record<string, number> = {};
+  graph.nodes.forEach((n) => {
+    dist[n.id] = n.id === startNodeId ? 0 : Infinity;
+  });
+
+  const formatDist = () =>
+    graph.nodes.map((n) => `${n.id}:${dist[n.id] === Infinity ? "∞" : dist[n.id]}`).join("  ");
+
+  const relaxedEdges: [string, string][] = [];
+
+  steps.push({
+    graph,
+    currentNode: startNodeId,
+    visitedNodes: [startNodeId],
+    description: `Khởi tạo Bellman-Ford từ đỉnh nguồn ${startNodeId}: dist[${startNodeId}] = 0, các đỉnh khác = ∞. Thực hiện tối đa V - 1 = ${V - 1} vòng nới lỏng (Relaxation) tất cả các cạnh (kể cả cạnh có trọng số âm).`,
+    codeLine: 1,
+    extraInfo: { "Vòng lặp": `0 / ${V - 1}`, "Khoảng cách": formatDist() },
+  });
+
+  for (let pass = 1; pass <= V - 1; pass++) {
+    let anyUpdate = false;
+
+    for (const edge of graph.edges) {
+      const u = edge.from;
+      const v = edge.to;
+      const w = edge.weight ?? 1;
+
+      steps.push({
+        graph,
+        currentNode: v,
+        activeEdge: [u, v],
+        visitedNodes: Object.keys(dist).filter((k) => dist[k] < Infinity),
+        visitedEdges: [...relaxedEdges],
+        description: `[Vòng ${pass}/${V - 1}] Kiểm tra cạnh (${u} → ${v}) với trọng số w = ${w}. Hiện tại dist[${u}] = ${dist[u] === Infinity ? "∞" : dist[u]}, dist[${v}] = ${dist[v] === Infinity ? "∞" : dist[v]}.`,
+        codeLine: 4,
+        extraInfo: { "Vòng lặp": `${pass} / ${V - 1}`, "Khoảng cách": formatDist() },
+      });
+
+      if (dist[u] !== Infinity && dist[u] + w < dist[v]) {
+        const oldVal = dist[v] === Infinity ? "∞" : String(dist[v]);
+        dist[v] = dist[u] + w;
+        anyUpdate = true;
+        relaxedEdges.push([u, v]);
+
+        steps.push({
+          graph,
+          currentNode: v,
+          activeEdge: [u, v],
+          visitedNodes: Object.keys(dist).filter((k) => dist[k] < Infinity),
+          visitedEdges: [...relaxedEdges],
+          description: `Cập nhật (Relax)! ${dist[u] - 0} + (${w}) = ${dist[v]} < ${oldVal}. Gán dist[${v}] = ${dist[v]}.`,
+          codeLine: 6,
+          extraInfo: { "Vòng lặp": `${pass} / ${V - 1}`, "Khoảng cách": formatDist() },
+        });
+      }
+    }
+
+    if (!anyUpdate) {
+      steps.push({
+        graph,
+        visitedNodes: Object.keys(dist).filter((k) => dist[k] < Infinity),
+        visitedEdges: [...relaxedEdges],
+        description: `Dừng sớm ở vòng ${pass}: Không có cạnh nào được cập nhật thêm — đường đi ngắn nhất đã hội tụ!`,
+        codeLine: 8,
+        extraInfo: { "Trạng thái": "Hội tụ sớm", "Khoảng cách": formatDist() },
+      });
+      break;
+    }
+  }
+
+  // Negative cycle check (Pass V)
+  steps.push({
+    graph,
+    visitedNodes: Object.keys(dist).filter((k) => dist[k] < Infinity),
+    visitedEdges: [...relaxedEdges],
+    description: `Hoàn tất kiểm tra vòng thứ ${V}: Không phát hiện chu trình âm! Kết quả đường đi ngắn nhất từ ${startNodeId}: ${formatDist()}.`,
+    codeLine: 10,
+    extraInfo: { "Chu trình âm": "Không có", "Khoảng cách cuối": formatDist() },
+  });
+
+  return steps;
+}

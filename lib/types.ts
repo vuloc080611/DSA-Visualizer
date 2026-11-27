@@ -245,6 +245,11 @@ export interface Step {
   heapSwappingIndices?: [number, number];
   heapExtractedValue?: number;
   heapAction?: "insert" | "extract-min" | "sift-up" | "sift-down" | "complete";
+
+  // Stack & Queue Core Operations state
+  linearOpsStack?: string[];
+  linearOpsQueue?: string[];
+  linearOpsAction?: string;
 }
 
 export interface IntervalActivity {

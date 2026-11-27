@@ -211,10 +211,10 @@ export function Navbar() {
 
                 {/* Study Studio / Học tập Link */}
                 <Link
-                  href="/visualizer/linear-search"
+                  href="/learn"
                   className={cn(
                     "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
-                    pathname.startsWith("/visualizer/")
+                    pathname.startsWith("/learn") || pathname.startsWith("/visualizer/")
                       ? "bg-[#e06c53] text-white shadow-md shadow-[#e06c53]/25 font-bold"
                       : "bg-[#e06c53]/10 text-[#e06c53] border border-[#e06c53]/25 hover:bg-[#e06c53]/20"
                   )}
@@ -429,16 +429,16 @@ export function Navbar() {
 
             {/* Study Studio / Học tập in Drawer */}
             <Link
-              href="/visualizer/linear-search"
+              href="/learn"
               onClick={() => setMobileMenuOpen(false)}
               className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-[#e06c53] bg-[#e06c53]/10 border border-[#e06c53]/25"
             >
               <div className="flex items-center gap-2.5">
                 <BookOpen className="w-4 h-4 text-[#e06c53]" />
-                <span>Khóa học thuật toán (Studio)</span>
+                <span>Khóa học DSA (42 bài)</span>
               </div>
               <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-[#e06c53]/20 text-[#e06c53]">
-                12 Chương
+                11 Phần
               </span>
             </Link>
 

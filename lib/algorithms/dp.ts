@@ -245,3 +245,73 @@ export function generateKnapsackSteps(
 
   return steps;
 }
+
+export function generateDp1DSteps(n: number = 8): Step[] {
+  const steps: Step[] = [];
+  const dp = Array(n + 1).fill(0);
+  dp[0] = 1;
+  dp[1] = 1;
+  const computed: number[] = [0, 1];
+
+  steps.push({
+    array: [...dp],
+    sorted: [...computed],
+    description: `Bài toán Climbing Stairs (Leo cầu thang ${n} bậc, mỗi bước 1 hoặc 2 bậc). Khởi tạo bài toán con cơ sở: dp[0] = 1, dp[1] = 1.`,
+    comparisons: 0,
+    swaps: 0,
+    codeLine: 1,
+    extraInfo: {
+      "Công thức truy hồi": "dp[i] = dp[i-1] + dp[i-2]",
+      "Số bậc cầu thang": n,
+    },
+  });
+
+  for (let i = 2; i <= n; i++) {
+    steps.push({
+      array: [...dp],
+      highlights: [i - 1, i - 2],
+      pivot: i,
+      sorted: [...computed],
+      description: `Tính số cách lên bậc ${i}: lấy kết quả đã lưu từ dp[${i - 1}] (${dp[i - 1]}) + dp[${i - 2}] (${dp[i - 2]}).`,
+      comparisons: i - 1,
+      swaps: i - 1,
+      codeLine: 4,
+      extraInfo: {
+        "Đang xét bậc": `i = ${i}`,
+        "Bài toán con": `${dp[i - 1]} + ${dp[i - 2]}`,
+      },
+    });
+
+    dp[i] = dp[i - 1] + dp[i - 2];
+    computed.push(i);
+
+    steps.push({
+      array: [...dp],
+      pivot: i,
+      sorted: [...computed],
+      description: `Lưu bảng dp[${i}] = ${dp[i]} để tái sử dụng cho các bậc sau (tránh tính lại đệ quy O(2^N)).`,
+      comparisons: i - 1,
+      swaps: i - 1,
+      codeLine: 5,
+      extraInfo: {
+        [`dp[${i}]`]: dp[i],
+        "Độ phức tạp": "O(N) Time • O(N) Space",
+      },
+    });
+  }
+
+  steps.push({
+    array: [...dp],
+    sorted: computed,
+    description: `Hoàn tất Quy hoạch động 1D! Có tổng cộng dp[${n}] = ${dp[n]} cách leo lên bậc thứ ${n}.`,
+    comparisons: n - 1,
+    swaps: n - 1,
+    codeLine: 6,
+    extraInfo: {
+      "Đáp án tối ưu": `${dp[n]} cách`,
+      "Độ phức tạp": "O(N)",
+    },
+  });
+
+  return steps;
+}

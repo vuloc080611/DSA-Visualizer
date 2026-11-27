@@ -3,12 +3,11 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  CURRICULUM_CHAPTERS,
-  CurriculumChapter,
-  getChapterProgress,
-  isAlgorithmUnlocked,
-} from "@/lib/curriculum";
-import { getAlgorithmById } from "@/lib/algorithms";
+  COURSE_CHAPTERS,
+  ALL_COURSE_LESSONS,
+  getLessonById,
+  isCourseLessonUnlocked,
+} from "@/lib/course";
 import {
   Folder,
   FolderOpen,
@@ -17,9 +16,6 @@ import {
   Check,
   Search,
   BookOpen,
-  Layers,
-  Sparkles,
-  Filter,
   X,
   PanelLeftClose,
   PanelLeftOpen,
@@ -42,10 +38,9 @@ export function StudioSyllabusSidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "completed" | "uncompleted">("all");
 
-  // Keep all chapters open by default, allow collapsing
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    CURRICULUM_CHAPTERS.forEach((ch) => {
+    COURSE_CHAPTERS.forEach((ch) => {
       initial[ch.id] = true;
     });
     return initial;
@@ -58,19 +53,20 @@ export function StudioSyllabusSidebar({
     }));
   };
 
-  // Filter algorithms according to search and status
   const filteredChapters = useMemo(() => {
-    return CURRICULUM_CHAPTERS.map((chapter) => {
-      const algs = chapter.algorithmIds
-        .map((id) => getAlgorithmById(id))
-        .filter((a): a is NonNullable<typeof a> => a !== undefined);
+    return COURSE_CHAPTERS.map((chapter) => {
+      const lessons = chapter.lessonIds
+        .map((id) => getLessonById(id))
+        .filter((l): l is NonNullable<typeof l> => l !== undefined);
 
-      const matchingAlgs = algs.filter((alg) => {
+      const matchedLessons = lessons.filter((lesson) => {
+        const q = searchQuery.toLowerCase();
         const matchesSearch =
-          alg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          alg.shortDescription.toLowerCase().includes(searchQuery.toLowerCase());
+          lesson.title.toLowerCase().includes(q) ||
+          lesson.subtitle.toLowerCase().includes(q) ||
+          lesson.code.toLowerCase().includes(q);
 
-        const isDone = completedIds.includes(alg.id);
+        const isDone = completedIds.includes(lesson.id);
         const matchesFilter =
           filterMode === "all" ||
           (filterMode === "completed" && isDone) ||
@@ -79,19 +75,20 @@ export function StudioSyllabusSidebar({
         return matchesSearch && matchesFilter;
       });
 
+      const doneInChapter = chapter.lessonIds.filter((id) => completedIds.includes(id)).length;
+
       return {
         ...chapter,
-        matchedAlgs: matchingAlgs,
+        matchedLessons,
+        completedCount: doneInChapter,
+        totalCount: chapter.lessonIds.length,
       };
     });
   }, [searchQuery, filterMode, completedIds]);
 
-  const totalAlgsCount = useMemo(() => {
-    return CURRICULUM_CHAPTERS.reduce((sum, ch) => sum + ch.algorithmIds.length, 0);
-  }, []);
-
+  const totalLessonsCount = ALL_COURSE_LESSONS.length;
   const totalCompletedCount = useMemo(() => {
-    return completedIds.length;
+    return ALL_COURSE_LESSONS.filter((l) => completedIds.includes(l.id)).length;
   }, [completedIds]);
 
   if (!isOpen) {
@@ -108,7 +105,7 @@ export function StudioSyllabusSidebar({
 
         <button
           onClick={onToggle}
-          title="Mở danh sách 31 bài học DSA"
+          title={`Mở danh sách ${totalLessonsCount} bài học DSA`}
           className="flex flex-col items-center gap-2.5 text-slate-400 hover:text-[#e06c53] transition-colors cursor-pointer group"
         >
           <BookOpen className="w-4 h-4 text-[#e06c53]" />
@@ -116,7 +113,7 @@ export function StudioSyllabusSidebar({
             Khóa học
           </span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 group-hover:border-[#e06c53]/40">
-            {totalCompletedCount}/{totalAlgsCount}
+            {totalCompletedCount}/{totalLessonsCount}
           </span>
         </button>
       </aside>
@@ -136,7 +133,7 @@ export function StudioSyllabusSidebar({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-              {totalCompletedCount}/{totalAlgsCount}
+              {totalCompletedCount}/{totalLessonsCount}
             </span>
             <button
               onClick={onToggle}
@@ -153,70 +150,83 @@ export function StudioSyllabusSidebar({
         <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-full h-1.5 overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-[#e06c53] to-amber-500 transition-all duration-500 rounded-full"
-            style={{ width: `${Math.round((totalCompletedCount / Math.max(1, totalAlgsCount)) * 100)}%` }}
+            style={{ width: `${Math.round((totalCompletedCount / Math.max(1, totalLessonsCount)) * 100)}%` }}
           />
         </div>
 
         {/* Quick Search */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tìm bài học, giải thuật..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-xl pl-8 pr-7 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#e06c53] transition-colors"
+            placeholder="Tìm bài học, mã bài (VD: 03.4)..."
+            className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-[#e06c53]"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
             </button>
           )}
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Chips */}
         <div className="flex items-center gap-1 text-[11px]">
-          {(["all", "completed", "uncompleted"] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setFilterMode(mode)}
-              className={`px-2 py-0.5 rounded-md font-medium transition-colors ${
-                filterMode === mode
-                  ? "bg-[#e06c53]/15 text-[#e06c53] font-bold"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              {mode === "all" ? "Tất cả" : mode === "completed" ? "Đã học" : "Chưa học"}
-            </button>
-          ))}
+          <button
+            onClick={() => setFilterMode("all")}
+            className={`px-2 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+              filterMode === "all"
+                ? "bg-[#e06c53]/15 text-[#e06c53] font-bold"
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => setFilterMode("completed")}
+            className={`px-2 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+              filterMode === "completed"
+                ? "bg-emerald-500/15 text-emerald-500 font-bold"
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+            }`}
+          >
+            Đã Pass
+          </button>
+          <button
+            onClick={() => setFilterMode("uncompleted")}
+            className={`px-2 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+              filterMode === "uncompleted"
+                ? "bg-amber-500/15 text-amber-500 font-bold"
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+            }`}
+          >
+            Chưa học
+          </button>
         </div>
       </div>
 
-      {/* Chapters & Lessons Tree */}
+      {/* Scrollable Chapter Tree */}
       <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1.5 custom-scrollbar">
         {filteredChapters.map((chapter) => {
-          const isOpen = openChapters[chapter.id] !== false;
-          const { completed, total } = getChapterProgress(chapter, completedIds);
-          const hasAlgs = chapter.algorithmIds.length > 0;
-          const matchedCount = chapter.matchedAlgs.length;
+          const isChapterOpen = openChapters[chapter.id] ?? true;
+          const matchedCount = chapter.matchedLessons.length;
 
-          // If searching or filtering and no match, skip this chapter
           if ((searchQuery || filterMode !== "all") && matchedCount === 0) {
             return null;
           }
 
           return (
             <div key={chapter.id} className="rounded-xl overflow-hidden transition-colors">
-              {/* Chapter Header Button */}
               <button
                 onClick={() => toggleChapter(chapter.id)}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/60 transition-colors group"
+                className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/60 transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-2 truncate">
-                  {isOpen ? (
+                  {isChapterOpen ? (
                     <FolderOpen className="w-4 h-4 text-[#e06c53] shrink-0" />
                   ) : (
                     <Folder className="w-4 h-4 text-slate-400 shrink-0" />
@@ -228,9 +238,9 @@ export function StudioSyllabusSidebar({
 
                 <div className="flex items-center gap-1.5 shrink-0 ml-1">
                   <span className="text-[10px] font-mono text-slate-400">
-                    {completed}/{total}
+                    {chapter.completedCount}/{chapter.totalCount}
                   </span>
-                  {isOpen ? (
+                  {isChapterOpen ? (
                     <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
                   ) : (
                     <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
@@ -238,39 +248,35 @@ export function StudioSyllabusSidebar({
                 </div>
               </button>
 
-              {/* Sub-lessons */}
-              {isOpen && (
-                <div className="pl-6 pr-1 py-1 space-y-0.5 border-l border-slate-200 dark:border-slate-800/80 ml-4 my-0.5">
-                  {chapter.matchedAlgs.map((alg) => {
-                    const isActive = alg.id === currentAlgorithmId;
-                    const isDone = completedIds.includes(alg.id);
-                    const isUnlocked = isAlgorithmUnlocked(alg.id, completedIds);
+              {isChapterOpen && (
+                <div className="pl-5 pr-1 py-1 space-y-0.5 border-l border-slate-200 dark:border-slate-800/80 ml-4 my-0.5">
+                  {chapter.matchedLessons.map((lesson) => {
+                    const isActive = lesson.id === currentAlgorithmId;
+                    const isDone = completedIds.includes(lesson.id);
+                    const isUnlocked = isCourseLessonUnlocked(lesson.id, completedIds);
 
                     if (!isUnlocked && !isActive) {
                       return (
                         <div
-                          key={alg.id}
-                          title="Hoàn thành (Pass) bài trước đó để mở khóa bài này"
+                          key={lesson.id}
+                          title="Pass bài trước đó để mở khóa bài này"
                           className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-400 dark:text-slate-600 opacity-60 cursor-not-allowed select-none"
                         >
                           <div className="flex items-center gap-2 truncate">
                             <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                               <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-slate-500" />
                             </span>
-                            <span className="truncate">{alg.name}</span>
+                            <span className="font-mono text-[10px] opacity-80">{lesson.code}</span>
+                            <span className="truncate">{lesson.title}</span>
                           </div>
-
-                          <span className="text-[10px] font-mono shrink-0 ml-1 text-slate-400 dark:text-slate-600">
-                            {alg.complexity.average}
-                          </span>
                         </div>
                       );
                     }
 
                     return (
                       <Link
-                        key={alg.id}
-                        href={`/visualizer/${alg.id}`}
+                        key={lesson.id}
+                        href={`/learn/${lesson.id}`}
                         className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all ${
                           isActive
                             ? "bg-[#e06c53] text-white font-bold shadow-sm shadow-[#e06c53]/20"
@@ -291,25 +297,14 @@ export function StudioSyllabusSidebar({
                           >
                             {isDone && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                           </span>
-                          <span className="truncate">{alg.name}</span>
+                          <span className={`font-mono text-[10px] shrink-0 ${isActive ? "text-white/80" : "text-slate-400"}`}>
+                            {lesson.code}
+                          </span>
+                          <span className="truncate">{lesson.title}</span>
                         </div>
-
-                        <span
-                          className={`text-[10px] font-mono shrink-0 ml-1 ${
-                            isActive ? "text-white/80" : "text-slate-400 dark:text-slate-500"
-                          }`}
-                        >
-                          {alg.complexity.average}
-                        </span>
                       </Link>
                     );
                   })}
-
-                  {!hasAlgs && (
-                    <div className="text-[11px] text-slate-400 italic px-2 py-1">
-                      Đang cập nhật...
-                    </div>
-                  )}
                 </div>
               )}
             </div>

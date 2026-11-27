@@ -1,182 +1,68 @@
-import { ALGORITHMS, getAlgorithmById } from "./algorithms";
+import {
+  COURSE_CHAPTERS,
+  ALL_COURSE_LESSONS,
+  getLessonById,
+  getChapterForLesson,
+  getOrderedCourseLessons,
+  isCourseLessonUnlocked,
+  getCourseFrontierLesson,
+  getCourseNavigationContext,
+} from "./course";
+import { getAlgorithmById } from "./algorithms";
 import { Algorithm } from "./types";
 
 export interface CurriculumChapter {
   id: string;
   number: number;
-  code: string; // e.g. "01", "02", ...
+  code: string;
   title: string;
   englishTitle: string;
   description: string;
   icon: string;
   algorithmIds: string[];
+  lessonIds: string[];
 }
 
-export const CURRICULUM_CHAPTERS: CurriculumChapter[] = [
-  {
-    id: "chapter-01-foundations",
-    number: 1,
-    code: "01",
-    title: "Nền tảng & Tìm kiếm",
-    englishTitle: "Foundations & Searching",
-    description: "Nhập môn phân tích độ phức tạp Big-O và các phương pháp tìm kiếm tuyến tính, nhị phân căn bản.",
-    icon: "Compass",
-    algorithmIds: ["linear-search", "binary-search"],
-  },
-  {
-    id: "chapter-02-arrays",
-    number: 2,
-    code: "02",
-    title: "Mảng & Hai con trỏ",
-    englishTitle: "Arrays & Two Pointers",
-    description: "Các kỹ thuật thao tác mảng tốc độ cao: Hai con trỏ, Cửa sổ trượt (Sliding Window) và Mảng con lớn nhất (Kadane).",
-    icon: "Layers",
-    algorithmIds: ["two-sum", "sliding-window", "kadane"],
-  },
-  {
-    id: "chapter-03-linked-lists",
-    number: 3,
-    code: "03",
-    title: "Danh sách liên kết",
-    englishTitle: "Linked Lists",
-    description: "Làm chủ con trỏ bộ nhớ: Đảo ngược danh sách liên kết và thuật toán Rùa & Thỏ phát hiện chu trình (Floyd's Cycle).",
-    icon: "Link2",
-    algorithmIds: ["reverse-linked-list", "floyd-cycle"],
-  },
-  {
-    id: "chapter-04-stack-queue",
-    number: 4,
-    code: "04",
-    title: "Ngăn xếp & Hàng đợi",
-    englishTitle: "Stack & Queue",
-    description: "Cấu trúc LIFO và FIFO kinh điển trong phân tích cú pháp dấu ngoặc và xử lý luồng sự kiện.",
-    icon: "Layers",
-    algorithmIds: ["valid-parentheses"],
-  },
-  {
-    id: "chapter-05-hashing",
-    number: 5,
-    code: "05",
-    title: "Bảng băm (Hash Table)",
-    englishTitle: "Hashing & Tables",
-    description: "Nguyên lý hàm băm $O(1)$, xử lý xung đột bằng Chaining và Open Addressing.",
-    icon: "Database",
-    algorithmIds: ["hash-table"],
-  },
-  {
-    id: "chapter-06-trees",
-    number: 6,
-    code: "06",
-    title: "Cây nhị phân & Cây cân bằng",
-    englishTitle: "Trees & Balanced BST",
-    description: "Khám phá Cây tìm kiếm nhị phân (BST), Cây tự cân bằng (AVL Tree) với 4 phép xoay và Cây phân đoạn (Segment Tree).",
-    icon: "GitFork",
-    algorithmIds: ["bst", "avl-tree", "segment-tree"],
-  },
-  {
-    id: "chapter-07-heaps",
-    number: 7,
-    code: "07",
-    title: "Đống & Hàng đợi ưu tiên",
-    englishTitle: "Heap & Priority Queue",
-    description: "Cấu trúc Max Heap, Min Heap, thao tác Heapify và thuật toán Sắp xếp vun đống (Heap Sort).",
-    icon: "BarChart2",
-    algorithmIds: ["min-heap", "heap-sort"],
-  },
-  {
-    id: "chapter-08-graphs",
-    number: 8,
-    code: "08",
-    title: "Đồ thị & Đường đi ngắn nhất",
-    englishTitle: "Graphs & Shortest Path",
-    description: "Duyệt BFS, DFS, tìm đường ngắn nhất Dijkstra, tìm đường heuristic A*, cây khung Kruskal DSU và sắp xếp Topo.",
-    icon: "Network",
-    algorithmIds: [
-      "bfs",
-      "dfs",
-      "dijkstra",
-      "a-star",
-      "kruskal-dsu",
-      "topological-sort",
-    ],
-  },
-  {
-    id: "chapter-09-sorting",
-    number: 9,
-    code: "09",
-    title: "Sắp xếp & Chia để trị",
-    englishTitle: "Sorting & Divide-and-Conquer",
-    description: "Bộ sưu tập sắp xếp kinh điển: Bubble, Selection, Insertion, Merge Sort và Quick Sort tối ưu.",
-    icon: "ArrowDownUp",
-    algorithmIds: [
-      "bubble-sort",
-      "selection-sort",
-      "insertion-sort",
-      "merge-sort",
-      "quick-sort",
-    ],
-  },
-  {
-    id: "chapter-10-greedy",
-    number: 10,
-    code: "10",
-    title: "Thuật toán Tham lam",
-    englishTitle: "Greedy Strategy",
-    description: "Chiến lược tối ưu hóa cục bộ trong chọn lịch hoạt động không xung đột và bài toán cái túi phân số.",
-    icon: "Zap",
-    algorithmIds: ["greedy-interval-scheduling"],
-  },
-  {
-    id: "chapter-11-backtracking",
-    number: 11,
-    code: "11",
-    title: "Quay lui (Backtracking)",
-    englishTitle: "Backtracking & Exhaustive",
-    description: "Duyệt không gian trạng thái, tỉa nhánh và bài toán xếp 8 quân Hậu (N-Queens).",
-    icon: "Crown",
-    algorithmIds: ["n-queens"],
-  },
-  {
-    id: "chapter-12-dp-strings",
-    number: 12,
-    code: "12",
-    title: "Quy hoạch động & Chuỗi",
-    englishTitle: "Dynamic Programming & Trie",
-    description: "Đỉnh cao thuật toán Big Tech: Cái túi 0/1, Dãy con chung dài nhất (LCS), Khớp chuỗi KMP và Cây tiền tố Trie.",
-    icon: "Sparkles",
-    algorithmIds: ["knapsack-01", "lcs", "kmp", "trie"],
-  },
-];
+const CHAPTER_ICONS: Record<number, string> = {
+  0: "Compass",
+  1: "Search",
+  2: "Link2",
+  3: "ArrowDownUp",
+  4: "Database",
+  5: "GitFork",
+  6: "BarChart2",
+  7: "Network",
+  8: "Zap",
+  9: "Sparkles",
+  10: "Award",
+};
 
-/**
- * Total active algorithms registered across curriculum
- */
-export const TOTAL_CURRICULUM_ALGORITHMS = CURRICULUM_CHAPTERS.reduce(
-  (sum, chap) => sum + chap.algorithmIds.length,
-  0
-);
+export const CURRICULUM_CHAPTERS: CurriculumChapter[] = COURSE_CHAPTERS.map((ch) => ({
+  id: ch.id,
+  number: ch.number,
+  code: ch.code,
+  title: ch.title,
+  englishTitle: ch.englishTitle,
+  description: ch.chapterIntro.goal,
+  icon: CHAPTER_ICONS[ch.number] || "BookOpen",
+  lessonIds: ch.lessonIds,
+  algorithmIds: ch.lessonIds.filter((id) => getAlgorithmById(id) !== undefined),
+}));
 
-/**
- * Find which chapter an algorithm belongs to
- */
+export const TOTAL_CURRICULUM_ALGORITHMS = ALL_COURSE_LESSONS.length;
+
 export function getChapterByAlgorithmId(algorithmId: string): CurriculumChapter | undefined {
-  return CURRICULUM_CHAPTERS.find((ch) => ch.algorithmIds.includes(algorithmId));
+  return CURRICULUM_CHAPTERS.find((ch) => ch.lessonIds.includes(algorithmId));
 }
 
-/**
- * Get progress data for a specific chapter
- */
 export function getChapterProgress(chapter: CurriculumChapter, completedIds: string[]) {
-  const total = chapter.algorithmIds.length;
+  const total = chapter.lessonIds.length;
   if (total === 0) return { completed: 0, total: 0, percentage: 0 };
-  const completed = chapter.algorithmIds.filter((id) => completedIds.includes(id)).length;
+  const completed = chapter.lessonIds.filter((id) => completedIds.includes(id)).length;
   const percentage = Math.round((completed / total) * 100);
   return { completed, total, percentage };
 }
 
-/**
- * Flatten all active algorithms in sequential curriculum order
- */
 export function getFlattenedCurriculum(): {
   alg: Algorithm;
   chapter: CurriculumChapter;
@@ -200,35 +86,19 @@ export function getFlattenedCurriculum(): {
   return flattened;
 }
 
-/**
- * Check if an algorithm is unlocked under sequential progression rules:
- * - First algorithm in the curriculum is always unlocked.
- * - Any algorithm is unlocked if it is already completed OR the immediately preceding algorithm is completed.
- */
 export function isAlgorithmUnlocked(algorithmId: string, completedIds: string[]): boolean {
-  if (completedIds.includes(algorithmId)) return true;
-  const flattened = getFlattenedCurriculum();
-  const idx = flattened.findIndex((item) => item.alg.id === algorithmId);
-  if (idx <= 0) return true; // First lesson (or unknown) is unlocked
-  const prevId = flattened[idx - 1].alg.id;
-  return completedIds.includes(prevId);
+  return isCourseLessonUnlocked(algorithmId, completedIds);
 }
 
-/**
- * Find the next uncompleted unlocked algorithm (the user's current frontier lesson)
- */
 export function getCurrentFrontierLesson(completedIds: string[]) {
-  const flattened = getFlattenedCurriculum();
-  const nextUncompleted = flattened.find((item) => !completedIds.includes(item.alg.id));
-  return nextUncompleted || flattened[0] || null;
+  const frontier = getCourseFrontierLesson(completedIds);
+  const chapter = getChapterByAlgorithmId(frontier.id);
+  const alg = frontier.algorithmId ? getAlgorithmById(frontier.algorithmId) : undefined;
+  return alg && chapter ? { alg, chapter, indexInChapter: 1 } : null;
 }
 
-/**
- * Get the previous and next algorithm in the sequential curriculum order
- */
 export function getNavigationContext(currentAlgorithmId: string) {
   const flattened = getFlattenedCurriculum();
-
   const currentIndex = flattened.findIndex((item) => item.alg.id === currentAlgorithmId);
   const currentItem = currentIndex !== -1 ? flattened[currentIndex] : null;
 
@@ -243,3 +113,14 @@ export function getNavigationContext(currentAlgorithmId: string) {
     currentIndex: currentIndex + 1,
   };
 }
+
+export {
+  COURSE_CHAPTERS,
+  ALL_COURSE_LESSONS,
+  getLessonById,
+  getChapterForLesson,
+  getOrderedCourseLessons,
+  isCourseLessonUnlocked,
+  getCourseFrontierLesson,
+  getCourseNavigationContext,
+};

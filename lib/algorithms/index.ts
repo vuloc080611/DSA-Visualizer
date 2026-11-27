@@ -6,11 +6,18 @@ import {
   generateMergeSortSteps,
   generateQuickSortSteps,
   generateHeapSortSteps,
+  generateCountingSortSteps,
 } from "./sorting";
 import { generateLinearSearchSteps, generateBinarySearchSteps } from "./searching";
-import { generateBFSSteps, generateDFSSteps, defaultGraphData } from "./graph";
+import {
+  generateBFSSteps,
+  generateDFSSteps,
+  generateBellmanFordSteps,
+  defaultGraphData,
+  defaultBellmanFordGraph,
+} from "./graph";
 import { generateTwoSumSteps, generateSlidingWindowSteps, generateKadaneSteps } from "./array";
-import { generateBSTSteps, generateAVLSteps } from "./tree";
+import { generateBSTSteps, generateAVLSteps, generateTreeTraversalSteps } from "./tree";
 import {
   generateDijkstraSteps,
   generateAStarSteps,
@@ -26,7 +33,12 @@ import {
   DEFAULT_LINKED_LIST_VALUES,
 } from "./linkedList";
 import { generateValidParenthesesSteps, DEFAULT_PARENTHESES_STRING } from "./stackQueue";
-import { generateKnapsackSteps, DEFAULT_KNAPSACK_ITEMS, DEFAULT_KNAPSACK_CAPACITY } from "./dp";
+import {
+  generateKnapsackSteps,
+  generateDp1DSteps,
+  DEFAULT_KNAPSACK_ITEMS,
+  DEFAULT_KNAPSACK_CAPACITY,
+} from "./dp";
 import { generateNQueensSteps, DEFAULT_N_QUEENS_SIZE } from "./backtracking";
 import { generateTrieSteps, DEFAULT_TRIE_WORDS } from "./trie";
 import { generateKMPSteps, DEFAULT_KMP_TEXT, DEFAULT_KMP_PATTERN } from "./kmp";
@@ -35,8 +47,9 @@ import { generateSegmentTreeSteps, DEFAULT_SEG_TREE_ARRAY } from "./segmentTree"
 import { generateTopologicalSortSteps, DEFAULT_DAG_GRAPH } from "./topologicalSort";
 import { generateLCSSteps, DEFAULT_LCS_STR1, DEFAULT_LCS_STR2 } from "./lcs";
 import { generateIntervalSchedulingSteps } from "./greedy";
-import { generateHashTableSteps } from "./hashTable";
+import { generateHashTableSteps, generateHashOpenAddressingSteps } from "./hashTable";
 import { generateMinHeapSteps } from "./heapOperations";
+import { generateLinearOpsSteps } from "./linearOps";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -2091,6 +2104,327 @@ void demo() {
 }`,
     },
     generateSteps: () => generateMinHeapSteps(),
+  },
+
+  // =================== NEW CORE CURRICULUM ALGORITHMS ===================
+  {
+    id: "linear-ops",
+    name: "Thao tác Stack & Queue (LIFO / FIFO)",
+    category: "stack-queue",
+    shortDescription: "Minh họa trực tiếp sự khác biệt giữa Ngăn xếp LIFO (Push/Pop) và Hàng đợi FIFO (Enqueue/Dequeue) với độ phức tạp O(1).",
+    fullDescription:
+      "Stack (Ngăn xếp) tuân theo quy tắc Vào sau Ra trước (LIFO) và Queue (Hàng đợi) tuân theo quy tắc Vào trước Ra trước (FIFO). Đây là hai kiểu dữ liệu trừu tượng nền tảng đứng sau lời gọi hàm (Call Stack), duyệt đồ thị (DFS/BFS) và hàng đợi tác vụ.",
+    complexity: {
+      best: "O(1)",
+      average: "O(1)",
+      worst: "O(1)",
+      space: "O(N)",
+    },
+    properties: {
+      dataStructure: "Stack & Queue",
+    },
+    code: {
+      python: `from collections import deque
+
+# Stack (LIFO) dùng list
+stack = []
+stack.append("Task A")  # Push O(1)
+top = stack.pop()       # Pop O(1)
+
+# Queue (FIFO) dùng deque để popleft O(1)
+queue = deque()
+queue.append("Task A")  # Enqueue O(1)
+front = queue.popleft() # Dequeue O(1)`,
+      cpp: `#include <stack>
+#include <queue>
+#include <string>
+using namespace std;
+
+void demo() {
+    stack<string> st;
+    st.push("Task A"); st.pop();
+
+    queue<string> q;
+    q.push("Task A"); q.pop();
+}`,
+      typescript: `const stack: string[] = [];
+stack.push("Task A"); // O(1)
+const popped = stack.pop(); // O(1)
+
+const queue: string[] = [];
+queue.push("Task A"); // Enqueue
+const front = queue.shift(); // Dequeue (nên dùng Circular Buffer / Deque để đạt O(1))`,
+    },
+    generateSteps: () => generateLinearOpsSteps(),
+  },
+  {
+    id: "counting-sort",
+    name: "Counting Sort",
+    category: "sorting",
+    shortDescription: "Thuật toán sắp xếp không dùng phép so sánh, đếm tần suất xuất hiện để đạt độ phức tạp tuyến tính O(N + K).",
+    fullDescription:
+      "Khác với Merge Sort hay Quick Sort bị chặn bởi giới hạn dưới O(N log N) của sắp xếp so sánh, Counting Sort đếm số lần xuất hiện của mỗi giá trị nguyên trong miền [0..K] rồi điền trực tiếp kết quả về mảng trong O(N + K).",
+    complexity: {
+      best: "O(N + K)",
+      average: "O(N + K)",
+      worst: "O(N + K)",
+      space: "O(N + K)",
+    },
+    properties: {
+      stable: true,
+      inPlace: false,
+      dataStructure: "Array + Count Array",
+    },
+    defaultArray: [4, 2, 2, 8, 3, 3, 1, 7],
+    code: {
+      python: `def counting_sort(arr):
+    if not arr: return []
+    k = max(arr)
+    count = [0] * (k + 1)
+    for x in arr:
+        count[x] += 1
+    res = []
+    for val, c in enumerate(count):
+        res.extend([val] * c)
+    return res`,
+      cpp: `vector<int> countingSort(vector<int>& arr) {
+    if (arr.empty()) return {};
+    int k = *max_element(arr.begin(), arr.end());
+    vector<int> count(k + 1, 0);
+    for (int x : arr) count[x]++;
+    vector<int> res;
+    for (int v = 0; v <= k; v++)
+        while (count[v]--) res.push_back(v);
+    return res;
+}`,
+      typescript: `function countingSort(arr: number[]): number[] {
+  if (arr.length === 0) return [];
+  const k = Math.max(...arr);
+  const count = new Array(k + 1).fill(0);
+  for (const x of arr) count[x]++;
+  const res: number[] = [];
+  for (let v = 0; v <= k; v++) {
+    while (count[v]-- > 0) res.push(v);
+  }
+  return res;
+}`,
+    },
+    generateSteps: (config) => generateCountingSortSteps(config?.array || [4, 2, 2, 8, 3, 3, 1, 7]),
+  },
+  {
+    id: "hash-open-addressing",
+    name: "Bảng Băm — Open Addressing (Linear Probing)",
+    category: "hash-table",
+    shortDescription: "Giải quyết xung đột ngay bên trong mảng bảng băm bằng cách dò tuyến tính sang các ô trống kế tiếp.",
+    fullDescription:
+      "Thay vì tạo danh sách liên kết ở mỗi bucket như Separate Chaining, phương pháp Open Addressing (Linear Probing) lưu mọi phần tử trực tiếp trong mảng kích thước M. Khi xảy ra xung đột tại h(k), thuật toán dò lần lượt (h(k) + 1) mod M, (h(k) + 2) mod M cho đến khi gặp ô trống.",
+    complexity: {
+      best: "O(1)",
+      average: "O(1)",
+      worst: "O(N)",
+      space: "O(M)",
+    },
+    properties: {
+      dataStructure: "Flat Array Hash Table",
+    },
+    code: {
+      python: `class LinearProbingHashTable:
+    def __init__(self, m=7):
+        self.m = m
+        self.keys = [None] * m
+
+    def insert(self, key):
+        idx = key % self.m
+        while self.keys[idx] is not None:
+            if self.keys[idx] == key: return
+            idx = (idx + 1) % self.m
+        self.keys[idx] = key`,
+      cpp: `class LinearProbingHashTable {
+    int m;
+    vector<int> slots;
+public:
+    LinearProbingHashTable(int size = 7) : m(size), slots(size, -1) {}
+    void insert(int key) {
+        int idx = key % m;
+        while (slots[idx] != -1 && slots[idx] != key)
+            idx = (idx + 1) % m;
+        slots[idx] = key;
+    }
+};`,
+      typescript: `class LinearProbingHashTable {
+  private slots: (number | null)[];
+  constructor(private m = 7) {
+    this.slots = Array(m).fill(null);
+  }
+  insert(key: number) {
+    let idx = key % this.m;
+    while (this.slots[idx] !== null && this.slots[idx] !== key) {
+      idx = (idx + 1) % this.m;
+    }
+    this.slots[idx] = key;
+  }
+}`,
+    },
+    generateSteps: () => generateHashOpenAddressingSteps(),
+  },
+  {
+    id: "tree-traversals",
+    name: "Duyệt Cây Nhị Phân (Tree Traversals)",
+    category: "tree",
+    shortDescription: "4 phép duyệt kinh điển trên cây nhị phân: In-Order, Pre-Order, Post-Order (DFS) và Level-Order (BFS).",
+    fullDescription:
+      "Duyệt cây nhị phân là nền tảng để xử lý mọi bài toán trên cây. Duyệt theo chiều sâu gồm Pre-order (Nút-Trái-Phải), In-order (Trái-Nút-Phải — cho dãy tăng dần trên BST), Post-order (Trái-Phải-Nút); còn duyệt theo chiều rộng Level-order sử dụng Queue để đi từng tầng.",
+    complexity: {
+      best: "O(N)",
+      average: "O(N)",
+      worst: "O(N)",
+      space: "O(H)",
+    },
+    properties: {
+      dataStructure: "Binary Tree",
+    },
+    defaultTreeValues: [50, 30, 70, 20, 40, 60, 80],
+    code: {
+      python: `def inorder(node, res):
+    if not node: return
+    inorder(node.left, res)
+    res.append(node.val)
+    inorder(node.right, res)
+
+from collections import deque
+def level_order(root):
+    if not root: return []
+    q, res = deque([root]), []
+    while q:
+        curr = q.popleft()
+        res.append(curr.val)
+        if curr.left: q.append(curr.left)
+        if curr.right: q.append(curr.right)
+    return res`,
+      cpp: `void inorder(TreeNode* root, vector<int>& res) {
+    if (!root) return;
+    inorder(root->left, res);
+    res.push_back(root->val);
+    inorder(root->right, res);
+}`,
+      typescript: `function inorder(node: TreeNode | null, res: number[] = []): number[] {
+  if (!node) return res;
+  inorder(node.left, res);
+  res.push(node.val);
+  inorder(node.right, res);
+  return res;
+}`,
+    },
+    generateSteps: (config) => generateTreeTraversalSteps(config?.treeValues || [50, 30, 70, 20, 40, 60, 80]),
+  },
+  {
+    id: "bellman-ford",
+    name: "Bellman-Ford Shortest Path",
+    category: "graph",
+    shortDescription: "Tìm đường đi ngắn nhất từ 1 đỉnh trên đồ thị có cả cạnh trọng số ÂM và phát hiện chu trình âm.",
+    fullDescription:
+      "Không giống Dijkstra vốn thất bại khi gặp cạnh âm, Bellman-Ford thực hiện V - 1 lượt nới lỏng (Relaxation) qua tất cả E cạnh. Nhờ đó thuật toán xử lý chính xác trọng số âm và dùng thêm lượt thứ V để phát hiện chu trình âm (Negative Cycle).",
+    complexity: {
+      best: "O(E)",
+      average: "O(V · E)",
+      worst: "O(V · E)",
+      space: "O(V)",
+    },
+    properties: {
+      dataStructure: "Weighted Directed Graph",
+    },
+    defaultGraph: defaultBellmanFordGraph,
+    code: {
+      python: `def bellman_ford(V, edges, src):
+    dist = [float('inf')] * V
+    dist[src] = 0
+    for _ in range(V - 1):
+        updated = False
+        for u, v, w in edges:
+            if dist[u] != float('inf') and dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                updated = True
+        if not updated: break
+    for u, v, w in edges:
+        if dist[u] != float('inf') and dist[u] + w < dist[v]:
+            return None # Negative cycle detected
+    return dist`,
+      cpp: `vector<int> bellmanFord(int V, vector<tuple<int,int,int>>& edges, int src) {
+    vector<int> dist(V, 1e9);
+    dist[src] = 0;
+    for (int i = 0; i < V - 1; i++) {
+        for (auto& [u, v, w] : edges) {
+            if (dist[u] < 1e9 && dist[u] + w < dist[v])
+                dist[v] = dist[u] + w;
+        }
+    }
+    return dist;
+}`,
+      typescript: `function bellmanFord(V: number, edges: [number, number, number][], src: number): number[] | null {
+  const dist = Array(V).fill(Infinity);
+  dist[src] = 0;
+  for (let i = 0; i < V - 1; i++) {
+    let updated = false;
+    for (const [u, v, w] of edges) {
+      if (dist[u] !== Infinity && dist[u] + w < dist[v]) {
+        dist[v] = dist[u] + w;
+        updated = true;
+      }
+    }
+    if (!updated) break;
+  }
+  for (const [u, v, w] of edges) {
+    if (dist[u] !== Infinity && dist[u] + w < dist[v]) return null;
+  }
+  return dist;
+}`,
+    },
+    generateSteps: (config) => generateBellmanFordSteps(config?.graph || defaultBellmanFordGraph, "S"),
+  },
+  {
+    id: "dp-1d",
+    name: "Quy hoạch động 1D (Climbing Stairs)",
+    category: "dp",
+    shortDescription: "Bài học nhập môn Quy hoạch động: tối ưu từ đệ quy mũ O(2^N) xuống tuyến tính O(N) bằng bảng 1 chiều.",
+    fullDescription:
+      "Climbing Stairs (Leo cầu thang) là bài toán kinh điển nhất để hiểu bản chất Quy hoạch động (Dynamic Programming): chia nhỏ bài toán thành các bài toán con gối nhau (dp[i] = dp[i-1] + dp[i-2]) và lưu lại kết quả thay vì tính lặp đi lặp lại.",
+    complexity: {
+      best: "O(N)",
+      average: "O(N)",
+      worst: "O(N)",
+      space: "O(N) → O(1)",
+    },
+    properties: {
+      dataStructure: "1D DP Array",
+    },
+    code: {
+      python: `def climb_stairs(n):
+    if n <= 1: return 1
+    dp = [0] * (n + 1)
+    dp[0], dp[1] = 1, 1
+    for i in range(2, n + 1):
+        dp[i] = dp[i - 1] + dp[i - 2]
+    return dp[n]`,
+      cpp: `int climbStairs(int n) {
+    if (n <= 1) return 1;
+    vector<int> dp(n + 1, 0);
+    dp[0] = dp[1] = 1;
+    for (int i = 2; i <= n; i++)
+        dp[i] = dp[i - 1] + dp[i - 2];
+    return dp[n];
+}`,
+      typescript: `function climbStairs(n: number): number {
+  if (n <= 1) return 1;
+  const dp = new Array(n + 1).fill(0);
+  dp[0] = 1;
+  dp[1] = 1;
+  for (let i = 2; i <= n; i++) {
+    dp[i] = dp[i - 1] + dp[i - 2];
+  }
+  return dp[n];
+}`,
+    },
+    generateSteps: () => generateDp1DSteps(8),
   },
 ];
 

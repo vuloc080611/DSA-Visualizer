@@ -629,3 +629,85 @@ export function generateHeapSortSteps(initialArray: number[]): Step[] {
 
   return steps;
 }
+
+export function generateCountingSortSteps(initialArray: number[]): Step[] {
+  const source = initialArray.length > 0 ? initialArray : [4, 2, 2, 8, 3, 3, 1, 7];
+  // Scale down large values if needed or keep manageable integer range [0..20] for counting demo
+  const arr = source.map((v) => Math.max(0, Math.min(20, Math.round(v % 15))));
+  const steps: Step[] = [];
+  const n = arr.length;
+  const maxVal = Math.max(...arr, 0);
+  const count = Array(maxVal + 1).fill(0);
+
+  steps.push({
+    array: [...arr],
+    description: `Khởi tạo Counting Sort trên ${n} phần tử không âm (giá trị tối đa K = ${maxVal}). Tạo mảng đếm tần suất count[0..${maxVal}] bằng 0.`,
+    comparisons: 0,
+    swaps: 0,
+    codeLine: 1,
+    extraInfo: {
+      "Miền giá trị K": `0..${maxVal}`,
+      "Mảng đếm count[]": `[${count.join(", ")}]`,
+    },
+  });
+
+  // 1. Frequency counting phase
+  for (let i = 0; i < n; i++) {
+    const val = arr[i];
+    count[val]++;
+    steps.push({
+      array: [...arr],
+      highlights: [i],
+      description: `Đếm phần tử arr[${i}] = ${val} → tăng count[${val}] lên ${count[val]}.`,
+      comparisons: 0,
+      swaps: i + 1,
+      codeLine: 4,
+      extraInfo: {
+        "Đang đếm": `val = ${val}`,
+        "Mảng đếm count[]": `[${count.join(", ")}]`,
+      },
+    });
+  }
+
+  // 2. Reconstruct sorted array directly
+  const output = [...arr];
+  const sortedIndices: number[] = [];
+  let writeIdx = 0;
+
+  for (let val = 0; val <= maxVal; val++) {
+    while (count[val] > 0) {
+      output[writeIdx] = val;
+      count[val]--;
+      sortedIndices.push(writeIdx);
+      steps.push({
+        array: [...output],
+        highlights: [writeIdx],
+        sorted: [...sortedIndices],
+        description: `Ghi giá trị ${val} vào vị trí arr[${writeIdx}] (dựa trên count[${val}]). Còn lại count[${val}] = ${count[val]}.`,
+        comparisons: 0,
+        swaps: n + writeIdx + 1,
+        codeLine: 8,
+        extraInfo: {
+          "Giá trị đang ghi": val,
+          "Mảng đếm count[]": `[${count.join(", ")}]`,
+        },
+      });
+      writeIdx++;
+    }
+  }
+
+  steps.push({
+    array: [...output],
+    sorted: Array.from({ length: n }, (_, k) => k),
+    description: `Counting Sort hoàn tất trong O(N + K) mà không cần so sánh cặp phần tử nào!`,
+    comparisons: 0,
+    swaps: n * 2,
+    codeLine: 11,
+    extraInfo: {
+      "Phép so sánh phần tử": 0,
+      "Độ phức tạp": "O(N + K)",
+    },
+  });
+
+  return steps;
+}

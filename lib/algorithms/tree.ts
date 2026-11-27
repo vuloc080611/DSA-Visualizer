@@ -576,3 +576,94 @@ export function generateAVLSteps(
 
   return steps;
 }
+
+export function generateTreeTraversalSteps(initialValues: number[] = [50, 30, 70, 20, 40, 60, 80]): Step[] {
+  const steps: Step[] = [];
+
+  // Build static balanced tree from values
+  function insertStatic(node: TreeNodeData | null, val: number): TreeNodeData {
+    if (!node) return { id: `node-${val}`, value: val, left: null, right: null };
+    if (val < node.value) node.left = insertStatic(node.left || null, val);
+    else if (val > node.value) node.right = insertStatic(node.right || null, val);
+    return node;
+  }
+
+  let root: TreeNodeData | null = null;
+  for (const v of initialValues) {
+    root = insertStatic(root, v);
+  }
+  layoutTree(root);
+
+  steps.push({
+    tree: cloneTree(root),
+    description:
+      "Khởi tạo cây nhị phân hoàn chỉnh với 7 nút. Ta sẽ lần lượt minh họa phép duyệt In-Order (Trái → Gốc → Phải) và Pre-Order (Gốc → Trái → Phải).",
+    codeLine: 1,
+    extraInfo: { "Phép duyệt": "In-Order (L → N → R)", "Kết quả": "[]" },
+  });
+
+  // 1. In-Order Traversal (Left -> Node -> Right)
+  const inOrderResult: number[] = [];
+  function inOrder(node: TreeNodeData | null) {
+    if (!node) return;
+    steps.push({
+      tree: cloneTree(root),
+      activeNodeValue: node.value,
+      treeHighlights: [...inOrderResult],
+      description: `[In-Order] Đi xuống nhánh trái của node ${node.value} (nếu có).`,
+      codeLine: 3,
+      extraInfo: { "Phép duyệt": "In-Order (L → N → R)", "Đã thu thập": inOrderResult.join(" → ") || "Chưa có" },
+    });
+
+    inOrder(node.left || null);
+
+    inOrderResult.push(node.value);
+    steps.push({
+      tree: cloneTree(root),
+      activeNodeValue: node.value,
+      foundNodeValue: node.value,
+      treeHighlights: [...inOrderResult],
+      description: `[In-Order] Thăm và ghi nhận node ${node.value}! (Trên BST, In-Order luôn cho dãy tăng dần).`,
+      codeLine: 4,
+      extraInfo: { "Phép duyệt": "In-Order (L → N → R)", "Kết quả": inOrderResult.join(" → ") },
+    });
+
+    inOrder(node.right || null);
+  }
+  inOrder(root);
+
+  // 2. Level-Order Traversal (BFS on Tree)
+  const levelOrderResult: number[] = [];
+  const queue: TreeNodeData[] = root ? [root] : [];
+  while (queue.length > 0) {
+    const curr = queue.shift()!;
+    levelOrderResult.push(curr.value);
+    steps.push({
+      tree: cloneTree(root),
+      activeNodeValue: curr.value,
+      foundNodeValue: curr.value,
+      treeHighlights: [...levelOrderResult],
+      description: `[Level-Order (BFS)] Duyệt theo từng tầng từ trên xuống dưới, trái sang phải: thăm node ${curr.value}.`,
+      codeLine: 9,
+      extraInfo: {
+        "In-Order hoàn tất": inOrderResult.join(" → "),
+        "Level-Order đang duyệt": levelOrderResult.join(" → "),
+      },
+    });
+    if (curr.left) queue.push(curr.left);
+    if (curr.right) queue.push(curr.right);
+  }
+
+  steps.push({
+    tree: cloneTree(root),
+    treeHighlights: [...levelOrderResult],
+    description: `Hoàn tất các phép duyệt cây nhị phân! In-Order cho dãy tăng dần: [${inOrderResult.join(", ")}]. Level-Order theo tầng: [${levelOrderResult.join(", ")}].`,
+    codeLine: 12,
+    extraInfo: {
+      "In-Order (L-N-R)": inOrderResult.join(" → "),
+      "Level-Order (BFS)": levelOrderResult.join(" → "),
+    },
+  });
+
+  return steps;
+}

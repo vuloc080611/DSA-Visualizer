@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GreedyIntervalCanvas } from "@/components/canvas/GreedyIntervalCanvas";
 import { HashTableCanvas } from "@/components/canvas/HashTableCanvas";
 import { HeapCanvas } from "@/components/canvas/HeapCanvas";
+import { LinearOpsCanvas } from "@/components/canvas/LinearOpsCanvas";
 import {
   Sparkles,
   ArrowDown,
@@ -112,8 +113,13 @@ export function VisualizerCanvas({
     return <HeapCanvas currentStep={currentStep} />;
   }
 
-  // If it's a dynamic programming algorithm (0/1 Knapsack), render DpCanvas
-  if (category === "dp" || currentStep.dpTable !== undefined) {
+  // Stack & Queue Core Operations
+  if (currentStep.linearOpsStack !== undefined || currentStep.linearOpsQueue !== undefined) {
+    return <LinearOpsCanvas currentStep={currentStep} />;
+  }
+
+  // If it's a 2D dynamic programming algorithm (0/1 Knapsack), render DpCanvas
+  if (currentStep.dpTable !== undefined) {
     return <DpCanvas currentStep={currentStep} />;
   }
 
@@ -447,18 +453,47 @@ function GraphCanvas({
               strokeWidth = 3;
             }
 
+            const midX = (fromNode.x + toNode.x) / 2;
+            const midY = (fromNode.y + toNode.y) / 2;
+
             return (
-              <line
-                key={idx}
-                x1={fromNode.x}
-                y1={fromNode.y}
-                x2={toNode.x}
-                y2={toNode.y}
-                stroke={strokeColor}
-                strokeWidth={strokeWidth}
-                strokeDasharray={strokeDash}
-                className={active ? "animate-laser" : "transition-all duration-300"}
-              />
+              <g key={idx}>
+                <line
+                  x1={fromNode.x}
+                  y1={fromNode.y}
+                  x2={toNode.x}
+                  y2={toNode.y}
+                  stroke={strokeColor}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={strokeDash}
+                  className={active ? "animate-laser" : "transition-all duration-300"}
+                />
+                {edge.weight !== undefined && (
+                  <g>
+                    <rect
+                      x={midX - 13}
+                      y={midY - 10}
+                      width={26}
+                      height={20}
+                      rx={6}
+                      fill={edge.weight < 0 ? "#be123c" : "#0f172a"}
+                      stroke={active ? "#06b6d4" : edge.weight < 0 ? "#fb7185" : "#475569"}
+                      strokeWidth={1.5}
+                    />
+                    <text
+                      x={midX}
+                      y={midY + 4}
+                      textAnchor="middle"
+                      fill="#f8fafc"
+                      fontSize="11"
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                    >
+                      {edge.weight}
+                    </text>
+                  </g>
+                )}
+              </g>
             );
           })}
 

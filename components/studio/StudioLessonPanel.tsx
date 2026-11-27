@@ -260,7 +260,7 @@ export function StudioLessonPanel({
             </div>
             {nextLesson && (
               <Link
-                href={`/visualizer/${nextLesson.id}`}
+                href={`/learn/${nextLesson.id}`}
                 className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <span className="truncate">Học bài tiếp theo: {nextLesson.name}</span>
