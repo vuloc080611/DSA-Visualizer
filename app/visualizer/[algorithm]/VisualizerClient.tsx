@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Algorithm, Step } from "@/lib/types";
 import { getAlgorithmById } from "@/lib/algorithms";
 import { VisualizerCanvas } from "@/components/VisualizerCanvas";
 import { ControlPanel } from "@/components/ControlPanel";
-import { StepDescription } from "@/components/StepDescription";
-import { CodePanel } from "@/components/CodePanel";
 import { ComplexityBadge } from "@/components/ComplexityBadge";
 import {
   generateRandomArray,
@@ -36,10 +34,19 @@ import {
   isAlgorithmCompleted,
   toggleAlgorithmCompleted,
   markAlgorithmCompleted,
+  getStoredCompletedAlgorithms,
+  EVENT_PROGRESS_UPDATED,
 } from "@/lib/roadmap";
+import {
+  getChapterByAlgorithmId,
+  getNavigationContext,
+} from "@/lib/curriculum";
+import { StudioSyllabusSidebar } from "@/components/studio/StudioSyllabusSidebar";
+import { StudioLessonPanel } from "@/components/studio/StudioLessonPanel";
 import confetti from "canvas-confetti";
 import {
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   Share2,
   Check,
@@ -52,6 +59,11 @@ import {
   Gamepad2,
   Map,
   CheckCircle2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  FolderOpen,
 } from "lucide-react";
 
 interface VisualizerClientProps {
@@ -103,10 +115,36 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
 
   // Roadmap Progress State
   const [isCompletedInRoadmap, setIsCompletedInRoadmap] = useState(false);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
+
+  // 3-Panel Studio Layout States
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isLessonPanelOpen, setIsLessonPanelOpen] = useState(true);
+
+  // Automatically adjust sidebars on smaller screens initially
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1280) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
 
   useEffect(() => {
     setIsCompletedInRoadmap(isAlgorithmCompleted(algorithm.id));
+    setCompletedIds(getStoredCompletedAlgorithms());
+
+    const handleProgress = (e: any) => {
+      const ids = e.detail || getStoredCompletedAlgorithms();
+      setCompletedIds(ids);
+      setIsCompletedInRoadmap(ids.includes(algorithm.id));
+    };
+
+    window.addEventListener(EVENT_PROGRESS_UPDATED, handleProgress);
+    return () => window.removeEventListener(EVENT_PROGRESS_UPDATED, handleProgress);
   }, [algorithm.id]);
+
+  // Chapter & Navigation Context
+  const chapter = useMemo(() => getChapterByAlgorithmId(algorithm.id), [algorithm.id]);
+  const navContext = useMemo(() => getNavigationContext(algorithm.id), [algorithm.id]);
 
   const handleToggleRoadmapCompletion = () => {
     const { completed } = toggleAlgorithmCompleted(algorithm.id);
@@ -678,164 +716,181 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
-      {/* Top Bar: Back button + Algorithm Header + Share */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2.5 mb-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Trang chủ</span>
-            </Link>
-            <span className="text-slate-300 dark:text-slate-700">•</span>
-            <Link
-              href="/roadmap"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
-            >
-              <Map className="w-3.5 h-3.5" />
-              <span>Lộ trình học tập</span>
-            </Link>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {algorithm.name}
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 uppercase tracking-wide">
-              {algorithm.category}
-            </span>
-          </div>
-        </div>
-
-        {/* Action icons, completed toggle, quiz score & share */}
-        <div className="flex items-center gap-2">
-          {/* Toggle Completed in Roadmap button */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+      {/* Studio Top Control Ribbon */}
+      <div className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xs">
+        {/* Left Side: Sidebar Toggle & Chapter Context */}
+        <div className="flex items-center gap-2.5 truncate">
           <button
-            onClick={handleToggleRoadmapCompletion}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border shadow-sm cursor-pointer ${
-              isCompletedInRoadmap
-                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900 dark:hover:text-white"
+            onClick={() => setIsSidebarOpen((prev) => !prev)}
+            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
+              isSidebarOpen
+                ? "bg-slate-100 dark:bg-slate-800 text-[#e06c53] border-slate-300 dark:border-slate-700"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
             }`}
-            title="Đánh dấu tiến độ trong Lộ trình học (Roadmap)"
+            title={isSidebarOpen ? "Đóng danh mục khóa học" : "Mở danh mục khóa học"}
           >
-            <CheckCircle2 className={`w-4 h-4 ${isCompletedInRoadmap ? "text-emerald-500" : "text-slate-400"}`} />
-            <span>{isCompletedInRoadmap ? "Đã học" : "Đánh dấu đã học"}</span>
+            {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+            <span className="hidden sm:inline">Khóa học</span>
           </button>
 
-          {isQuizMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold font-mono shadow-sm animate-in fade-in">
-              <Trophy className="w-3.5 h-3.5 text-amber-500" />
-              <span>{quizScore} XP</span>
-              {quizStreak > 1 && <span className="text-rose-500 font-extrabold">🔥x{quizStreak}</span>}
+          {chapter && (
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <span className="font-mono text-[#e06c53] font-bold">[{chapter.code}]</span>
+              <span className="truncate">{chapter.title}</span>
+              {navContext.currentItem && (
+                <span className="text-[10px] text-slate-400 font-mono">
+                  • Bài {navContext.currentItem.indexInChapter}/{chapter.algorithmIds.length}
+                </span>
+              )}
             </div>
           )}
 
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden md:block" />
+
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+            {algorithm.name}
+          </h1>
+        </div>
+
+        {/* Right Side: Quick Action Pills & Lesson Panel Toggle */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Toggle Completed in Roadmap button */}
+          <button
+            onClick={handleToggleRoadmapCompletion}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
+              isCompletedInRoadmap
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
+            }`}
+            title="Đánh dấu tiến độ trong Lộ trình học (Roadmap)"
+          >
+            <CheckCircle2 className={`w-3.5 h-3.5 ${isCompletedInRoadmap ? "text-emerald-500" : "text-slate-400"}`} />
+            <span className="hidden sm:inline">{isCompletedInRoadmap ? "Đã học" : "Đánh dấu đã học"}</span>
+          </button>
+
+          {/* Export Modal trigger */}
           <button
             onClick={() => setIsExportModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm cursor-pointer"
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors"
             title="Xuất Video / Ảnh động / Snapshot PNG"
           >
-            <Camera className="w-4 h-4 text-emerald-500" />
-            <span className="hidden sm:inline">Xuất Video/Ảnh</span>
-            <span className="sm:hidden">Xuất</span>
+            <Camera className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="hidden md:inline ml-1">Xuất ảnh</span>
           </button>
 
+          {/* Share button */}
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors shadow-sm"
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors"
             title="Sao chép liên kết"
           >
-            {copiedLink ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-500" />
-                <span className="text-emerald-500">Đã chép link</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                <span>Chia sẻ</span>
-              </>
-            )}
+            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Toggle Lesson Panel */}
+          <button
+            onClick={() => setIsLessonPanelOpen((prev) => !prev)}
+            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
+              isLessonPanelOpen
+                ? "bg-slate-100 dark:bg-slate-800 text-[#e06c53] border-slate-300 dark:border-slate-700"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
+            }`}
+            title={isLessonPanelOpen ? "Đóng bài giảng" : "Mở bài giảng & mã giả"}
+          >
+            <span className="hidden sm:inline">Bài giảng</span>
+            {isLessonPanelOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Complexity & Property Badges Bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <ComplexityBadge label="Best" value={algorithm.complexity.best} />
-        <ComplexityBadge label="Average" value={algorithm.complexity.average} />
-        <ComplexityBadge label="Worst" value={algorithm.complexity.worst} />
-        <ComplexityBadge label="Space" value={algorithm.complexity.space} type="space" />
+      {/* Main Studio 3-Panel Body */}
+      <div className="flex-1 flex w-full relative">
+        {/* ================= LEFT COLUMN: SYLLABUS SIDEBAR ================= */}
+        <StudioSyllabusSidebar
+          currentAlgorithmId={algorithm.id}
+          completedIds={completedIds}
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
 
-        {algorithm.properties?.stable && (
-          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
-            Stable: Có
-          </span>
-        )}
-        {algorithm.properties?.inPlace && (
-          <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
-            In-place: Có
-          </span>
-        )}
-      </div>
+        {/* ================= CENTER COLUMN: CANVAS STAGE ================= */}
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
+          {/* Algorithm Info Header Bar in Canvas */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+            <div>
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
+                {chapter && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#e06c53]/10 text-[#e06c53] font-bold border border-[#e06c53]/25">
+                    {chapter.code}. {chapter.title}
+                  </span>
+                )}
+                <span>•</span>
+                <span className="uppercase tracking-wider font-semibold">{algorithm.category}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {algorithm.name}
+              </h2>
+            </div>
 
-      {/* Mode Selector Pill: Auto Visualizer vs Play-by-Hand Challenge */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-          <button
-            onClick={() => {
-              setIsChallengeMode(false);
-              setIsPlaying(false);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              !isChallengeMode
-                ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-500/20"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <Eye className="w-4 h-4 text-emerald-500" />
-            <span>Mô phỏng tự động</span>
-          </button>
+            {/* Complexity Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <ComplexityBadge label="Best" value={algorithm.complexity.best} />
+              <ComplexityBadge label="Average" value={algorithm.complexity.average} />
+              <ComplexityBadge label="Worst" value={algorithm.complexity.worst} />
+              <ComplexityBadge label="Space" value={algorithm.complexity.space} type="space" />
+            </div>
+          </div>
 
-          <button
-            onClick={() => {
-              setIsChallengeMode(true);
-              setIsPlaying(false);
-              handleRestartChallenge();
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              isChallengeMode
-                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/25"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <Gamepad2 className="w-4 h-4 text-amber-300" />
-            <span>Tự giải bằng tay (Challenge)</span>
-            <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-black">
-              LIVE
-            </span>
-          </button>
-        </div>
-      </div>
+          {/* Mode Selector Pill: Auto Visualizer vs Play-by-Hand Challenge */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+              <button
+                onClick={() => {
+                  setIsChallengeMode(false);
+                  setIsPlaying(false);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  !isChallengeMode
+                    ? "bg-white dark:bg-slate-800 text-[#e06c53] shadow-sm border border-[#e06c53]/20"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Eye className="w-4 h-4 text-[#e06c53]" />
+                <span>Mô phỏng tự động</span>
+              </button>
 
-      {/* Main Workspace Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Visualizer Canvas + Controls + Step Description */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-5">
-          {/* Canvas */}
-          <VisualizerCanvas
-            currentStep={currentStep}
-            category={algorithm.category}
-            arraySize={arrayData.length}
-            onGridChange={algorithm.category === "pathfinding" ? handleGridChange : undefined}
-            isChallengeMode={isChallengeMode}
-            selectedIndices={challengeSelectedIndices}
-            onSelectIndex={handleChallengeSelectIndex}
-            onSelectNode={handleChallengeSelectNode}
-          />
+              <button
+                onClick={() => {
+                  setIsChallengeMode(true);
+                  setIsPlaying(false);
+                  handleRestartChallenge();
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  isChallengeMode
+                    ? "bg-gradient-to-r from-[#e06c53] to-amber-500 text-white shadow-md shadow-[#e06c53]/25"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Gamepad2 className="w-4 h-4 text-amber-200" />
+                <span>Tự giải bằng tay (Challenge)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Canvas */}
+          <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800/90 bg-white/80 dark:bg-slate-950/80 p-2 sm:p-4 shadow-sm backdrop-blur-xs">
+            <VisualizerCanvas
+              currentStep={currentStep}
+              category={algorithm.category}
+              arraySize={arrayData.length}
+              onGridChange={algorithm.category === "pathfinding" ? handleGridChange : undefined}
+              isChallengeMode={isChallengeMode}
+              selectedIndices={challengeSelectedIndices}
+              onSelectIndex={handleChallengeSelectIndex}
+              onSelectNode={handleChallengeSelectNode}
+            />
+          </div>
 
           {/* Control Panel vs Challenge HUD */}
           {isChallengeMode ? (
@@ -917,23 +972,41 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             />
           )}
 
-          {/* Step Description */}
-          <StepDescription step={currentStep} totalSteps={steps.length} />
-        </div>
+          {/* Next & Previous Algorithm Navigation Bar */}
+          <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-4">
+            {navContext.prev ? (
+              <Link
+                href={`/visualizer/${navContext.prev.alg.id}`}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-[#e06c53] hover:text-[#e06c53] transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <div className="text-left">
+                  <div className="text-[10px] text-slate-400">Bài trước</div>
+                  <div className="font-bold">{navContext.prev.alg.name}</div>
+                </div>
+              </Link>
+            ) : <div />}
 
-        {/* Right Column: Code Panel + Educational Description */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-5">
-          {/* Code Panel */}
-          <div className="h-[420px]">
-            <CodePanel code={algorithm.code} activeLine={currentStep.codeLine} />
+            {navContext.next ? (
+              <Link
+                href={`/visualizer/${navContext.next.alg.id}`}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-[#e06c53] hover:text-[#e06c53] transition-all text-right ml-auto"
+              >
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-400">Bài tiếp theo</div>
+                  <div className="font-bold">{navContext.next.alg.name}</div>
+                </div>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : <div />}
           </div>
 
-          {/* Educational Explanation Box */}
-          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+          {/* Educational Operating Principle Box */}
+          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
+            <div className="flex items-center gap-2 text-[#e06c53]">
               <BookOpen className="w-4 h-4" />
               <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                Nguyên lý hoạt động
+                Nguyên lý hoạt động chuyên sâu
               </h3>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -950,7 +1023,17 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
               <p>• <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border">R</kbd>: Reset về đầu</p>
             </div>
           </div>
-        </div>
+        </main>
+
+        {/* ================= RIGHT COLUMN: STEP LESSON & PSEUDOCODE ================= */}
+        <StudioLessonPanel
+          algorithm={algorithm}
+          steps={steps}
+          currentStepIndex={currentStepIndex}
+          onStepChange={setCurrentStepIndex}
+          isOpen={isLessonPanelOpen}
+          onToggle={() => setIsLessonPanelOpen(!isLessonPanelOpen)}
+        />
       </div>
 
       {/* Interactive Quiz Practice Modal */}

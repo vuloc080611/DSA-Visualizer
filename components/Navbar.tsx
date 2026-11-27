@@ -29,6 +29,7 @@ import {
   Terminal,
   Map,
   TrendingUp,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -207,6 +208,21 @@ export function Navbar() {
                 >
                   <Search className="w-5 h-5" />
                 </button>
+
+                {/* Study Studio / Học tập Link */}
+                <Link
+                  href="/visualizer/linear-search"
+                  className={cn(
+                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    pathname.startsWith("/visualizer/")
+                      ? "bg-[#e06c53] text-white shadow-md shadow-[#e06c53]/25 font-bold"
+                      : "bg-[#e06c53]/10 text-[#e06c53] border border-[#e06c53]/25 hover:bg-[#e06c53]/20"
+                  )}
+                >
+                  <BookOpen className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">Học tập</span>
+                  <span className="sm:hidden">Học</span>
+                </Link>
 
                 {/* Learning Roadmap Link */}
                 <Link
@@ -410,6 +426,21 @@ export function Navbar() {
                 ⌘K
               </kbd>
             </button>
+
+            {/* Study Studio / Học tập in Drawer */}
+            <Link
+              href="/visualizer/linear-search"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-[#e06c53] bg-[#e06c53]/10 border border-[#e06c53]/25"
+            >
+              <div className="flex items-center gap-2.5">
+                <BookOpen className="w-4 h-4 text-[#e06c53]" />
+                <span>Khóa học thuật toán (Studio)</span>
+              </div>
+              <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-[#e06c53]/20 text-[#e06c53]">
+                12 Chương
+              </span>
+            </Link>
 
             {/* Learning Roadmap in Drawer */}
             <Link
