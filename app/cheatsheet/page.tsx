@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ALGORITHMS, CATEGORIES } from "@/lib/algorithms";
 import { Algorithm } from "@/lib/types";
 import {
@@ -21,6 +21,9 @@ import {
   ExternalLink,
   ShieldAlert,
   Sparkles,
+  Play,
+  Pause,
+  RotateCcw,
 } from "lucide-react";
 
 interface CurveConfig {
@@ -119,6 +122,8 @@ export default function CheatsheetPage() {
   const [selectedComplexityTier, setSelectedComplexityTier] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [hoverN, setHoverN] = useState<number>(16);
+  const [hoveredCurveId, setHoveredCurveId] = useState<string | null>(null);
+  const [isAutoPlayingN, setIsAutoPlayingN] = useState(false);
   const [activeCurves, setActiveCurves] = useState<Record<string, boolean>>({
     o1: true,
     ologn: true,
@@ -127,6 +132,21 @@ export default function CheatsheetPage() {
     on2: true,
     o2n: true,
   });
+
+  // Auto-play N from 1 -> maxN
+  useEffect(() => {
+    if (!isAutoPlayingN) return;
+    const timer = setInterval(() => {
+      setHoverN((prev) => {
+        if (prev >= 32) {
+          setIsAutoPlayingN(false);
+          return 32;
+        }
+        return prev + 1;
+      });
+    }, 170);
+    return () => clearInterval(timer);
+  }, [isAutoPlayingN]);
 
   // Filter algorithms
   const filteredAlgorithms = useMemo(() => {
@@ -151,7 +171,7 @@ export default function CheatsheetPage() {
         if (selectedComplexityTier === "O(N)" && (!avg.includes("o(n)") || avg.includes("log") || avg.includes("²"))) return false;
         if (selectedComplexityTier === "O(N log N)" && !avg.includes("n log n")) return false;
         if (selectedComplexityTier === "O(N²)" && !avg.includes("n²") && !avg.includes("n^2")) return false;
-        if (selectedComplexityTier === "O(Advanced)" && (avg.includes("o(1)") || avg.includes("log n") || avg.includes("n²") || avg.includes("n log n"))) return false;
+        if (selectedComplexityTier === "O(Advanced)" && (avg === "o(1)" || avg.includes("o(1)") || avg.includes("log n") || avg.includes("n²") || avg.includes("n log n") || (avg.includes("o(n)") && !avg.includes("·") && !avg.includes("+")))) return false;
       }
 
       return true;
@@ -201,39 +221,49 @@ export default function CheatsheetPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500/30">
+    <div className="min-h-screen w-full overflow-x-clip bg-slate-950 text-slate-100 py-8 sm:py-10 px-4 sm:px-6 lg:px-8 selection:bg-emerald-500/30">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* ================= HEADER SECTION ================= */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-950/90 p-6 sm:p-8 md:p-10 backdrop-blur-xl shadow-2xl">
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-          <div className="absolute bottom-0 left-10 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 to-slate-950/90 p-6 sm:p-8 md:p-10 backdrop-blur-xl shadow-2xl"
+        >
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-500/15 rounded-full blur-3xl pointer-events-none -z-10 animate-aurora" />
+          <div className="absolute bottom-0 left-10 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none -z-10 animate-aurora-reverse" />
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-                <TrendingUp className="w-3.5 h-3.5" />
+                <TrendingUp className="w-3.5 h-3.5 animate-pulse" />
                 <span>Interactive Big-O Matrix & Growth Curves</span>
               </div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white">
                 Bảng Tra Cứu <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 bg-clip-text text-transparent">Độ Phức Tạp Big-O</span>
               </h1>
               <p className="text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed">
-                So sánh hiệu năng toán học Thời gian & Không gian của toàn bộ 28 thuật toán. Biểu đồ trực quan giúp bạn nắm bắt ngay sự khác biệt bùng nổ giữa các bậc thuật toán khi dữ liệu đầu vào ($N$) mở rộng.
+                So sánh hiệu năng toán học Thời gian & Không gian của toàn bộ <strong className="text-slate-200">{ALGORITHMS.length} thuật toán</strong>. Biểu đồ trực quan giúp bạn nắm bắt ngay sự khác biệt bùng nổ giữa các bậc thuật toán khi dữ liệu đầu vào <code className="font-mono text-cyan-400">N</code> mở rộng.
               </p>
             </div>
 
             <Link
               href="/roadmap"
-              className="px-5 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 hover:text-white hover:border-slate-500 transition-all text-xs font-semibold flex items-center gap-2 shrink-0 self-start md:self-auto"
+              className="px-5 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 hover:text-white hover:border-emerald-500/60 hover:shadow-[0_0_24px_rgba(16,185,129,0.25)] hover:scale-[1.03] active:scale-95 transition-all text-xs font-semibold flex items-center gap-2 shrink-0 self-start md:self-auto"
             >
               <span>Xem Lộ Trình Học 4 Chặng</span>
               <ArrowRight className="w-4 h-4 text-emerald-400" />
             </Link>
           </div>
-        </div>
+        </motion.div>
 
         {/* ================= INTERACTIVE BIG-O GROWTH CHART ================= */}
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/70 backdrop-blur-md p-6 sm:p-8 space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.08 }}
+          className="rounded-3xl border border-slate-800 bg-slate-900/70 backdrop-blur-md p-5 sm:p-8 space-y-6"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -241,7 +271,7 @@ export default function CheatsheetPage() {
                 <span>Đồ Thị Tăng Trưởng Toán Học (Growth Curves)</span>
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Kéo thanh trượt hoặc rê chuột trên biểu đồ để xem số phép tính tại kích thước dữ liệu $N = {hoverN}$
+                Kéo thanh trượt hoặc rê chuột trên biểu đồ để xem số phép tính tại kích thước dữ liệu <strong className="font-mono text-cyan-400">N = {hoverN}</strong>
               </p>
             </div>
 
@@ -359,12 +389,12 @@ export default function CheatsheetPage() {
 
               {/* Axis Labels */}
               <text
-                x={paddingL - 10}
+                x={paddingL + 8}
                 y={paddingT - 10}
                 fill="#94a3b8"
                 fontSize="11"
                 fontWeight="bold"
-                textAnchor="end"
+                textAnchor="start"
               >
                 Số phép tính ↑
               </text>
@@ -379,19 +409,30 @@ export default function CheatsheetPage() {
                 Kích thước dữ liệu (N) →
               </text>
 
-              {/* Curves */}
-              {CURVES.map((curve) => {
+              {/* Animated Growth Curves */}
+              {CURVES.map((curve, idx) => {
                 if (!activeCurves[curve.id]) return null;
                 const d = generatePath(curve.calc);
+                const isHovered = hoveredCurveId === curve.id;
+                const isDimmed = hoveredCurveId !== null && hoveredCurveId !== curve.id;
+
                 return (
-                  <path
+                  <motion.path
                     key={curve.id}
                     d={d}
                     fill="none"
                     stroke={curve.stroke}
-                    strokeWidth="2.5"
+                    strokeWidth={isHovered ? 4 : 2.5}
                     strokeLinecap="round"
-                    className="transition-opacity duration-300"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: isDimmed ? 0.2 : 1 }}
+                    transition={{
+                      pathLength: { duration: 1.0, delay: idx * 0.08, ease: "easeOut" },
+                      opacity: { duration: 0.2 },
+                    }}
+                    style={{
+                      filter: isHovered ? `drop-shadow(0 0 8px ${curve.stroke})` : undefined,
+                    }}
                   />
                 );
               })}
@@ -411,38 +452,144 @@ export default function CheatsheetPage() {
                 if (!activeCurves[curve.id]) return null;
                 const yVal = curve.calc(hoverN);
                 if (yVal > maxY + 10) return null; // Don't draw dot outside chart
+                const cx = toSvgX(hoverN);
+                const cy = toSvgY(yVal);
+                const isDangerous = curve.zone === "horrible" && yVal >= 32;
+
                 return (
-                  <circle
-                    key={`dot-${curve.id}`}
-                    cx={toSvgX(hoverN)}
-                    cy={toSvgY(yVal)}
-                    r="5"
-                    fill={curve.stroke}
-                    stroke="#0f172a"
-                    strokeWidth="2"
-                    className="transition-all duration-75"
-                  />
+                  <g key={`dot-${curve.id}`}>
+                    {isDangerous && (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r="9"
+                        fill={curve.stroke}
+                        fillOpacity="0.25"
+                        className="animate-pulse"
+                      />
+                    )}
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={hoveredCurveId === curve.id ? 6.5 : 5}
+                      fill={curve.stroke}
+                      stroke="#0f172a"
+                      strokeWidth="2"
+                      className="transition-all duration-75"
+                    />
+                  </g>
                 );
               })}
+
+              {/* Floating SVG Tooltip Card */}
+              {(() => {
+                const tooltipW = 148;
+                const activeList = CURVES.filter((c) => activeCurves[c.id]);
+                const tooltipH = 26 + activeList.length * 16;
+                const lineX = toSvgX(hoverN);
+                const boxX = hoverN > 20 ? lineX - tooltipW - 12 : lineX + 12;
+                const boxY = paddingT + 8;
+
+                return (
+                  <g className="pointer-events-none">
+                    <rect
+                      x={boxX}
+                      y={boxY}
+                      width={tooltipW}
+                      height={tooltipH}
+                      rx={10}
+                      fill="#090d16"
+                      fillOpacity="0.92"
+                      stroke="#334155"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={boxX + 10}
+                      y={boxY + 17}
+                      fill="#38bdf8"
+                      fontSize="11"
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                    >
+                      Tại N = {hoverN}:
+                    </text>
+                    {activeList.map((c, idx) => (
+                      <g key={`tip-${c.id}`}>
+                        <circle cx={boxX + 14} cy={boxY + 30 + idx * 16} r="3" fill={c.stroke} />
+                        <text
+                          x={boxX + 22}
+                          y={boxY + 33 + idx * 16}
+                          fill="#cbd5e1"
+                          fontSize="10"
+                          fontFamily="monospace"
+                        >
+                          {c.math}
+                        </text>
+                        <text
+                          x={boxX + tooltipW - 10}
+                          y={boxY + 33 + idx * 16}
+                          fill={c.stroke}
+                          fontSize="10"
+                          fontWeight="bold"
+                          fontFamily="monospace"
+                          textAnchor="end"
+                        >
+                          {c.formatValue(hoverN)}
+                        </text>
+                      </g>
+                    ))}
+                  </g>
+                );
+              })()}
             </svg>
           </div>
 
-          {/* Interactive Slider & Curve Toggles */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pt-2">
-            {/* Range Slider for N */}
-            <div className="flex items-center gap-4 flex-1 max-w-md">
+          {/* Interactive Slider, Auto-Play & Curve Toggles */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2">
+            {/* Range Slider & Auto-Play for N */}
+            <div className="flex flex-wrap items-center gap-3 flex-1 max-w-xl">
+              <button
+                onClick={() => {
+                  if (!isAutoPlayingN && hoverN >= maxN) {
+                    setHoverN(1);
+                  }
+                  setIsAutoPlayingN((prev) => !prev);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer shrink-0 ${
+                  isAutoPlayingN
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                    : "bg-emerald-500 hover:bg-emerald-600 text-slate-950 border-emerald-400 shadow-sm shadow-emerald-500/25"
+                }`}
+              >
+                {isAutoPlayingN ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                <span>{isAutoPlayingN ? "Tạm dừng" : "Chạy thử N"}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsAutoPlayingN(false);
+                  setHoverN(1);
+                }}
+                title="Đưa N về 1"
+                className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer shrink-0"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+
               <span className="text-xs font-semibold text-slate-300 shrink-0">
-                Kích thước N: <strong className="text-cyan-400 font-mono text-sm">{hoverN}</strong>
+                N = <strong className="text-cyan-400 font-mono text-sm">{hoverN}</strong>
               </span>
               <input
                 type="range"
                 min="1"
                 max={maxN}
                 value={hoverN}
-                onChange={(e) => setHoverN(parseInt(e.target.value))}
-                className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                onChange={(e) => {
+                  setIsAutoPlayingN(false);
+                  setHoverN(parseInt(e.target.value));
+                }}
+                className="flex-1 min-w-[120px] accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
               />
-              <span className="text-xs font-mono text-slate-500">Max 32</span>
             </div>
 
             {/* Curve visibility toggles */}
@@ -453,9 +600,11 @@ export default function CheatsheetPage() {
                   <button
                     key={curve.id}
                     onClick={() => toggleCurve(curve.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold font-mono flex items-center gap-1.5 transition-all ${
+                    onMouseEnter={() => setHoveredCurveId(curve.id)}
+                    onMouseLeave={() => setHoveredCurveId(null)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
                       isActive
-                        ? "bg-slate-800 text-white border border-slate-700 shadow-sm"
+                        ? "bg-slate-800 text-white border border-slate-700 shadow-sm hover:border-slate-500"
                         : "bg-slate-900/40 text-slate-500 border border-slate-800/80 opacity-50"
                     }`}
                   >
@@ -471,32 +620,62 @@ export default function CheatsheetPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
             {CURVES.map((curve) => {
               const val = curve.calc(hoverN);
+              const barPct = Math.min(100, Math.max(4, Math.round((val / 150) * 100)));
+              const isExploding = curve.zone === "horrible" && val >= 100;
+              const isHighlighted = hoveredCurveId === curve.id;
+
               return (
-                <div
+                <motion.div
                   key={curve.id}
-                  className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-3.5 space-y-1.5"
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onMouseEnter={() => setHoveredCurveId(curve.id)}
+                  onMouseLeave={() => setHoveredCurveId(null)}
+                  className={`rounded-2xl border p-3.5 space-y-2 transition-colors cursor-default ${
+                    isHighlighted
+                      ? "bg-slate-900 border-cyan-500/60 shadow-lg shadow-cyan-500/10"
+                      : isExploding
+                      ? "bg-rose-950/20 border-rose-500/40"
+                      : "border-slate-800/80 bg-slate-950/60 hover:border-slate-700"
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-slate-400">{curve.label}</span>
-                    <span className={`text-xs font-bold font-mono ${curve.color}`}>{curve.math}</span>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[11px] font-semibold text-slate-400 truncate">{curve.label}</span>
+                    <span className={`text-xs font-bold font-mono shrink-0 ${curve.color}`}>{curve.math}</span>
                   </div>
-                  <div className="text-lg font-black text-white font-mono truncate">
-                    {curve.formatValue(hoverN)}
+                  <div className="flex items-baseline justify-between gap-1">
+                    <div className="text-lg font-black text-white font-mono truncate">
+                      {curve.formatValue(hoverN)}
+                    </div>
+                    {isExploding && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 animate-pulse shrink-0">
+                        Bùng nổ
+                      </span>
+                    )}
                   </div>
-                  <div className="text-[10px] text-slate-500">phép tính</div>
-                </div>
+                  <div className="w-full h-1.5 rounded-full bg-slate-900 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-200"
+                      style={{ width: `${barPct}%`, backgroundColor: curve.stroke }}
+                    />
+                  </div>
+                </motion.div>
               );
             })}
           </div>
-        </div>
+        </motion.div>
 
         {/* ================= ALGORITHMS MATRIX TABLE ================= */}
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/70 backdrop-blur-md p-6 sm:p-8 space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.14 }}
+          className="rounded-3xl border border-slate-800 bg-slate-900/70 backdrop-blur-md p-6 sm:p-8 space-y-6"
+        >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div>
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Database className="w-5 h-5 text-amber-400" />
-                <span>Bảng Ma Trận Hiệu Năng 28 Thuật Toán</span>
+                <span>Bảng Ma Trận Hiệu Năng {ALGORITHMS.length} Thuật Toán</span>
               </h2>
               <p className="text-xs text-slate-400 mt-1">
                 Hiển thị {filteredAlgorithms.length} / {ALGORITHMS.length} thuật toán theo bộ lọc
@@ -521,19 +700,27 @@ export default function CheatsheetPage() {
             <span className="text-xs font-semibold text-slate-400 flex items-center gap-1 mr-2">
               <Filter className="w-3.5 h-3.5" /> Lọc Big-O:
             </span>
-            {["all", "O(1)", "O(log N)", "O(N)", "O(N log N)", "O(N²)", "O(Advanced)"].map((tier) => (
-              <button
-                key={tier}
-                onClick={() => setSelectedComplexityTier(tier)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold font-mono transition-all ${
-                  selectedComplexityTier === tier
-                    ? "bg-amber-500 text-slate-950 font-bold shadow-sm shadow-amber-500/20"
-                    : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
-                }`}
-              >
-                {tier === "all" ? "Tất cả" : tier}
-              </button>
-            ))}
+            {["all", "O(1)", "O(log N)", "O(N)", "O(N log N)", "O(N²)", "O(Advanced)"].map((tier) => {
+              const active = selectedComplexityTier === tier;
+              return (
+                <button
+                  key={tier}
+                  onClick={() => setSelectedComplexityTier(tier)}
+                  className={`relative px-3 py-1 rounded-lg text-xs font-semibold font-mono transition-colors cursor-pointer ${
+                    active ? "text-slate-950 font-bold" : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                  }`}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="cheatsheet-tier-pill"
+                      className="absolute inset-0 bg-amber-500 rounded-lg shadow-sm shadow-amber-500/20 -z-0"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tier === "all" ? "Tất cả" : tier}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Category Pills */}
@@ -543,13 +730,13 @@ export default function CheatsheetPage() {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap cursor-pointer ${
                   selectedCategory === cat.id
-                    ? "bg-slate-800 text-cyan-400 border border-slate-700"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-slate-800 text-cyan-400 border border-slate-700 font-semibold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
                 }`}
               >
-                {cat.name.split(" ")[0]} ({cat.count})
+                {cat.name.replace(/\s*\([^)]*\)/g, "")} ({cat.count})
               </button>
             ))}
           </div>
@@ -585,39 +772,39 @@ export default function CheatsheetPage() {
                     </td>
 
                     {/* Best Time */}
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded font-mono border text-[11px] ${getComplexityStyle(alg.complexity.best)}`}>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className={`inline-block px-2 py-0.5 rounded font-mono border text-[11px] whitespace-nowrap ${getComplexityStyle(alg.complexity.best)}`}>
                         {alg.complexity.best}
                       </span>
                     </td>
 
                     {/* Average Time */}
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded font-mono border text-[11px] ${getComplexityStyle(alg.complexity.average)}`}>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className={`inline-block px-2 py-0.5 rounded font-mono border text-[11px] whitespace-nowrap ${getComplexityStyle(alg.complexity.average)}`}>
                         {alg.complexity.average}
                       </span>
                     </td>
 
                     {/* Worst Time */}
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded font-mono border text-[11px] ${getComplexityStyle(alg.complexity.worst)}`}>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className={`inline-block px-2 py-0.5 rounded font-mono border text-[11px] whitespace-nowrap ${getComplexityStyle(alg.complexity.worst)}`}>
                         {alg.complexity.worst}
                       </span>
                     </td>
 
                     {/* Space */}
-                    <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded font-mono bg-slate-950 text-slate-300 border border-slate-800 text-[11px]">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className="inline-block px-2 py-0.5 rounded font-mono bg-slate-950 text-slate-300 border border-slate-800 text-[11px] whitespace-nowrap">
                         {alg.complexity.space}
                       </span>
                     </td>
 
                     {/* Properties: Stable & In-place */}
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5 flex-nowrap">
                         {alg.properties?.stable && (
                           <span
-                            className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 whitespace-nowrap"
                             title="Ổn định (Stable): Bảo tồn thứ tự tương đối của các phần tử bằng nhau"
                           >
                             Stable
@@ -625,7 +812,7 @@ export default function CheatsheetPage() {
                         )}
                         {alg.properties?.inPlace && (
                           <span
-                            className="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/30"
+                            className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30 whitespace-nowrap"
                             title="Tại chỗ (In-Place): Không yêu cầu thêm mảng phụ đáng kể"
                           >
                             In-place
@@ -638,13 +825,13 @@ export default function CheatsheetPage() {
                     </td>
 
                     {/* Action link */}
-                    <td className="py-3.5 px-4 text-right">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <Link
-                        href={`/visualizer/${alg.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 font-semibold border border-emerald-500/30 transition-all text-xs"
+                        href={`/learn/${alg.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 font-semibold border border-emerald-500/30 transition-all text-xs whitespace-nowrap"
                       >
                         <span>Xem</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                       </Link>
                     </td>
                   </tr>
@@ -658,39 +845,75 @@ export default function CheatsheetPage() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* ================= CHEATSHEET RULES & INTERVIEW TIPS ================= */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-2.5">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0 }}
+            whileHover={{ y: -5 }}
+            className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 hover:border-emerald-500/50 hover:shadow-[0_12px_32px_-8px_rgba(16,185,129,0.25)] p-5 space-y-3 transition-colors duration-300"
+          >
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span>Quy Tắc Cộng & Nhân</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Nếu 2 thao tác chạy tuần tự: $O(A + B) = \max(O(A), O(B))$. Nếu 2 vòng lặp lồng nhau: $O(A \times B)$. Luôn triệt tiêu hằng số ($O(2N) \rightarrow O(N)$).
+            <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
+              Nếu 2 thao tác chạy tuần tự: <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-[11px]">O(A + B) = max(O(A), O(B))</code>.
+              Nếu 2 vòng lặp lồng nhau: <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-[11px]">O(A × B)</code>.
+              Luôn triệt tiêu hằng số (<code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-[11px]">O(2N) → O(N)</code>).
             </p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-2.5">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.08 }}
+            whileHover={{ y: -5 }}
+            className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 hover:border-amber-500/50 hover:shadow-[0_12px_32px_-8px_rgba(245,158,11,0.25)] p-5 space-y-3 transition-colors duration-300"
+          >
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-amber-500 via-orange-400 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-              <Cpu className="w-4 h-4" />
+              <Cpu className="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span>Không Gian Bộ Nhớ (Space)</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Tính cả Stack Frame của các hàm đệ quy (Call Stack). Ví dụ DFS trên cây nhị phân lệch có thể tốn $O(N)$ bộ nhớ Stack dù không cấp phát mảng phụ.
+            <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
+              Tính cả Stack Frame của các hàm đệ quy (Call Stack). Ví dụ DFS trên cây nhị phân lệch có thể tốn{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-amber-400 font-mono text-[11px]">O(N)</code>{" "}
+              bộ nhớ Stack dù không cấp phát mảng phụ.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 space-y-2.5">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.16 }}
+            whileHover={{ y: -5 }}
+            className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/70 hover:border-cyan-500/50 hover:shadow-[0_12px_32px_-8px_rgba(6,182,212,0.25)] p-5 space-y-3 transition-colors duration-300"
+          >
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-cyan-500 via-blue-400 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
-              <ShieldAlert className="w-4 h-4" />
+              <ShieldAlert className="w-4 h-4 group-hover:scale-110 transition-transform" />
               <span>Mẹo Phỏng Vấn Big Tech</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Khi thấy $N \le 20$, nghĩ tới Quay lui $O(2^N)$ hoặc $O(N!)$. Khi $N \le 10^5$, bài toán đòi hỏi nghiệm $O(N)$ hoặc $O(N \log N)$. Khi $N \ge 10^9$, chỉ có thể là $O(\log N)$ hoặc $O(1)$.
+            <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
+              Khi thấy <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">N ≤ 20</code>: nghĩ tới Quay lui{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">O(2^N)</code> hoặc{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">O(N!)</code>.{" "}
+              Khi <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">N ≤ 10⁵</code>: cần nghiệm{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">O(N)</code> hoặc{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">O(N log N)</code>.{" "}
+              Khi <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">N ≥ 10⁹</code>: chỉ có thể là{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">O(log N)</code> hoặc{" "}
+              <code className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-mono text-[11px]">O(1)</code>.
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

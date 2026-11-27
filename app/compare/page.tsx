@@ -89,168 +89,174 @@ export default function ComparePage() {
     }
   }, []);
 
-  // Initialize all active racers
-  const initRace = useCallback(
-    (arr?: number[]) => {
-      const baseArr = arr || currentBaseArray;
-      if (baseArr.length === 0) return;
+  // Build racers cleanly without cyclic callback dependencies
+  const buildRacers = useCallback((baseArr: number[], ids: string[], mode: 2 | 4): RacerState[] => {
+    if (baseArr.length === 0) return [];
+    const activeIds = ids.slice(0, mode);
+    return activeIds.map((id) => {
+      const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
+      const steps = alg.generateSteps({ array: [...baseArr] });
+      return {
+        id: alg.id,
+        algorithm: alg,
+        steps,
+        index: 0,
+        rank: null,
+      };
+    });
+  }, []);
 
-      const activeIds = selectedIds.slice(0, trackMode);
-      const newRacers: RacerState[] = activeIds.map((id) => {
-        const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
-        const steps = alg.generateSteps({ array: [...baseArr] });
-        return {
-          id: alg.id,
-          algorithm: alg,
-          steps,
-          index: 0,
-          rank: null,
-        };
-      });
+  // Keep latest refs to avoid circular useEffect dependencies
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
+  const trackModeRef = useRef(trackMode);
+  trackModeRef.current = trackMode;
+  const currentBaseArrayRef = useRef(currentBaseArray);
+  currentBaseArrayRef.current = currentBaseArray;
+  const confettiFiredRef = useRef(false);
 
+  const resetRaceWithArray = useCallback(
+    (baseArr: number[], ids = selectedIdsRef.current, mode = trackModeRef.current) => {
+      const newRacers = buildRacers(baseArr, ids, mode);
       setRacers(newRacers);
       setIsPlaying(false);
       rankCounterRef.current = 1;
+      confettiFiredRef.current = false;
     },
-    [currentBaseArray, selectedIds, trackMode]
+    [buildRacers]
   );
 
-  // Initial load or size/type change
+  const initializedRef = useRef(false);
+
+  // Initial load once on mount (dataset/size/import handlers update racers explicitly)
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     const initialArr = createArray(arraySize, arrayType);
     setCurrentBaseArray(initialArr);
-    initRace(initialArr);
-  }, [arraySize, arrayType, trackMode, createArray, initRace]);
+    currentBaseArrayRef.current = initialArr;
+    resetRaceWithArray(initialArr, selectedIdsRef.current, trackModeRef.current);
+  }, [arraySize, arrayType, createArray, resetRaceWithArray]);
 
-  // Race Loop: Advances all active racers concurrently
+  // Update lanes cleanly when trackMode switches between 2 and 4
+  const handleTrackModeChange = (mode: 2 | 4) => {
+    setTrackMode(mode);
+    trackModeRef.current = mode;
+    resetRaceWithArray(currentBaseArrayRef.current, selectedIdsRef.current, mode);
+  };
+
+  // Race Loop: Advances all active racers concurrently without recreating racers dependencies every tick
+  const soundEnabledRef = useRef(soundEnabled);
+  soundEnabledRef.current = soundEnabled;
+
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    if (!isPlaying) return;
 
-    if (isPlaying) {
-      const allFinished = racers.every((r) => r.index >= r.steps.length - 1);
+    const timer = setInterval(() => {
+      setRacers((prevRacers) => {
+        if (prevRacers.length === 0) return prevRacers;
+        const allDone = prevRacers.every((r) => r.index >= r.steps.length - 1);
+        if (allDone) {
+          setIsPlaying(false);
+          return prevRacers;
+        }
 
-      if (allFinished) {
-        setIsPlaying(false);
-      } else {
-        timer = setTimeout(() => {
-          setRacers((prevRacers) => {
-            const nextRacers = [...prevRacers];
-            let newlyFinished = false;
+        const nextRacers = [...prevRacers];
+        let newlyFinished = false;
 
-            for (let i = 0; i < nextRacers.length; i++) {
-              const r = nextRacers[i];
-              if (r.index < r.steps.length - 1) {
-                const nextIdx = r.index + 1;
-                const isNowDone = nextIdx >= r.steps.length - 1;
+        for (let i = 0; i < nextRacers.length; i++) {
+          const r = nextRacers[i];
+          if (r.index < r.steps.length - 1) {
+            const nextIdx = r.index + 1;
+            const isNowDone = nextIdx >= r.steps.length - 1;
 
-                let assignedRank = r.rank;
-                if (isNowDone && assignedRank === null) {
-                  assignedRank = rankCounterRef.current;
-                  rankCounterRef.current++;
-                  newlyFinished = true;
-
-                  // First place celebration
-                  if (assignedRank === 1) {
-                    confetti({
-                      particleCount: 90,
-                      spread: 70,
-                      origin: { y: 0.6 },
-                      colors: ["#f59e0b", "#10b981", "#3b82f6", "#ec4899"],
-                    });
-                    if (soundEnabled) {
-                      playTone(587, "sine", 0.08, 0.06);
-                      setTimeout(() => playTone(880, "sine", 0.15, 0.1), 80);
-                    }
-                  }
-                }
-
-                nextRacers[i] = {
-                  ...r,
-                  index: nextIdx,
-                  rank: assignedRank,
-                };
-              }
+            let assignedRank = r.rank;
+            if (isNowDone && assignedRank === null) {
+              assignedRank = rankCounterRef.current;
+              rankCounterRef.current++;
+              newlyFinished = true;
             }
 
-            // Audio tick for leading racer
-            if (soundEnabled && !newlyFinished) {
-              const active = nextRacers.find((r) => r.index < r.steps.length - 1);
-              if (active && active.steps[active.index]) {
-                const step = active.steps[active.index];
-                if (step.swapping?.length) {
-                  playStepSound("swap");
-                } else if (step.highlights?.length) {
-                  playStepSound("compare");
-                }
-              }
-            }
+            nextRacers[i] = {
+              ...r,
+              index: nextIdx,
+              rank: assignedRank,
+            };
+          }
+        }
 
-            return nextRacers;
-          });
-        }, speed);
+        if (soundEnabledRef.current && !newlyFinished) {
+          const active = nextRacers.find((r) => r.index < r.steps.length - 1);
+          if (active && active.steps[active.index]) {
+            const step = active.steps[active.index];
+            if (step.swapping?.length) {
+              playStepSound("swap");
+            } else if (step.highlights?.length) {
+              playStepSound("compare");
+            }
+          }
+        }
+
+        const nowAllDone = nextRacers.every((r) => r.index >= r.steps.length - 1);
+        if (nowAllDone) {
+          setIsPlaying(false);
+        }
+
+        return nextRacers;
+      });
+    }, speed);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, speed]);
+
+  // Separate clean effect for 1st-place celebration (safe outside pure state updater)
+  useEffect(() => {
+    const winner = racers.find((r) => r.rank === 1);
+    if (winner && !confettiFiredRef.current) {
+      confettiFiredRef.current = true;
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#f59e0b", "#10b981", "#3b82f6", "#ec4899"],
+      });
+      if (soundEnabledRef.current) {
+        playTone(587, "sine", 0.08, 0.06);
+        setTimeout(() => playTone(880, "sine", 0.15, 0.1), 80);
       }
     }
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [isPlaying, racers, speed, soundEnabled]);
+  }, [racers]);
 
   // Controls
   const handleStartPause = () => {
-    const allFinished = racers.every((r) => r.index >= r.steps.length - 1);
+    const allFinished = racers.length > 0 && racers.every((r) => r.index >= r.steps.length - 1);
     if (allFinished) {
-      initRace();
+      resetRaceWithArray(currentBaseArray);
       setIsPlaying(true);
     } else {
-      setIsPlaying(!isPlaying);
+      setIsPlaying((prev) => !prev);
     }
   };
 
   const handleReset = () => {
-    initRace();
+    resetRaceWithArray(currentBaseArray);
   };
 
   const handleAlgChange = (laneIdx: number, newAlgId: string) => {
     const updated = [...selectedIds];
     updated[laneIdx] = newAlgId;
     setSelectedIds(updated);
-
-    const baseArr = currentBaseArray;
-    const newRacers = updated.slice(0, trackMode).map((id) => {
-      const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
-      const steps = alg.generateSteps({ array: [...baseArr] });
-      return {
-        id: alg.id,
-        algorithm: alg,
-        steps,
-        index: 0,
-        rank: null,
-      };
-    });
-    setRacers(newRacers);
-    setIsPlaying(false);
-    rankCounterRef.current = 1;
+    selectedIdsRef.current = updated;
+    resetRaceWithArray(currentBaseArray, updated, trackMode);
   };
 
   const handleApplyPreset = (ids: string[]) => {
     setSelectedIds(ids);
-    setTrackMode(ids.length as 2 | 4);
-    const baseArr = currentBaseArray;
-    const newRacers = ids.map((id) => {
-      const alg = SORTING_ALGORITHMS.find((a) => a.id === id) || SORTING_ALGORITHMS[0];
-      const steps = alg.generateSteps({ array: [...baseArr] });
-      return {
-        id: alg.id,
-        algorithm: alg,
-        steps,
-        index: 0,
-        rank: null,
-      };
-    });
-    setRacers(newRacers);
-    setIsPlaying(false);
-    rankCounterRef.current = 1;
+    selectedIdsRef.current = ids;
+    const mode = ids.length as 2 | 4;
+    setTrackMode(mode);
+    trackModeRef.current = mode;
+    resetRaceWithArray(currentBaseArray, ids, mode);
   };
 
   // File Upload Parser
@@ -302,8 +308,9 @@ export default function ComparePage() {
   const handleApplyImportedData = () => {
     if (importedArray && importedArray.length >= 4) {
       setCurrentBaseArray(importedArray);
+      currentBaseArrayRef.current = importedArray;
       setArraySize(importedArray.length);
-      initRace(importedArray);
+      resetRaceWithArray(importedArray);
       setShowImportModal(false);
     }
   };
@@ -340,7 +347,7 @@ export default function ComparePage() {
           {/* Mode toggle */}
           <div className="flex rounded-xl p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <button
-              onClick={() => setTrackMode(2)}
+              onClick={() => handleTrackModeChange(2)}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
                 trackMode === 2
@@ -351,7 +358,7 @@ export default function ComparePage() {
               2 Làn (1v1)
             </button>
             <button
-              onClick={() => setTrackMode(4)}
+              onClick={() => handleTrackModeChange(4)}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
                 trackMode === 4
@@ -493,7 +500,8 @@ export default function ComparePage() {
                 setArrayType("random");
                 const arr = createArray(arraySize, "random");
                 setCurrentBaseArray(arr);
-                initRace(arr);
+                currentBaseArrayRef.current = arr;
+                resetRaceWithArray(arr);
               }}
               disabled={isPlaying}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700"
@@ -506,7 +514,8 @@ export default function ComparePage() {
                 setArrayType("nearly");
                 const arr = createArray(arraySize, "nearly");
                 setCurrentBaseArray(arr);
-                initRace(arr);
+                currentBaseArrayRef.current = arr;
+                resetRaceWithArray(arr);
               }}
               disabled={isPlaying}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700"
@@ -519,7 +528,8 @@ export default function ComparePage() {
                 setArrayType("reversed");
                 const arr = createArray(arraySize, "reversed");
                 setCurrentBaseArray(arr);
-                initRace(arr);
+                currentBaseArrayRef.current = arr;
+                resetRaceWithArray(arr);
               }}
               disabled={isPlaying}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-700"
@@ -538,7 +548,8 @@ export default function ComparePage() {
                     setArraySize(s);
                     const arr = createArray(s, arrayType);
                     setCurrentBaseArray(arr);
-                    initRace(arr);
+                    currentBaseArrayRef.current = arr;
+                    resetRaceWithArray(arr);
                   }}
                   disabled={isPlaying}
                   className={cn(
