@@ -6,6 +6,7 @@ import {
   CURRICULUM_CHAPTERS,
   CurriculumChapter,
   getChapterProgress,
+  isAlgorithmUnlocked,
 } from "@/lib/curriculum";
 import { getAlgorithmById } from "@/lib/algorithms";
 import {
@@ -22,6 +23,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  Lock,
 } from "lucide-react";
 
 interface StudioSyllabusSidebarProps {
@@ -242,6 +244,28 @@ export function StudioSyllabusSidebar({
                   {chapter.matchedAlgs.map((alg) => {
                     const isActive = alg.id === currentAlgorithmId;
                     const isDone = completedIds.includes(alg.id);
+                    const isUnlocked = isAlgorithmUnlocked(alg.id, completedIds);
+
+                    if (!isUnlocked && !isActive) {
+                      return (
+                        <div
+                          key={alg.id}
+                          title="Hoàn thành (Pass) bài trước đó để mở khóa bài này"
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-slate-400 dark:text-slate-600 opacity-60 cursor-not-allowed select-none"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                              <Lock className="w-2.5 h-2.5 text-slate-400 dark:text-slate-500" />
+                            </span>
+                            <span className="truncate">{alg.name}</span>
+                          </div>
+
+                          <span className="text-[10px] font-mono shrink-0 ml-1 text-slate-400 dark:text-slate-600">
+                            {alg.complexity.average}
+                          </span>
+                        </div>
+                      );
+                    }
 
                     return (
                       <Link
@@ -260,6 +284,8 @@ export function StudioSyllabusSidebar({
                                 ? isActive
                                   ? "bg-white/20 text-white"
                                   : "bg-emerald-500/20 text-emerald-500 font-bold"
+                                : isActive
+                                ? "border border-white/60 text-transparent"
                                 : "border border-slate-300 dark:border-slate-700 text-transparent"
                             }`}
                           >

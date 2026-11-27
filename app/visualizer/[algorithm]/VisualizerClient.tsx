@@ -40,6 +40,8 @@ import {
 import {
   getChapterByAlgorithmId,
   getNavigationContext,
+  isAlgorithmUnlocked,
+  getCurrentFrontierLesson,
 } from "@/lib/curriculum";
 import { StudioSyllabusSidebar } from "@/components/studio/StudioSyllabusSidebar";
 import { StudioLessonPanel } from "@/components/studio/StudioLessonPanel";
@@ -64,6 +66,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   FolderOpen,
+  Lock,
 } from "lucide-react";
 
 interface VisualizerClientProps {
@@ -116,6 +119,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   // Roadmap Progress State
   const [isCompletedInRoadmap, setIsCompletedInRoadmap] = useState(false);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
+  const [hasLoadedProgress, setHasLoadedProgress] = useState(false);
 
   // 3-Panel Studio Layout States
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -144,6 +148,7 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   useEffect(() => {
     setIsCompletedInRoadmap(isAlgorithmCompleted(algorithm.id));
     setCompletedIds(getStoredCompletedAlgorithms());
+    setHasLoadedProgress(true);
 
     const handleProgress = (e: any) => {
       const ids = e.detail || getStoredCompletedAlgorithms();
@@ -158,6 +163,23 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
   // Chapter & Navigation Context
   const chapter = useMemo(() => getChapterByAlgorithmId(algorithm.id), [algorithm.id]);
   const navContext = useMemo(() => getNavigationContext(algorithm.id), [algorithm.id]);
+  const isLessonUnlocked = useMemo(
+    () => !hasLoadedProgress || isAlgorithmUnlocked(algorithm.id, completedIds),
+    [hasLoadedProgress, algorithm.id, completedIds]
+  );
+  const frontierLesson = useMemo(
+    () => getCurrentFrontierLesson(completedIds),
+    [completedIds]
+  );
+
+  // Auto-pass lesson when user finishes watching/stepping to the final step
+  useEffect(() => {
+    if (!hasLoadedProgress || !isLessonUnlocked) return;
+    if (steps.length > 1 && currentStepIndex === steps.length - 1 && !isCompletedInRoadmap) {
+      markAlgorithmCompleted(algorithm.id);
+      setIsCompletedInRoadmap(true);
+    }
+  }, [currentStepIndex, steps.length, isCompletedInRoadmap, algorithm.id, hasLoadedProgress, isLessonUnlocked]);
 
   const handleToggleRoadmapCompletion = () => {
     const { completed } = toggleAlgorithmCompleted(algorithm.id);
@@ -768,19 +790,28 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
 
         {/* Right Side: Quick Action Pills & Lesson Panel Toggle */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Toggle Completed in Roadmap button */}
-          <button
-            onClick={handleToggleRoadmapCompletion}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
+          {/* Lesson Pass Status Pill (Strictly earned by completing simulation or Challenge) */}
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-xs ${
               isCompletedInRoadmap
-                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/25"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40"
+                : "bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800"
             }`}
-            title="Đánh dấu tiến độ trong Lộ trình học (Roadmap)"
+            title={
+              isCompletedInRoadmap
+                ? "Bạn đã Pass bài học này!"
+                : "Xem hết mô phỏng đến bước cuối hoặc thắng Challenge để Pass bài này"
+            }
           >
-            <CheckCircle2 className={`w-3.5 h-3.5 ${isCompletedInRoadmap ? "text-emerald-500" : "text-slate-400"}`} />
-            <span className="hidden sm:inline">{isCompletedInRoadmap ? "Đã học" : "Đánh dấu đã học"}</span>
-          </button>
+            {isCompletedInRoadmap ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span className="hidden sm:inline">
+              {isCompletedInRoadmap ? "Đã Pass" : "Chưa Pass"}
+            </span>
+          </div>
 
           {/* Export Modal trigger */}
           <button
@@ -829,6 +860,41 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
 
         {/* ================= CENTER COLUMN: CANVAS STAGE ================= */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
+          {!isLessonUnlocked ? (
+            <div className="max-w-xl mx-auto my-12 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center space-y-5 shadow-lg">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500">
+                <Lock className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                  Bài học đang bị khóa
+                </span>
+                <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                  {algorithm.name}
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Theo lộ trình học tuần tự, bạn cần <strong>Pass</strong> bài học trước đó
+                  {navContext.prev ? (
+                    <>
+                      {" "}
+                      (<span className="text-[#e06c53] font-semibold">{navContext.prev.alg.name}</span>)
+                    </>
+                  ) : null}{" "}
+                  để mở khóa nội dung này.
+                </p>
+              </div>
+              {frontierLesson && (
+                <Link
+                  href={`/visualizer/${frontierLesson.alg.id}`}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[#e06c53] hover:bg-[#d05c43] text-white font-bold text-sm shadow-lg shadow-[#e06c53]/25 transition-all"
+                >
+                  <span>Học bài tiếp theo cần Pass: {frontierLesson.alg.name}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          ) : (
+            <>
           {/* Algorithm Info Header Bar in Canvas */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
             <div>
@@ -1001,16 +1067,29 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
             ) : <div />}
 
             {navContext.next ? (
-              <Link
-                href={`/visualizer/${navContext.next.alg.id}`}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:border-[#e06c53] hover:text-[#e06c53] transition-all text-right ml-auto"
-              >
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-400">Bài tiếp theo</div>
-                  <div className="font-bold">{navContext.next.alg.name}</div>
+              isCompletedInRoadmap ? (
+                <Link
+                  href={`/visualizer/${navContext.next.alg.id}`}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all text-right ml-auto"
+                >
+                  <div className="text-right">
+                    <div className="text-[10px] text-emerald-500/80">Đã mở khóa • Bài tiếp theo</div>
+                    <div className="font-bold">{navContext.next.alg.name}</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <div
+                  title="Hoàn thành (Pass) bài học này để mở khóa bài tiếp theo"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-900/50 text-xs font-semibold text-slate-400 dark:text-slate-500 cursor-not-allowed text-right ml-auto opacity-75"
+                >
+                  <div className="text-right">
+                    <div className="text-[10px] text-slate-400">Pass bài này để mở khóa</div>
+                    <div className="font-bold">{navContext.next.alg.name}</div>
+                  </div>
+                  <Lock className="w-4 h-4 shrink-0" />
                 </div>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              )
             ) : <div />}
           </div>
 
@@ -1036,18 +1115,28 @@ export function VisualizerClient({ algorithmId }: VisualizerClientProps) {
               <p>• <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border">R</kbd>: Reset về đầu</p>
             </div>
           </div>
+          </>
+          )}
         </main>
 
         {/* ================= RIGHT COLUMN: STEP LESSON & PSEUDOCODE ================= */}
-        <StudioLessonPanel
-          algorithm={algorithm}
-          steps={steps}
-          currentStepIndex={currentStepIndex}
-          onStepChange={setCurrentStepIndex}
-          isOpen={isLessonPanelOpen}
-          onToggle={() => setIsLessonPanelOpen(!isLessonPanelOpen)}
-          isSidebarCollapsed={!isSidebarOpen}
-        />
+        {isLessonUnlocked && (
+          <StudioLessonPanel
+            algorithm={algorithm}
+            steps={steps}
+            currentStepIndex={currentStepIndex}
+            onStepChange={setCurrentStepIndex}
+            isOpen={isLessonPanelOpen}
+            onToggle={() => setIsLessonPanelOpen(!isLessonPanelOpen)}
+            isSidebarCollapsed={!isSidebarOpen}
+            isCompleted={isCompletedInRoadmap}
+            nextLesson={
+              navContext.next
+                ? { id: navContext.next.alg.id, name: navContext.next.alg.name }
+                : null
+            }
+          />
+        )}
       </div>
 
       {/* Interactive Quiz Practice Modal */}

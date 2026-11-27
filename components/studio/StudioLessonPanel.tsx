@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { Algorithm, Step } from "@/lib/types";
 import {
   Lightbulb,
@@ -24,6 +25,8 @@ interface StudioLessonPanelProps {
   isOpen: boolean;
   onToggle: () => void;
   isSidebarCollapsed?: boolean;
+  isCompleted?: boolean;
+  nextLesson?: { id: string; name: string } | null;
 }
 
 export function StudioLessonPanel({
@@ -34,6 +37,8 @@ export function StudioLessonPanel({
   isOpen,
   onToggle,
   isSidebarCollapsed = false,
+  isCompleted = false,
+  nextLesson = null,
 }: StudioLessonPanelProps) {
   const [selectedLang, setSelectedLang] = useState<"pseudocode" | "python" | "cpp" | "typescript">("pseudocode");
   const [isCodeExpanded, setIsCodeExpanded] = useState(true);
@@ -175,13 +180,29 @@ export function StudioLessonPanel({
       {/* ================= 1. PEDAGOGICAL STEP CARD ================= */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-4 space-y-3 shadow-xs">
         {/* Step Progress & Tag */}
-        <div className="flex items-center justify-between text-xs">
-          <div className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">
-            BƯỚC {currentStepIndex + 1} / {totalSteps}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <div className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <span>BƯỚC {currentStepIndex + 1} / {totalSteps}</span>
+              {isCompleted && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-500 text-[10px] font-bold">
+                  <CheckCircle2 className="w-3 h-3" />
+                  ĐÃ PASS
+                </span>
+              )}
+            </div>
+            <span className="px-2 py-0.5 rounded-full font-bold text-[10px] tracking-wide uppercase bg-[#e06c53]/15 text-[#e06c53] border border-[#e06c53]/30">
+              {stepTag}
+            </span>
           </div>
-          <span className="px-2 py-0.5 rounded-full font-bold text-[10px] tracking-wide uppercase bg-[#e06c53]/15 text-[#e06c53] border border-[#e06c53]/30">
-            {stepTag}
-          </span>
+          <div className="w-full h-1.5 rounded-full bg-slate-200/80 dark:bg-slate-800 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                isCompleted ? "bg-emerald-500" : "bg-[#e06c53]"
+              }`}
+              style={{ width: `${Math.round(((currentStepIndex + 1) / totalSteps) * 100)}%` }}
+            />
+          </div>
         </div>
 
         {/* Step Dynamic Title */}
@@ -224,11 +245,35 @@ export function StudioLessonPanel({
                 onStepChange(currentStepIndex + 1);
               }
             }}
-            className="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-[#e06c53] hover:bg-[#d05c43] text-white shadow-md shadow-[#e06c53]/25 hover:shadow-[#e06c53]/40 transition-all flex items-center justify-center gap-1.5"
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-[#e06c53] hover:bg-[#d05c43] text-white shadow-md shadow-[#e06c53]/25 hover:shadow-[#e06c53]/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <span>{nextActionLabel}</span>
           </button>
         </div>
+
+        {/* Pass Gate / Next Lesson Unlock Banner */}
+        {isCompleted ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>Bạn đã Pass bài học này!</span>
+            </div>
+            {nextLesson && (
+              <Link
+                href={`/visualizer/${nextLesson.id}`}
+                className="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span className="truncate">Học bài tiếp theo: {nextLesson.name}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pt-0.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#e06c53] shrink-0" />
+            <span>Xem hết mô phỏng đến bước cuối hoặc thắng Challenge để Pass & mở bài tiếp theo.</span>
+          </div>
+        )}
       </div>
 
       {/* ================= 2. SYNCHRONIZED PSEUDOCODE ================= */}

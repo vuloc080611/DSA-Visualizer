@@ -175,10 +175,13 @@ export function getChapterProgress(chapter: CurriculumChapter, completedIds: str
 }
 
 /**
- * Get the previous and next algorithm in the sequential curriculum order
+ * Flatten all active algorithms in sequential curriculum order
  */
-export function getNavigationContext(currentAlgorithmId: string) {
-  // Flatten all active algorithms in chapter order
+export function getFlattenedCurriculum(): {
+  alg: Algorithm;
+  chapter: CurriculumChapter;
+  indexInChapter: number;
+}[] {
   const flattened: { alg: Algorithm; chapter: CurriculumChapter; indexInChapter: number }[] = [];
 
   for (const chapter of CURRICULUM_CHAPTERS) {
@@ -193,6 +196,38 @@ export function getNavigationContext(currentAlgorithmId: string) {
       }
     });
   }
+
+  return flattened;
+}
+
+/**
+ * Check if an algorithm is unlocked under sequential progression rules:
+ * - First algorithm in the curriculum is always unlocked.
+ * - Any algorithm is unlocked if it is already completed OR the immediately preceding algorithm is completed.
+ */
+export function isAlgorithmUnlocked(algorithmId: string, completedIds: string[]): boolean {
+  if (completedIds.includes(algorithmId)) return true;
+  const flattened = getFlattenedCurriculum();
+  const idx = flattened.findIndex((item) => item.alg.id === algorithmId);
+  if (idx <= 0) return true; // First lesson (or unknown) is unlocked
+  const prevId = flattened[idx - 1].alg.id;
+  return completedIds.includes(prevId);
+}
+
+/**
+ * Find the next uncompleted unlocked algorithm (the user's current frontier lesson)
+ */
+export function getCurrentFrontierLesson(completedIds: string[]) {
+  const flattened = getFlattenedCurriculum();
+  const nextUncompleted = flattened.find((item) => !completedIds.includes(item.alg.id));
+  return nextUncompleted || flattened[0] || null;
+}
+
+/**
+ * Get the previous and next algorithm in the sequential curriculum order
+ */
+export function getNavigationContext(currentAlgorithmId: string) {
+  const flattened = getFlattenedCurriculum();
 
   const currentIndex = flattened.findIndex((item) => item.alg.id === currentAlgorithmId);
   const currentItem = currentIndex !== -1 ? flattened[currentIndex] : null;
