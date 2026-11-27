@@ -61,7 +61,7 @@ export const CURRICULUM_CHAPTERS: CurriculumChapter[] = [
     englishTitle: "Hashing & Tables",
     description: "Nguyên lý hàm băm $O(1)$, xử lý xung đột bằng Chaining và Open Addressing.",
     icon: "Database",
-    algorithmIds: [], // Placeholder for upcoming interactive Hash Table visualizer
+    algorithmIds: ["hash-table"],
   },
   {
     id: "chapter-06-trees",
@@ -81,7 +81,7 @@ export const CURRICULUM_CHAPTERS: CurriculumChapter[] = [
     englishTitle: "Heap & Priority Queue",
     description: "Cấu trúc Max Heap, Min Heap, thao tác Heapify và thuật toán Sắp xếp vun đống (Heap Sort).",
     icon: "BarChart2",
-    algorithmIds: ["heap-sort"],
+    algorithmIds: ["min-heap", "heap-sort"],
   },
   {
     id: "chapter-08-graphs",
@@ -124,7 +124,7 @@ export const CURRICULUM_CHAPTERS: CurriculumChapter[] = [
     englishTitle: "Greedy Strategy",
     description: "Chiến lược tối ưu hóa cục bộ trong chọn lịch hoạt động không xung đột và bài toán cái túi phân số.",
     icon: "Zap",
-    algorithmIds: [], // Placeholder for upcoming greedy module
+    algorithmIds: ["greedy-interval-scheduling"],
   },
   {
     id: "chapter-11-backtracking",

@@ -34,6 +34,9 @@ import { generateKruskalSteps, DEFAULT_KRUSKAL_GRAPH } from "./dsu";
 import { generateSegmentTreeSteps, DEFAULT_SEG_TREE_ARRAY } from "./segmentTree";
 import { generateTopologicalSortSteps, DEFAULT_DAG_GRAPH } from "./topologicalSort";
 import { generateLCSSteps, DEFAULT_LCS_STR1, DEFAULT_LCS_STR2 } from "./lcs";
+import { generateIntervalSchedulingSteps } from "./greedy";
+import { generateHashTableSteps } from "./hashTable";
+import { generateMinHeapSteps } from "./heapOperations";
 
 export const ALGORITHMS: Algorithm[] = [
   // =================== SORTING ===================
@@ -1886,6 +1889,209 @@ function union(parent: Record<string, string>, i: string, j: string): void {
     },
     generateSteps: () => generateLCSSteps(),
   },
+
+  // =================== GREEDY ===================
+  {
+    id: "greedy-interval-scheduling",
+    name: "Interval Scheduling (Tham lam)",
+    category: "greedy",
+    shortDescription: "Thuật toán chọn tập khoảng thời gian không giao nhau lớn nhất bằng chiến lược tham lam (Earliest Deadline First).",
+    fullDescription:
+      "Bài toán lập lịch khoảng thời gian (Interval Scheduling / Activity Selection) tìm tập hợp lớn nhất các công việc không trùng nhau. Chiến lược tối ưu là sắp xếp các công việc tăng dần theo thời điểm kết thúc (Finish Time) và luôn tham lam chọn công việc kết thúc sớm nhất còn khả dụng.",
+    complexity: {
+      best: "O(N log N)",
+      average: "O(N log N)",
+      worst: "O(N log N)",
+      space: "O(N)",
+    },
+    properties: {
+      dataStructure: "Interval Array",
+    },
+    code: {
+      python: `def interval_scheduling(intervals):
+    # Sắp xếp theo thời gian kết thúc tăng dần
+    intervals.sort(key=lambda x: x[1])
+    selected = []
+    last_end = float('-inf')
+    for start, end in intervals:
+        if start >= last_end:
+            selected.append((start, end))
+            last_end = end
+    return selected`,
+      cpp: `#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Interval { int start, finish; };
+
+bool compareInterval(Interval a, Interval b) {
+    return a.finish < b.finish;
+}
+
+vector<Interval> intervalScheduling(vector<Interval>& arr) {
+    sort(arr.begin(), arr.end(), compareInterval);
+    vector<Interval> res;
+    int last_finish = -1e9;
+    for (auto& item : arr) {
+        if (item.start >= last_finish) {
+            res.push_back(item);
+            last_finish = item.finish;
+        }
+    }
+    return res;
+}`,
+      typescript: `function intervalScheduling(intervals: { start: number; finish: number }[]) {
+  intervals.sort((a, b) => a.finish - b.finish);
+  const selected: { start: number; finish: number }[] = [];
+  let lastFinish = -Infinity;
+  for (const item of intervals) {
+    if (item.start >= lastFinish) {
+      selected.push(item);
+      lastFinish = item.finish;
+    }
+  }
+  return selected;
+}`,
+    },
+    generateSteps: () => generateIntervalSchedulingSteps(),
+  },
+
+  // =================== HASH TABLE ===================
+  {
+    id: "hash-table",
+    name: "Bảng Băm (Hash Table Chaining)",
+    category: "hash-table",
+    shortDescription: "Cấu trúc dữ liệu ánh xạ khoá tới vị trí bucket bằng hàm băm và giải quyết xung đột bằng danh sách liên kết.",
+    fullDescription:
+      "Bảng băm (Hash Table) sử dụng hàm băm (h(k) = k mod M) để tính chỉ số bucket cho mỗi khoá. Khi xảy ra xung đột (collision) — hai khoá khác nhau ra cùng một bucket index — phương pháp Separate Chaining giải quyết bằng cách liên kết các phần tử thành một danh sách liên kết tại bucket đó.",
+    complexity: {
+      best: "O(1)",
+      average: "O(1)",
+      worst: "O(N)",
+      space: "O(N)",
+    },
+    properties: {
+      dataStructure: "Hash Table / Linked List",
+    },
+    code: {
+      python: `class HashTable:
+    def __init__(self, size=7):
+        self.size = size
+        self.table = [[] for _ in range(size)]
+
+    def _hash(self, key):
+        return key % self.size
+
+    def insert(self, key, value):
+        idx = self._hash(key)
+        for i, (k, v) in enumerate(self.table[idx]):
+            if k == key:
+                self.table[idx][i] = (key, value)
+                return
+        self.table[idx].append((key, value))`,
+      cpp: `#include <vector>
+#include <list>
+using namespace std;
+
+class HashTable {
+    int size;
+    vector<list<pair<int, string>>> table;
+public:
+    HashTable(int s = 7) : size(s), table(s) {}
+    int hashFunc(int key) { return key % size; }
+    void insert(int key, string val) {
+        int idx = hashFunc(key);
+        for (auto& p : table[idx]) {
+            if (p.first == key) { p.second = val; return; }
+        }
+        table[idx].push_back({key, val});
+    }
+};`,
+      typescript: `class HashTable {
+  private size: number;
+  private table: Array<Array<{ key: number; value: any }>>;
+  constructor(size: number = 7) {
+    this.size = size;
+    this.table = Array.from({ length: size }, () => []);
+  }
+  private hash(key: number): number { return Math.abs(key) % this.size; }
+  insert(key: number, value: any) {
+    const idx = this.hash(key);
+    const bucket = this.table[idx];
+    const existing = bucket.find(item => item.key === key);
+    if (existing) existing.value = value;
+    else bucket.push({ key, value });
+  }
+}`,
+    },
+    generateSteps: () => generateHashTableSteps(),
+  },
+
+  // =================== HEAP ===================
+  {
+    id: "min-heap",
+    name: "Thao Tác Min Heap (Sift Up / Down)",
+    category: "heap",
+    shortDescription: "Cây nhị phân hoàn chỉnh duy trì tính chất min-heap: nút cha luôn nhỏ hơn hoặc bằng các nút con.",
+    fullDescription:
+      "Min Heap là cây nhị phân hoàn chỉnh được biểu diễn gọn gàng dưới dạng mảng 1D (với nút cha tại i có con trái tại 2i+1, con phải tại 2i+2). Thao tác chèn (Push) thêm phần tử vào cuối và đẩy ngược lên (Sift Up). Thao tác lấy phần tử nhỏ nhất (Extract Min) đưa phần tử cuối lên gốc và sàng xuống (Sift Down).",
+    complexity: {
+      best: "O(1)",
+      average: "O(log N)",
+      worst: "O(log N)",
+      space: "O(N)",
+    },
+    properties: {
+      dataStructure: "Binary Heap (1D Array)",
+    },
+    code: {
+      python: `import heapq
+
+# Min Heap chuẩn trong Python
+heap = []
+# Chèn phần tử: O(log N)
+heapq.heappush(heap, 3)
+heapq.heappush(heap, 1)
+heapq.heappush(heap, 6)
+
+# Lấy giá trị nhỏ nhất: O(log N)
+min_val = heapq.heappop(heap) # Trả về 1`,
+      cpp: `#include <vector>
+#include <queue>
+using namespace std;
+
+// Min Heap trong C++ STL
+priority_queue<int, vector<int>, greater<int>> minHeap;
+
+void demo() {
+    minHeap.push(3);
+    minHeap.push(1);
+    minHeap.push(6);
+    int top = minHeap.top(); // 1
+    minHeap.pop();
+}`,
+      typescript: `class MinHeap {
+  private heap: number[] = [];
+  push(val: number) {
+    this.heap.push(val);
+    this.siftUp(this.heap.length - 1);
+  }
+  extractMin(): number | undefined {
+    if (this.heap.length === 0) return undefined;
+    const min = this.heap[0];
+    const end = this.heap.pop()!;
+    if (this.heap.length > 0) {
+      this.heap[0] = end;
+      this.siftDown(0);
+    }
+    return min;
+  }
+  private siftUp(idx: number) { /* parent <= child */ }
+  private siftDown(idx: number) { /* parent <= child */ }
+}`,
+    },
+    generateSteps: () => generateMinHeapSteps(),
+  },
 ];
 
 export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: number }[] = [
@@ -1899,6 +2105,9 @@ export const CATEGORIES: { id: AlgorithmCategory | "all"; name: string; count: n
   { id: "pathfinding", name: "Pathfinding (Mê cung 2D)", count: ALGORITHMS.filter((a) => a.category === "pathfinding").length },
   { id: "linked-list", name: "Linked List (DS Liên kết)", count: ALGORITHMS.filter((a) => a.category === "linked-list").length },
   { id: "stack-queue", name: "Stack & Queue", count: ALGORITHMS.filter((a) => a.category === "stack-queue").length },
+  { id: "hash-table", name: "Hash Table (Bảng băm)", count: ALGORITHMS.filter((a) => a.category === "hash-table").length },
+  { id: "heap", name: "Heap (Đống nhị phân)", count: ALGORITHMS.filter((a) => a.category === "heap").length },
+  { id: "greedy", name: "Greedy (Thuật toán tham lam)", count: ALGORITHMS.filter((a) => a.category === "greedy").length },
   { id: "dp", name: "Quy hoạch động (DP)", count: ALGORITHMS.filter((a) => a.category === "dp").length },
   { id: "backtracking", name: "Quay lui (Backtracking)", count: ALGORITHMS.filter((a) => a.category === "backtracking").length },
 ];

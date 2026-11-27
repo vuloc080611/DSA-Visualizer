@@ -9,7 +9,10 @@ export type AlgorithmCategory =
   | "stack-queue"
   | "dp"
   | "backtracking"
-  | "string";
+  | "string"
+  | "greedy"
+  | "hash-table"
+  | "heap";
 
 export interface TrieNodeData {
   id: string;
@@ -222,6 +225,40 @@ export interface Step {
   lcsMatchChar?: string;
   lcsBacktrackPath?: [number, number][];
   lcsResult?: string;
+
+  // Greedy Interval Scheduling state
+  intervals?: IntervalActivity[];
+  selectedIntervalsCount?: number;
+  currentIntervalId?: string;
+  lastEndTime?: number;
+
+  // Hash Table Collision state
+  hashBuckets?: HashBucket[];
+  currentHashKey?: number;
+  computedHashIndex?: number;
+  hashCollisionDetected?: boolean;
+  hashProbingIndices?: number[];
+
+  // Min Heap Operations state
+  heapArray?: number[];
+  heapHighlightIndices?: number[];
+  heapSwappingIndices?: [number, number];
+  heapExtractedValue?: number;
+  heapAction?: "insert" | "extract-min" | "sift-up" | "sift-down" | "complete";
+}
+
+export interface IntervalActivity {
+  id: string;
+  name: string;
+  start: number;
+  end: number;
+  status: "normal" | "inspecting" | "selected" | "overlapping";
+}
+
+export interface HashBucket {
+  index: number;
+  items: { key: number; label?: string }[];
+  status?: "idle" | "inserting" | "collided" | "matched";
 }
 
 export interface GridConfig {

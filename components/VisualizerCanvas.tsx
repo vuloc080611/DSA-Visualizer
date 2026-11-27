@@ -3,6 +3,9 @@
 import { useState, useMemo } from "react";
 import { Step, AlgorithmCategory, TreeNodeData } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { GreedyIntervalCanvas } from "@/components/canvas/GreedyIntervalCanvas";
+import { HashTableCanvas } from "@/components/canvas/HashTableCanvas";
+import { HeapCanvas } from "@/components/canvas/HeapCanvas";
 import {
   Sparkles,
   ArrowDown,
@@ -92,6 +95,21 @@ export function VisualizerCanvas({
   // Longest Common Subsequence (LCS)
   if (currentStep.lcsTable !== undefined) {
     return <LcsCanvas currentStep={currentStep} />;
+  }
+
+  // Greedy Interval Scheduling
+  if (category === "greedy" || currentStep.intervals !== undefined) {
+    return <GreedyIntervalCanvas currentStep={currentStep} />;
+  }
+
+  // Hash Table Collision
+  if (category === "hash-table" || currentStep.hashBuckets !== undefined) {
+    return <HashTableCanvas currentStep={currentStep} />;
+  }
+
+  // Min/Max Heap Operations
+  if (category === "heap" || currentStep.heapArray !== undefined) {
+    return <HeapCanvas currentStep={currentStep} />;
   }
 
   // If it's a dynamic programming algorithm (0/1 Knapsack), render DpCanvas
