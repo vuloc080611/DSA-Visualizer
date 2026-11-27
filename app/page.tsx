@@ -90,7 +90,7 @@ export default function HomePage() {
   }, [selectedCategory, searchQuery]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full overflow-x-clip">
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-12 pb-16 sm:pt-20 sm:pb-24 border-b border-slate-200/80 dark:border-slate-800/80">
         {/* Constellation Particle Canvas in background */}
@@ -142,7 +142,7 @@ export default function HomePage() {
             style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
             className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed"
           >
-            Học và ôn tập 28 thuật toán kinh điển từ Sorting, Searching, Graph, Cây BST/AVL, Mê cung 2D, Quy hoạch động đến Quay lui với hoạt ảnh step-by-step 60 FPS mượt mà và code mẫu đa ngôn ngữ.
+            Học và ôn tập {ALGORITHMS.length} thuật toán kinh điển từ Sorting, Searching, Graph, Cây BST/AVL, Bảng băm, Heap, Mê cung 2D, Quy hoạch động đến Quay lui với 42 bài học chuẩn và trình chấm code trực tiếp.
           </motion.p>
 
           {/* Quick CTA Buttons with Radiant Glow */}
@@ -306,7 +306,7 @@ export default function HomePage() {
                     <ArrowRight className="w-4 h-4 text-amber-400 transform group-hover:translate-x-1 transition-transform" />
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-                    So sánh đồ thị toán học trực quan $O(1)$ đến $O(2^N)$, ma trận Thời gian & Không gian của 28 thuật toán và bí quyết phỏng vấn Big Tech.
+                    So sánh đồ thị toán học trực quan O(1) đến O(2^N), ma trận Thời gian & Không gian của {ALGORITHMS.length} thuật toán và bí quyết phỏng vấn Big Tech.
                   </p>
                 </div>
               </div>

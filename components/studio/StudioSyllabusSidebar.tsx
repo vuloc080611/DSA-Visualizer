@@ -121,7 +121,14 @@ export function StudioSyllabusSidebar({
   }
 
   return (
-    <aside className="w-64 xl:w-72 shrink-0 h-[calc(100vh-4rem)] sticky top-16 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md flex flex-col z-20 transition-all select-none">
+    <>
+      {/* Mobile Drawer Backdrop */}
+      <div
+        onClick={onToggle}
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 md:hidden"
+        aria-hidden="true"
+      />
+      <aside className="fixed inset-y-0 left-0 z-50 w-72 h-full md:sticky md:top-16 md:z-20 md:w-64 xl:w-72 md:h-[calc(100vh-4rem)] shrink-0 border-r border-slate-200/80 dark:border-slate-800/80 bg-white/98 dark:bg-slate-950/98 backdrop-blur-md flex flex-col transition-all select-none shadow-2xl md:shadow-none">
       {/* Header & Overall progress */}
       <div className="p-3.5 border-b border-slate-200/80 dark:border-slate-800/80 space-y-3">
         <div className="flex items-center justify-between gap-2">
@@ -277,6 +284,11 @@ export function StudioSyllabusSidebar({
                       <Link
                         key={lesson.id}
                         href={`/learn/${lesson.id}`}
+                        onClick={() => {
+                          if (typeof window !== "undefined" && window.innerWidth < 768) {
+                            onToggle();
+                          }
+                        }}
                         className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all ${
                           isActive
                             ? "bg-[#e06c53] text-white font-bold shadow-sm shadow-[#e06c53]/20"
@@ -312,5 +324,6 @@ export function StudioSyllabusSidebar({
         })}
       </div>
     </aside>
+    </>
   );
 }

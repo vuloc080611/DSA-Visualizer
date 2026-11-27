@@ -46,17 +46,17 @@ export default function LearnCourseOverviewPage() {
   const frontierLesson = useMemo(() => getCourseFrontierLesson(completedIds), [completedIds]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen w-full overflow-x-clip bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-6 sm:py-10 px-3.5 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {/* Course Hero Banner */}
-        <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-8 shadow-sm space-y-5 sm:space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
             <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#e06c53]/10 text-[#e06c53] border border-[#e06c53]/25 text-xs font-bold">
-                <GraduationCap className="w-4 h-4" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#e06c53]/10 text-[#e06c53] border border-[#e06c53]/25 text-[11px] sm:text-xs font-bold leading-snug">
+                <GraduationCap className="w-4 h-4 shrink-0" />
                 <span>Giáo trình chuẩn MIT 6.006 • Princeton Alg4 • CLRS • OpenDSA</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                 Khóa học Cấu trúc Dữ liệu & Giải thuật Toàn diện
               </h1>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">

@@ -181,7 +181,7 @@ export function StageCodeJudgeView({
             onKeyDown={handleKeyDown}
             spellCheck={false}
             rows={15}
-            className="w-full flex-1 bg-slate-950 text-slate-100 font-mono text-xs sm:text-[13px] p-4 leading-relaxed focus:outline-none resize-y min-h-[320px]"
+            className="w-full flex-1 bg-slate-950 text-slate-100 font-mono text-[15px] sm:text-[13px] p-4 leading-relaxed focus:outline-none resize-y min-h-[300px]"
             placeholder="// Viết mã JavaScript của bạn tại đây..."
           />
 

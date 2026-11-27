@@ -161,21 +161,21 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md transition-colors shadow-xs">
+      <header className="sticky top-0 z-40 w-full max-w-full overflow-x-clip border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md transition-colors shadow-xs">
         {/* ================= TIER 1: MAIN HEADER ================= */}
         <div className="border-b border-slate-200/60 dark:border-slate-800/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 gap-2">
               {/* Brand Logo */}
-              <Link href="/" className="flex items-center gap-3 group shrink-0">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
                   <Code2 className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2 font-bold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 font-bold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
                     <span>DSA</span>
                     <span className="text-emerald-500 dark:text-emerald-400">Visualizer</span>
-                    <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 whitespace-nowrap">
+                    <span className="hidden sm:inline-block text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 whitespace-nowrap">
                       Next.js 15
                     </span>
                   </div>
@@ -186,7 +186,7 @@ export function Navbar() {
               </Link>
 
               {/* Right Global Actions */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 shrink-0">
                 {/* Quick Search Spotlight Button */}
                 <button
                   onClick={() => setSearchModalOpen(true)}
@@ -224,19 +224,18 @@ export function Navbar() {
                   <span className="sm:hidden">Học</span>
                 </Link>
 
-                {/* Learning Roadmap Link */}
+                {/* Learning Roadmap Link (Desktop lg+ top bar; available in mobile drawer below lg) */}
                 <Link
                   href="/roadmap"
                   className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    "hidden lg:flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
                     pathname === "/roadmap"
                       ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-emerald-500/25"
                       : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/70 hover:bg-teal-100 dark:hover:bg-teal-900/40 hover:border-teal-300 dark:hover:border-teal-700"
                   )}
                 >
                   <Map className="w-4 h-4 text-teal-500 shrink-0" />
-                  <span className="hidden sm:inline">Lộ trình</span>
-                  <span className="sm:hidden">Roadmap</span>
+                  <span>Lộ trình</span>
                   <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-teal-200/90 dark:bg-teal-900/90 text-teal-900 dark:text-teal-200 border border-teal-300 dark:border-teal-700 shrink-0">
                     4-Tiers
                   </span>
@@ -246,15 +245,14 @@ export function Navbar() {
                 <Link
                   href="/cheatsheet"
                   className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    "hidden lg:flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
                     pathname === "/cheatsheet"
                       ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/25"
                       : "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800/70 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 hover:border-cyan-300 dark:hover:border-cyan-700"
                   )}
                 >
                   <TrendingUp className="w-4 h-4 text-cyan-500 shrink-0" />
-                  <span className="hidden sm:inline">Big-O</span>
-                  <span className="sm:hidden">Big-O</span>
+                  <span>Big-O</span>
                   <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-cyan-200/90 dark:bg-cyan-900/90 text-cyan-900 dark:text-cyan-200 border border-cyan-300 dark:border-cyan-700 shrink-0">
                     Chart
                   </span>
@@ -264,15 +262,14 @@ export function Navbar() {
                 <Link
                   href="/compare"
                   className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    "hidden lg:flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
                     pathname === "/compare"
                       ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/25"
                       : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/70 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:border-amber-300 dark:hover:border-amber-700"
                   )}
                 >
                   <Swords className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span className="hidden sm:inline">So sánh</span>
-                  <span className="sm:hidden">Race</span>
+                  <span>So sánh</span>
                   <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-amber-200/90 dark:bg-amber-900/90 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 shrink-0">
                     4-Way
                   </span>
@@ -282,28 +279,27 @@ export function Navbar() {
                 <Link
                   href="/playground"
                   className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
+                    "hidden lg:flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0",
                     pathname === "/playground"
                       ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/25"
                       : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/70 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:border-emerald-300 dark:hover:border-emerald-700"
                   )}
                 >
                   <Terminal className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="hidden sm:inline">Playground</span>
-                  <span className="sm:hidden">Code</span>
+                  <span>Playground</span>
                   <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.2 rounded bg-emerald-200/90 dark:bg-emerald-900/90 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 shrink-0">
                     Live
                   </span>
                 </Link>
 
-                <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+                <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 hidden lg:block" />
 
                 {/* GitHub Repository Link */}
                 <Link
                   href="https://github.com/vuloc080611/DSA-Visualizer"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                  className="hidden sm:inline-flex p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
                   title="Mã nguồn GitHub"
                 >
                   <GithubIcon className="w-5 h-5" />
